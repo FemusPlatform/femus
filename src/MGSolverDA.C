@@ -1431,41 +1431,52 @@ void  MGSolDA::set_vector(const int &flag) {
                     int  elem_gidx= (iel+_mgmesh._off_el[0][iproc*_NoLevels+Level]) *NDOF_FEM;
                     for(int  i=0; i<el_nds; i++) {   // linear and quad
                         int k=_mgmesh._el_map[0][elem_gidx+i];   // the global node
-                        if (flag==0){
-                          const double value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                        }
-                        if (flag==2){
-                          const double value= (*disp[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                        }
-                        if (flag==3){
-                          const double value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-//                           cout<<"value "<<value<<endl;
-                        }
-                        if (flag==4){
-                          const double value= (*x_ooold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                        }       
-                        if (flag==5){
-                          const double value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          x_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                        }
-                        if (flag==6){
-                          const double value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                        }        
-                        if (flag==7){
-                          const double value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                          x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                        } 
+                        double value=0.;
+                        switch(flag) {
+                        case 0:
+                            value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+			    
+                        case 2:
+                            value= (*disp[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
 
-			if (flag==8){
-                           const double value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+			case 3:
+                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+			    
+                        case 4:
+                            value= (*x_ooold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+			    
+                        case 5:
+                            value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            x_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+
+			case 6:
+                            value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+
+			case 7:
+                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+
+			case 8:
+                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             disp_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                   
-  		       }
+                            break;
+                        
+			default:
+			  cout<<"Incorrect flag number in set_uoold function"<<endl;
+			  break;
+			}
                     }
                 }
         }

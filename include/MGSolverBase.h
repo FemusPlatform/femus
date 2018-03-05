@@ -229,7 +229,7 @@ public:
 )  const  ;    
 ///@}
  /// Return disp element solution
- void  get_el_old_disp (
+ void  get_el_new_disp (
   const int ivar0,                ///< \param[in]   <ivar0>   initial variable  
   const int nvars,                ///< \param[in]   <nvars>   number of variables to get  <-
   const int el_nds,               ///< \param[in]   <el_nds>  number  of element nodes for this variable 

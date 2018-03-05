@@ -503,7 +503,7 @@ void  MGSolBase::get_el_oooldsol (
 // ==========================================================================================
 /// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
 /// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void  MGSolBase::get_el_old_disp(
+void  MGSolBase::get_el_new_disp(
   const int ivar0,      // initial variable  <-
   const int nvars,      // # of variables to get  <-
   const int el_nds,     // # of element nodes for this variable  <-
@@ -517,7 +517,7 @@ void  MGSolBase::get_el_old_disp(
     for (int
          ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
       const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+(ivar+ivar0)*offset]; // dof from top level
-      uold[ id +(kvar0+ivar)*NDOF_FEM]= ((*disp_old[_NoLevels-1])(kdof_top));     // element sol
+      uold[ id +(kvar0+ivar)*NDOF_FEM]= ((*disp[_NoLevels-1])(kdof_top));     // element sol
     } // end quadratic ------------------------------------------------
   }
   return;
