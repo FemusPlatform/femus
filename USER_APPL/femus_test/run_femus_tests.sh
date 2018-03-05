@@ -39,13 +39,19 @@ echo "---------------------------------------------------------------------">> t
 echo "---------------------------------------------------------------------">> test.log
 export exit_status=1
 
-
-
+if [ -d "DATA" ]; then
+  rm -fr DATA
+fi
+if [ -d "SRC" ]; then
+  rm -fr SRC
+fi
+if [ -d "MESH" ]; then
+  rm -fr MESH
+fi
+  mkdir DATA
+  mkdir SRC
+  mkdir MESH
 # echo " Copy files from" $SIMU 
-rm  ./DATA/*.*
-rm  ./SRC/*.*     
-rm  ./MESH/*.* 
-
 cp  test/$SIMU/DATA/*.*      ./DATA/
 cp  test/$SIMU/SRC/*.*       ./SRC/
 cp  test/$SIMU/MESH/*.*      ./MESH/
