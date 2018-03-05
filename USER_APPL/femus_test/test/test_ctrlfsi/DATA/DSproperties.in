@@ -1,0 +1,65 @@
+# ===============================================================
+/ #                         T SOLVER SETTINGS
+# ===============================================================
+# Note: comment #_  init-end file /
+# ===============================================================
+# STEADY STATE AND NON LINEARITY
+# ---------------------------------------------------------------
+# SolveSteady=1 then only steady eqs (dflt:0; option:0(no),1) 
+  SolveSteady  0
+# MaxNonLinearIterations >0: non linear problem   (default 1) 
+  MaxNonLinearIterations    0 
+# DynamicUnderRelaxation=0.: no urelaxation (dflt:0.; option:0<u<1)   
+  DynamicUnderRelaxation      0. 
+# solver=GMRES    solver      GMRESM
+# ---------------------------------------------------------------
+# NUMERICAL STABILIZATION:
+# ---------------------------------------------------------------
+# Supg=1 : standard supg formulation (dflt:1; option:0,1(no))
+  Supg         1
+# Upwind=0: no standard upwind (dflt:0; option:0<Up<1000)  
+  Upwind       0
+# ReactionNumberBased0 : (dflt:0; option:0,1(yes))  
+# Les=0: no les stabilization (dflt:0; option:0<l<1) 
+# Prt=0.85: turb Prandtl  (dflt:0.85; option:0.5<Prt<4)
+  Prt                       0.85
+# ---------------------------------------------------------------
+# INITIAL CONDITION
+# ---------------------------------------------------------------
+# FlatProfile=1: flat inlet profile (dflt:1; option:0(no),1):
+# ---------------------------------------------------------------
+# BOUNDARY CONDITIONS
+# The available boundary conditions are: 
+#    fix_in0=      1,     ///<  1  normal velocity inlet  \f$ {\bf v}.{\bf n}= 0  \f$
+#    fix_tg0=      2,     ///<  2  normal velocity inlet  \f$ {\bf v}.{\bf t}={ 0}{\bf t}  \f$
+#    fix_disp0=              3,     ///<  3  normal velocity inlet  \f$ {\bf v}={\bf 0}  \f$
+#    fix_in=       5,     ///<  5  normal velocity inlet  \f$ {\bf v}.{\bf n}={\bf v}_0.{\bf n}  \f$
+#    fix_tg=       6,     ///<  6  normal velocity inlet  \f$ {\bf v}.{\bf t}={\bf v}_0.{\bf n}  \f$
+#    fix_dis=          7,     ///<  7  normal velocity inlet  \f$ {\bf v}={\bf v}_0  \f$
+#    free_disp=          10,     ///< 10  Neuman homogeneus         (dT.n=0)
+#    inter=         11,     ///<       
+#    free_disp_outlet=  12,     ///< 12  Neuman homogeneus         (dT.n=0)
+#     free_wall_turb=        13,     ///< 13   Robin    \f$ \nabla T \cdot \widehat{n}= \beta T \f$  (dT.n=beta*T)
+#     free_disp_p=        14,     ///< 14  Neuman nonhomogeneus      (dT.n=q_0)
+#     free_disp_inlet=   16,     ///< 16  Neuman nonhomogeneus      (dT.n=q_0)
+#    simm_dispx=            21,     ///< 21  simmetry      \f$ (p{\bf n}+{\bf tau} \cdot \widehat{n})\cdot \widehat{i}_x=0 \f$   
+#    simm_dispy=            22,     ///< 22  simmetry      \f$ \nabla T \cdot \widehat{n}=0 \f$    (dT.n=0)
+#    simm_dispz=            23,     ///< 23  simmetry      \f$ \nabla T \cdot \widehat{n}=0 \f$    (dT.n=0)
+#    simm_dispxy=           24,     ///< 24  simmetry      \f$ \nabla T \cdot \widehat{n}=0 \f$    (dT.n=0)
+#    simm_dispxz=           25,     ///< 25  simmetry      \f$ \nabla T \cdot \widehat{n}=0 \f$    (dT.n=0)
+#    simm_dispyz=           26      ///< 26  simmetry      \f$ \nabla T \cdot \widehat{n}=0 \f$    (dT.n=0) 
+# 
+#  In order to set the boundary condition follow the example below
+#  DSgroup<Group Number>    <Boundary Condition for DS>
+#        DTgroup10       fix_disp0
+#
+   DSgroup11       fix_disp0  
+   DSgroup13       fix_disp0  
+   DSgroup15       fix_disp0  
+   DSgroup20       free_disp
+   DSgroup21      fix_disp0
+   DSgroup23      fix_disp0
+   DSgroup1000    fix_disp0
+#   
+/ #######################################################################
+  

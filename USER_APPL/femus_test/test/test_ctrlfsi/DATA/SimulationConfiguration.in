@@ -1,0 +1,72 @@
+ # ===============================================================
+ / #                         SIMULATION SETTINGS
+ # =============================================================== 
+ #
+ # ---------------------------------------------------------------
+ #    TIME DISCRETIZATION
+ # ---------------------------------------------------------------
+ #    Time:
+ # SolveSteady: 1(yes) 0(no)
+ #
+   SolveSteady  0
+   dt           5.
+   nsteps       20
+ # ---------------------------------------------------------------
+ #    RESTART
+ # ---------------------------------------------------------------
+   restart      0
+   restart_lev  0
+   itime        0
+   restartime   0.
+ # ---------------------------------------------------------------
+ #    PRINT SETTINGS
+ # ---------------------------------------------------------------
+   printstep    1
+   ndigits      4
+ # ---------------------------------------------------------------
+ #   CONTROL PARAMETERS
+ # ---------------------------------------------------------------
+  ctrl_alpha  0.
+  ctrl_beta   0.000000000001
+ # ---------------------------------------------------------------
+ # ---------------------------------------------------------------
+ #    EQUATIONS TO SOLVE
+ #    1 standard  2 split
+ #
+   DA                      0
+   NavierStokes            0
+   Temperature             0
+   DynamicalTurbulence     0
+   ThermalTurbulence       0
+   FluidStructure          1
+   StructuralMechanics     0
+   Displacement            2
+   ColorFunction           0
+   Laplacian               0
+   Control                 2
+ # adjoint systems  
+   AdjointNavierStokes     0
+   AdjointTemperature      0
+   AdjointTurbulence       0
+   AdjointFluidStructure   1
+ # ---------------------------------------------------------------
+   SolveNavierStokes           no
+   SolveTemperature            no
+   SolveDynamicalTurbulence    no
+   SolveThermalTurbulence      no
+   SolveFluidStructure         yes
+   SolveAdjointFluidStructure  yes
+   SolveControl                yes
+ # ---------------------------------------------------------------  
+ #    BOUNDARY AND VOLUME GROUPS
+ #  Groups must be reported as follows
+ #    BoundaryGroups  15,16,17 
+ #    VolumeGroups    1,2,3
+ #    WallGroups      15,16
+ #  WallGroups contains the boundary ids used for wall distance 
+ #  calculation on interior points
+ # ---------------------------------------------------------------
+   BoundaryGroups    11,13,15,20,21,23,1000
+   VolumeGroups      2,4
+   WallGroups        15,20,21,23
+ / #--------------------------------------------------------------   

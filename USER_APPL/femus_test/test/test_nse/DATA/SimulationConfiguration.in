@@ -1,0 +1,62 @@
+ # ===============================================================
+ / #                         SIMULATION SETTINGS
+ # =============================================================== 
+ #
+ # ---------------------------------------------------------------
+ #    TIME DISCRETIZATION
+ # ---------------------------------------------------------------
+ #    Time:
+ # SolveSteady: 1(yes) 0(no)
+ #
+   SolveSteady  0
+   dt           1.
+   nsteps       20
+ # ---------------------------------------------------------------
+ #    RESTART
+ # ---------------------------------------------------------------
+   restart      0
+   restart_lev  0
+   itime        0
+   restartime   0.
+ # ---------------------------------------------------------------
+ #    PRINT SETTINGS
+ # ---------------------------------------------------------------
+   printstep    1
+   ndigits      4
+ # ---------------------------------------------------------------
+ #    EQUATIONS TO SOLVE
+ # standard
+   DA                      0
+   NavierStokes            1
+   Temperature             1
+   DynamicalTurbulence     0
+   ThermalTurbulence       0
+   FluidStructure          0
+   StructuralMechanics     0
+   Displacement            0
+   ColorFunction           0
+   Laplacian               0
+   Control                 0
+ # adjoint systems  
+   AdjointNavierStokes     0
+   AdjointTemperature      0
+   AdjointTurbulence       0
+   AdjointFluidStructure   0
+ # ---------------------------------------------------------------
+   SolveNavierStokes           yes
+   SolveTemperature            yes
+   SolveDynamicalTurbulence    no
+   SolveThermalTurbulence      no
+ # ---------------------------------------------------------------  
+ #    BOUNDARY AND VOLUME GROUPS
+ #  Groups must be reported as follows
+ #    BoundaryGroups  15,16,17 
+ #    VolumeGroups    1,2,3
+ #    WallGroups      15,16
+ #  WallGroups contains the boundary ids used for wall distance 
+ #  calculation on interior points
+ # ---------------------------------------------------------------
+   BoundaryGroups    20,13,21
+   VolumeGroups      0
+   WallGroups        21,20
+ / #--------------------------------------------------------------   

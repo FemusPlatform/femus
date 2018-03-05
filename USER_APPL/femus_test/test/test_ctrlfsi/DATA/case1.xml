@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?><Code_Saturne_GUI case="fourp_1" study="USER_APPL" version="2.0">
+	<solution_domain>
+		<volumic_conditions>
+			<zone head_losses="off" id="1" initialization="on" label="all_cells" mass_source_term="off" momentum_source_term="off" name="1" scalar_source_term="off" thermal_source_term="off">all[]</zone>
+		</volumic_conditions>
+		<meshes_list>
+			<meshdir name="../MESH"/>
+			<mesh name="anulus_int.neu"/>
+		</meshes_list>
+		<join_meshes status="off"/>
+		<faces_cutting status="off"/>
+		<reorientation status="off"/>
+		<periodic_boundary/>
+		<standalone/>
+		<mesh_smoothing status="off"/>
+		<joining/>
+		<periodicity/>
+		<meshes_libmesh/>
+	</solution_domain>
+	<thermophysical_models>
+		<velocity_pressure>
+			<variable label="Pressure" name="pressure">
+				<reference_pressure>101325</reference_pressure>
+			</variable>
+			<variable label="VelocityX" name="velocity_U">
+				<blending_factor>1</blending_factor>
+			</variable>
+			<variable label="VelocityY" name="velocity_V">
+				<blending_factor>1</blending_factor>
+			</variable>
+			<variable label="VelocityZ" name="velocity_W">
+				<blending_factor>1</blending_factor>
+			</variable>
+			<property label="total_pressure" name="total_pressure"/>
+			<property label="Yplus" name="yplus" support="boundary"/>
+			<property label="Efforts" name="effort" support="boundary"/>
+			<property label="all_variables" name="all_variables" support="boundary"/>
+		</velocity_pressure>
+		<ale_method status="off"/>
+		<turbulence model="k-epsilon">
+			<variable label="TurbEnergy" name="turb_k"/>
+			<variable label="Dissip" name="turb_eps"/>
+			<property label="TurbVisc" name="turb_viscosity"/>
+			<initialization choice="reference_velocity">
+				<reference_velocity>1</reference_velocity>
+			</initialization>
+		</turbulence>
+		<thermal_scalar model="temperature_celsius">
+			<property label="Input_thermal_flux" name="input_thermal_flux" support="boundary"/>
+		</thermal_scalar>
+		<radiative_transfer model="off">
+			<restart status="off"/>
+			<absorption_coefficient type="constant">0</absorption_coefficient>
+		</radiative_transfer>
+		<conjugate_heat_transfer>
+			<external_coupling status="off"/>
+			<external_coupling status="off"/>
+			<external_coupling status="on"/>
+		</conjugate_heat_transfer>
+		<gas_combustion model="off"/>
+		<pulverized_coal model="off"/>
+		<joule_effect model="off"/>
+		<atmospheric_flows model="off"/>
+		<heads_losses/>
+		<ns_eq status="1"/>
+		<en_eq status="1"/>
+		<turb_eq status="5"/>
+		<en_turb_eq status="3"/>
+		<neu_eq status=""/>
+		<sm_eq status=""/>
+		<elec_eq status=""/>
+		<fsi_eq status=""/>
+		<mhd_eq status=""/>
+		<vof_eq status=""/>
+	</thermophysical_models>
+	<numerical_parameters>
+		<multigrid status="on"/>
+		<gradient_transposed status="on"/>
+		<velocity_pressure_coupling status="off"/>
+		<pressure_relaxation>1</pressure_relaxation>
+		<wall_pressure_extrapolation>0</wall_pressure_extrapolation>
+		<gradient_reconstruction choice="0"/>
+	</numerical_parameters>
+	<physical_properties>
+		<fluid_properties>
+			<property choice="constant" label="Density" name="density">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>10340</initial_value>
+			</property>
+			<property choice="constant" label="Molecular_visc" name="molecular_viscosity">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0.0022</initial_value>
+			</property>
+			<property choice="constant" label="Sp_heat" name="specific_heat">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>145.75</initial_value>
+			</property>
+			<property choice="constant" label="Th_conduc" name="thermal_conductivity">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>11.732</initial_value>
+			</property>
+			<property choice="constant" label="compressibility" name="compressibility">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1e-20</initial_value>
+			</property>
+		</fluid_properties>
+		<gravity>
+			<gravity_x>0</gravity_x>
+			<gravity_y>0</gravity_y>
+			<gravity_z>0</gravity_z>
+		</gravity>
+		<hydrostatic_pressure status="off"/>
+		<reference_properties>
+			<property choice="constant" label="Length" name="length">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1</initial_value>
+			</property>
+			<property choice="constant" label="velocity" name="velocity">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1</initial_value>
+			</property>
+			<property choice="constant" label="Pressure" name="pressure">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1</initial_value>
+			</property>
+			<property choice="constant" label="temperature" name="temperature">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1</initial_value>
+			</property>
+		</reference_properties>
+		<solid_properties>
+			<property choice="constant" label="Density_s" name="density_s">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1000</initial_value>
+			</property>
+			<property choice="constant" label="young_modulus" name="young_modulus">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>183000</initial_value>
+			</property>
+			<property choice="constant" label="poisson_modulus" name="poisson_modulus">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0.2</initial_value>
+			</property>
+			<property choice="constant" label="SpecHeat_s" name="specific_heat_s">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>1017.24</initial_value>
+			</property>
+			<property choice="constant" label="ThermalCond_s" name="thermal_conductivity_s">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0.02495</initial_value>
+			</property>
+		</solid_properties>
+		<source_term>
+			<property choice="constant" label="momFx" name="momFx">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0</initial_value>
+			</property>
+			<property choice="constant" label="momFy" name="momFy">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0</initial_value>
+			</property>
+			<property choice="constant" label="momFz" name="momFz">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0</initial_value>
+			</property>
+			<property choice="constant" label="energy_Q" name="energy_Q">
+				<listing_printing status="off"/>
+				<postprocessing_recording status="off"/>
+				<initial_value>0</initial_value>
+			</property>
+		</source_term>
+	</physical_properties>
+	<additional_scalars>
+		<scalar label="TempC" name="temperature_celsius" type="thermal">
+			<initial_value label="all_cells" zone="1" zone_id="1">20.0</initial_value>
+			<min_value>0</min_value>
+			<max_value>400</max_value>
+			<blending_factor>1</blending_factor>
+		</scalar>
+	</additional_scalars>
+	<boundary_conditions>
+		<boundary label="inlet" name="1" nature="inlet">1</boundary>
+		<inlet label="inlet">
+			<velocity_pressure choice="norm" direction="coordinates">
+				<norm>1</norm>
+				<direction_x>1</direction_x>
+				<direction_y>0</direction_y>
+				<direction_z>0</direction_z>
+			</velocity_pressure>
+			<turbulence choice="hydraulic_diameter">
+				<hydraulic_diameter>0.5</hydraulic_diameter>
+			</turbulence>
+			<scalar choice="dirichlet" label="TempC" name="temperature_celsius" type="thermal">
+				<dirichlet>300</dirichlet>
+			</scalar>
+		</inlet>
+		<boundary label="outlet" name="2" nature="outlet">5</boundary>
+		<boundary label="symmetry" name="3" nature="symmetry">8 or 9</boundary>
+		<boundary label="walls" name="4" nature="wall">2 or 3 or 4 or 6 or 7</boundary>
+		<symmetry label="symmetry"/>
+		<outlet label="outlet">
+			<scalar choice="dirichlet" label="TempC" name="temperature_celsius" type="thermal">
+				<dirichlet>0</dirichlet>
+			</scalar>
+		</outlet>
+		<variable/>
+		<wall label="walls">
+			<velocity_pressure choice="off"/>
+			<scalar choice="neumann" label="TempC" name="temperature_celsius" type="thermal">
+				<neumann>0</neumann>
+			</scalar>
+		</wall>
+	</boundary_conditions>
+	<analysis_control>
+		<output>
+			<postprocessing_mesh_options choice="0"/>
+			<syrthes_boundary status="off"/>
+			<domain_boundary status="off"/>
+			<listing_printing_frequency>10</listing_printing_frequency>
+			<postprocessing_frequency>-1</postprocessing_frequency>
+			<probe_recording_frequency>1</probe_recording_frequency>
+			<fluid_domain status="on"/>
+			<postprocessing_format choice="EnSight"/>
+			<postprocessing_options choice="binary"/>
+			<writer id="-1" label="results">
+				<frequency period="none"/>
+				<output_at_end status="on"/>
+				<format name="ensight" options="binary"/>
+				<directory name="postprocessing"/>
+				<time_dependency choice="fixed_mesh"/>
+			</writer>
+			<mesh id="-1" label="Fluid domain" type="cells">
+				<all_variables status="on"/>
+				<location>all[]</location>
+				<writer id="-1"/>
+			</mesh>
+			<mesh id="-2" label="Boundary" type="boundary_faces">
+				<all_variables status="on"/>
+				<location>all[]</location>
+				<writer id="-1"/>
+			</mesh>
+			<probe_format choice="DAT"/>
+		</output>
+		<time_parameters>
+			<time_step_ref>0.001</time_step_ref>
+			<iterations>200</iterations>
+			<time_passing>0</time_passing>
+			<zero_time_step status="off"/>
+			<n_lev>2</n_lev>
+			<n_rest>4</n_rest>
+			<err_rest>1e-06</err_rest>
+			<n_coarse>4</n_coarse>
+			<err_coarse>1e-20</err_coarse>
+			<n_prol>4</n_prol>
+			<err_prol>1e-06</err_prol>
+			<a_hx>0</a_hx>
+			<b_hx>1</b_hx>
+			<n_hx>2</n_hx>
+			<a_hy>0</a_hy>
+			<b_hy>1</b_hy>
+			<n_hy>2</n_hy>
+			<a_hz>0</a_hz>
+			<b_hz>1</b_hz>
+			<n_hz>2</n_hz>
+			<property label="CourantNb" name="courant_number"/>
+			<property label="FourierNb" name="fourier_number"/>
+			<time_ini>0</time_ini>
+			<time_restart>0</time_restart>
+		</time_parameters>
+		<steady_management status="on">
+			<zero_iteration status="off"/>
+			<iterations>30</iterations>
+			<relaxation_coefficient>0.9</relaxation_coefficient>
+		</steady_management>
+		<time_averages/>
+		<profiles/>
+	</analysis_control>
+	<lagrangian model="off"/>
+	<calculation_management>
+		<start_restart>
+			<restart status="off"/>
+			<frozen_field status="off"/>
+			<restart_rescue>0</restart_rescue>
+			<restart_with_auxiliary status="on"/>
+		</start_restart>
+		<integer_user_array>
+			<ncelet>0</ncelet>
+			<nfac>0</nfac>
+			<nfabor>0</nfabor>
+			<dimless>0</dimless>
+		</integer_user_array>
+		<real_user_array>
+			<ncelet>0</ncelet>
+			<nfac>0</nfac>
+			<nfabor>0</nfabor>
+			<dimless>0</dimless>
+		</real_user_array>
+		<integer_work_array>
+			<ncelet>0</ncelet>
+			<nfac>0</nfac>
+			<nfabor>0</nfabor>
+			<dimless>0</dimless>
+		</integer_work_array>
+		<real_work_array>
+			<ncelet>0</ncelet>
+			<nfac>0</nfac>
+			<nfabor>0</nfabor>
+			<dimless>0</dimless>
+		</real_work_array>
+		<n_procs>8</n_procs>
+		<run_type>run</run_type>
+	</calculation_management>
+</Code_Saturne_GUI>

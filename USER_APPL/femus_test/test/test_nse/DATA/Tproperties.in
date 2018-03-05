@@ -1,0 +1,48 @@
+# ===============================================================
+/ #                         T SOLVER SETTINGS
+# ===============================================================
+# Note: comment #_  init-end file /
+# ===============================================================
+# STEADY STATE AND NON LINEARITY
+# ---------------------------------------------------------------
+# SolveSteady=1 then only steady eqs (dflt:0; option:0(no),1) 
+  SolveSteady  0
+# MaxNonLinearIterations >0: non linear problem   (default 1) 
+  MaxNonLinearIterations    0 
+# DynamicUnderRelaxation=0.: no urelaxation (dflt:0.; option:0<u<1)   
+  DynamicUnderRelaxation      0. 
+# solver=GMRES    solver      GMRESM
+# ---------------------------------------------------------------
+# NUMERICAL STABILIZATION:
+# ---------------------------------------------------------------
+# Supg=1 : standard supg formulation (dflt:1; option:0,1(no))
+  Supg         1
+# Upwind=0: no standard upwind (dflt:0; option:0<Up<1000)  
+  Upwind       0
+# ReactionNumberBased0 : (dflt:0; option:0,1(yes))  
+# Les=0: no les stabilization (dflt:0; option:0<l<1) 
+# Prt=0.85: turb Prandtl  (dflt:0.85; option:0.5<Prt<4)
+  Prt                       0.85
+# ---------------------------------------------------------------
+# INITIAL CONDITION
+# ---------------------------------------------------------------
+# FlatProfile=1: flat inlet profile (dflt:1; option:0(no),1):
+# ---------------------------------------------------------------
+# BOUNDARY CONDITIONS
+# The available boundary conditions are: 
+#  Kwall0         Dirichlet: zero wall value 
+#  Kwall          Dirichlet: wall value according to near wall behavior
+#  Kinlet         Dirichlet: inlet value based on turbulence intensity
+#  Kinsulation    Neumann:   zero derivative in boundary normal direction
+#  KrobinT        Neumann:   derivative value based on near wall behavior
+# 
+#  In order to set the boundary condition follow the example below
+#  Tgroup<Group Number>    <Boundary Condition for kh>,<Boundary Condition for wh>
+#        DTgroup10       KrobinT,Kwall
+#
+# 19,20,21,22,29,30,32,51,52,53,54
+   Tgroup13         insulation
+   Tgroup20          Twall0  
+   Tgroup21          Twall
+/ #######################################################################
+  
