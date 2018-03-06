@@ -208,7 +208,7 @@ void MGSolBase::MGSolve (
     if (bNorm!=bNorm) {
      std::cout << "\033[38;5;196m  ----------bNorm is Nan ABORT!!----------  \033[0m" <<  endl;
     return;}
-    if (bNorm>1.e6) {
+    if (bNorm>1.e15) {
      std::cout << "\033[38;5;196m  ----------bNorm is too high!!----------  \033[0m" <<  endl;
     return;} 
 #endif
