@@ -195,7 +195,7 @@ public:
   
   void PrintStatus(std::vector<std::string> TurbModel);
   
-  void DynTurInitValues(double & kappa, double & omega, double WallDist, double AvVel, double Diameter, bool FlatProfile);
+  void DynTurInitValues(double & kappa, double & omega, double WallDist, bool FlatProfile);
   void DynTurInitValues(double & kappa, double & omega, double WallDist, double Utau);
   void TherTurInitValues(double & kappaT, double & omegaT, double WallDist, double NormFlux, double AvVel, double Diameter, bool FlatProfile);
   

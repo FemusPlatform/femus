@@ -153,7 +153,19 @@ void TurbUtils::FillParameters()
 
      _YapCorr = stoi(_FileMap["YapCorrection"]);
      _Durbin  = stoi(_FileMap["DurbinConstrain"]);
-     
+
+     if ( _FileMap ["diameter"]!="" ) {
+        _diameter = stod ( _FileMap["diameter"] );
+    } else {
+        _diameter = 0.1;
+        std::cerr <<" IBUTILS::read_par(): using default value for _diameter \n";
+    }
+    if ( _FileMap ["vmid"]!="" ) {
+        _vmid = stod ( _FileMap["vmid"] );
+    } else {
+        _vmid = 0.1;
+        std::cerr <<" IBUTILS::read_par(): using default value for _vmid \n";
+    }
      return;
 }
 void TurbUtils::FillParameters ( double wall_dist, std::string FirstDynEq, std::string SecDynEq, std::string FirstThermEq, std::string SecThermEq, double nu, double alpha )
@@ -480,7 +492,7 @@ void TurbUtils::CalcDynTurSourceAndDiss ( double KappaAndOmega[], double dist, d
                source[1] = __C10*prod_k*epsilon/kappa;
           } else { // KAPPA - OMEGA AND LOG FORMULATION TURBULENCE MODEL
                diss[0]   = __CMU*omega;
-               diss[1]   = __CMU*omega* ( __C20*f_exp-1 );
+               diss[1]   = __CMU*omega* ( __C20*f_exp -1 );
                source[0] = prod_k*kCorr;
                source[1] = ( __C10-1. ) *prod_k*omega*wCorr/kappa;
                if ( _YapCorr==1 ) {
@@ -639,14 +651,14 @@ void TurbUtils::CalcThermTurSourceAndDiss ( double KappaAndOmega[], // Dynamic T
 }
 
 
-void TurbUtils::DynTurInitValues ( double & kappa, double & omega, double WallDist, double AvVel, double Diameter, bool FlatProfile )
+void TurbUtils::DynTurInitValues ( double & kappa, double & omega, double WallDist, bool FlatProfile )
 {
 
      if ( FlatProfile ) {
-          const double Re_h     = AvVel*Diameter/_nu;
+          const double Re_h     = _vmid*_diameter/_nu;
           const double In       = 0.16*pow ( Re_h,-0.125 );
-          const double len      = 0.07*Diameter;
-          const double k_in     = 1.5* ( In*AvVel ) * ( In*AvVel );
+          const double len      = 0.07*_diameter;
+          const double k_in     = 1.5* ( In*_vmid ) * ( In*_vmid );
           const double e_in     = __CMU*k_in*sqrt ( k_in ) /len;
           const double w_in     = sqrt ( k_in ) /len;
           const double n_in    = k_in/w_in;
@@ -711,7 +723,7 @@ void TurbUtils::TherTurInitValues ( double& kappaT, double& omegaT, double WallD
 {
 
      double kappa, omega, yp;
-     DynTurInitValues ( kappa, omega, WallDist, AvVel, Diameter, FlatProfile );
+     DynTurInitValues ( kappa, omega, WallDist, FlatProfile );
 
      if ( FlatProfile ) {
           kappaT = kappa* ( _alpha/_nu );
