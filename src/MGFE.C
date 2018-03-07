@@ -411,11 +411,11 @@ void MGFE::init_qua_rec() {
             pointNode[1] = y2D_n[j];
             //shape functions
             _phi_map1[1][i*nGauss+j] = Rec_Quad_Phi ( i, point, Dim );
-            for ( int dir=0; dir<2; dir++ ) {
+            for ( int dir=0; dir<Dim; dir++ ) {
                 _dphidxez_map1[1][ ( i+dir*nGauss ) *nGauss + j] = Rec_Quad_DPhi ( i, point, Dim, dir );
                 _dphidxez_map1_nodes[1][ ( i+dir*nGauss ) *nGauss + j] = Rec_Quad_DPhi ( i, pointNode, Dim, dir );
-                for ( int dir2=0; dir2<2; dir2++ )
-                    _dphidxx_map1[1][ ( i+ ( dir*2 + dir2 ) *nGauss ) *nGauss+j] = Rec_Quad_D2Phi ( i, point, Dim, dir, dir2 ); //d2/dxdy gaussian points
+                for ( int dir2=0; dir2<Dim; dir2++ )
+                    _dphidxx_map1[1][ ( i+ ( dir*Dim + dir2 ) *nGauss ) *nGauss+j] = Rec_Quad_D2Phi ( i, point, Dim, dir, dir2 ); //d2/dxdy gaussian points
             }
         }
     }
@@ -437,12 +437,12 @@ void MGFE::init_qua_rec() {
                 pointNode[1] = y3D_n[j];
                 pointNode[2] = z3D_n[j];
                 //shape functions
-                _phi_map1[2][i*nGauss+j] = Rec_Quad_Phi ( i, point, 3 );
-                for ( int dir=0; dir<3; dir++ ) {
+                _phi_map1[2][i*nGauss+j] = Rec_Quad_Phi ( i, point, Dim );
+                for ( int dir=0; dir<Dim; dir++ ) {
                     _dphidxez_map1[2][ ( i+dir*nGauss ) *nGauss + j] = Rec_Quad_DPhi ( i, point, Dim, dir );
                     _dphidxez_map1_nodes[2][ ( i+dir*nGauss ) *nGauss + j] = Rec_Quad_DPhi ( i, pointNode, Dim, dir );
-                    for ( int dir2=0; dir2<3; dir2++ )
-                        _dphidxx_map1[2][ ( i+ ( dir*3 + dir2 ) *nGauss ) *nGauss+j] = Rec_Quad_D2Phi ( i, point, Dim, dir, dir2 ); //d2/dxdy gaussian points
+                    for ( int dir2=0; dir2<Dim; dir2++ )
+                        _dphidxx_map1[2][ ( i+ ( dir*Dim + dir2 ) *nGauss ) *nGauss+j] = Rec_Quad_D2Phi ( i, point, Dim, dir, dir2 ); //d2/dxdy gaussian points
                 }
             }
         }
@@ -2713,10 +2713,9 @@ double MGFE::Rec_Quad_D2Phi ( int nPhi, double point[], int dimension, int DirDe
         PhiDer = 1;
         for ( int dir=0; dir<dimension; dir++ ) {
             int lambda_i;
-            int direction = dir%dimension;
             if ( dimension==1 ) lambda_i = _CooE3[nPhi];
-            else if ( dimension==2 ) lambda_i = _CooQ9[nPhi + direction*_Q9Off];
-            else if ( dimension==3 ) lambda_i = _CooH27[nPhi + direction*_H27Off];
+            else if ( dimension==2 ) lambda_i = _CooQ9[nPhi + dir*_Q9Off];
+            else if ( dimension==3 ) lambda_i = _CooH27[nPhi + dir*_H27Off];
             else printf ( "\033[1;31m MGFE::Rec_Quad_D2Phi unkown phi for dimension %d \n \033[0m",dimension );
             if ( dir==DirDer1 || dir==DirDer2 ) PhiDer *= Edge_Quad_DPhi ( lambda_i, point[dir] );
             else PhiDer *= Edge_Quad_Phi ( lambda_i, point[dir] );
