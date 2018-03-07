@@ -15,7 +15,7 @@
 #include "MGUtils.h"        // data and path to file
 #include "Printinfo_conf.h" // to print info
 
-
+// comm
 // ==============================
 /// This function constructs the class MGFE:
 MGFE::MGFE (
