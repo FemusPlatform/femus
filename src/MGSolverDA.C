@@ -645,6 +645,22 @@ void MGSolDA::GenBc_loop(
   int ndof_lev =0;
   const int  el_sides= _mgmesh._GeomEl._n_sides[0];
 
+      for(int isub=0; isub<_mgmesh._n_subdom; ++isub) {
+    int iel0=_mgmesh._off_el[0][_NoLevels-1+_NoLevels*isub];
+    int ielf=_mgmesh._off_el[0][_NoLevels-1+_NoLevels*isub+1];
+    int delta =ielf-iel0;
+
+    for(int iel=0; iel <delta; iel++) {  // element loop
+      _mgmesh.get_el_nod_conn(0,_NoLevels-1,iel,el_conn,xx_qnds,isub);
+      _mgmesh.get_el_neighbor(el_sides,0,_NoLevels-1,iel,el_neigh,isub);
+      for(int i=0; i< ndof_femv; i++) {  // node lement loop
+        const int k=_mgmesh._el_map[0][(iel+iel0) *ndof_femv+i]; // global node
+        // coordinates
+        for(int idim=0; idim< DIMENSION; idim++) { xp[idim] = xyzgl[k+idim*offset]; }
+        bc[0][_node_dof[_NoLevels-1][k]]  = -1000;
+  
+      }}}
+  
   /// B) Element Loop to set  bc[] (which is a node vector)
   for(int isub=0; isub<_mgmesh._n_subdom; ++isub) {
     int iel0=_mgmesh._off_el[0][_NoLevels-1+_NoLevels*isub];
@@ -670,8 +686,9 @@ void MGSolDA::GenBc_loop(
 
         /// Calling the local point functions
         bc_intern_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value);
-        bc[0][_node_dof[_NoLevels-1][k]]  = (bc[0][_node_dof[_NoLevels-1][k]] == -1000)? bc_Neu[0] : bc[0][_node_dof[_NoLevels-1][k]];
-
+	
+	int old_val =  bc[0][_node_dof[_NoLevels-1][k]] ;
+        bc[0][_node_dof[_NoLevels-1][k]]  = (bc[0][_node_dof[_NoLevels-1][k]] == -1000)? bc_Neu[0] : (bc[0][_node_dof[_NoLevels-1][k]]);
 
         // sharing boundary nodes on the same element
         for(int ivar=0; ivar<n_dofs; ivar++)  {
@@ -761,12 +778,11 @@ void MGSolDA::GenBc_loop(
               int kdof=_node_dof[_NoLevels-1][k+(ivar)* offset];
               int number = abs(bc[1][kdof]/10000) +1;
 	      bc[1][kdof] += sign*10000; // updating number of common nodes
-              if(abs(bc[1][kdof])<10000 || bc_id==bc_face || bc_id==18) bc[1][kdof] = sign*(abs(bc_id)+(mynormal+1)*1000+number*10000);
+              if(abs(bc[1][kdof])<10000 || bc_id==bc_face) bc[1][kdof] = sign*(abs(bc_id)+(mynormal+1)*1000+number*10000);
             } // ----------------------------------------------------------------
           } // loop i +++++++++++++++++++++++++++++++++++++++++++++
         } // iside -1
       }  // -----------------------------  End Boundary -------------------------------------
-
     } // end of element loop
     ndof_lev +=delta;
   } // i-sub
