@@ -4,7 +4,6 @@
 #include <cstdlib>
 
 
-
     MGGeomEl::MGGeomEl()     {
 
       
