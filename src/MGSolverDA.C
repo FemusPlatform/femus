@@ -670,7 +670,7 @@ void MGSolDA::GenBc_loop(
 
         /// Calling the local point functions
         bc_intern_read(face_id_node,mat_id_elem,xp,bc_Neu,bc_value);
-        bc[0][_node_dof[_NoLevels-1][k]] =bc_Neu[0];
+        bc[0][_node_dof[_NoLevels-1][k]]  = (bc[0][_node_dof[_NoLevels-1][k]] == -1000)? bc_Neu[0] : bc[0][_node_dof[_NoLevels-1][k]];
 
 
         // sharing boundary nodes on the same element
@@ -761,7 +761,7 @@ void MGSolDA::GenBc_loop(
               int kdof=_node_dof[_NoLevels-1][k+(ivar)* offset];
               int number = abs(bc[1][kdof]/10000) +1;
 	      bc[1][kdof] += sign*10000; // updating number of common nodes
-              if(abs(bc[1][kdof])<10000 || bc_id==bc_face) bc[1][kdof] = sign*(abs(bc_id)+(mynormal+1)*1000+number*10000);
+              if(abs(bc[1][kdof])<10000 || bc_id==bc_face || bc_id==18) bc[1][kdof] = sign*(abs(bc_id)+(mynormal+1)*1000+number*10000);
             } // ----------------------------------------------------------------
           } // loop i +++++++++++++++++++++++++++++++++++++++++++++
         } // iside -1
