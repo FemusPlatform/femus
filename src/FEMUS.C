@@ -189,9 +189,9 @@ void FEMUS::setSystem (
     int n_data_cell
 ) { // ==========================================================================
     _mg_equations_map=new EquationSystemsExtendedM ( *_mg_utils,*_mg_mesh,*_mg_femap,n_data_points,n_data_cell ); // MGEquationsMap class
-    _mg_equations_map->read_par();
+//     _mg_equations_map->read_par();
 #ifdef PRINT_INFO  // ---- info ---------------
-    _mg_equations_map->print_par();       // print parameters
+//     _mg_equations_map->print_par();       // print parameters
 #endif
     _mg_equations_map->init_data ( 0 );
     _mg_equations_map->init ( pbName );                           // adds the equations to the map
