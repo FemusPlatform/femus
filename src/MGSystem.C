@@ -33,7 +33,7 @@ MGSystem::MGSystem(
   // =========================================
   _n_data[1]=n_cell_in;     //< n cell data  (<=3)
   _n_data[0]=n_pt_in;       //< n vertex data (<=3)
-  read_par();
+//   read_par();
   return;
 }
 
