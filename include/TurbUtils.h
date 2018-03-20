@@ -65,14 +65,14 @@ public:
   int _numod, _emod;
   double _vmid, _diameter;
   double _DynUnderRel, _ThermUnderRel;
-  
+  double _InputUtau;
   std::map<int,int> _MgToMed;
   
 //   FLAGS 
   bool   _IsFilled = false;
   bool   _MuTurbInitialized=false;
   bool   _SolveNS, _SolveT, _SolveTBK, _SolveTTBK;
-  int    _YapCorr, _Durbin;
+  int    _YapCorr, _Durbin, _Park;
   bool   _IsWallDistSet = false;
   
   std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _NodeWallDist;
@@ -198,7 +198,8 @@ public:
   void DynTurInitValues(double & kappa, double & omega, double WallDist, bool FlatProfile);
   void DynTurInitValues(double & kappa, double & omega, double WallDist, double Utau);
   void TherTurInitValues(double & kappaT, double & omegaT, double WallDist, double NormFlux, double AvVel, double Diameter, bool FlatProfile);
-  
+  void CalcWallFuncKappaAndOmega(double KappaAndOmega[], int NodeOnBound, double WallDist, double utau);
+  void CalcWallFuncThermalKappaAndOmega(double KappaAndOmega[], int NodeOnBound, double WallDist, double utau);
   inline bool CheckIfFilled(){return _IsFilled;}
   inline void SetAvVel(double vel){ _vmid = vel;}
   inline void SetDiameter(double diameter){ _diameter = diameter;}
@@ -207,6 +208,8 @@ public:
   void GetLevelElemMuTurb(int iel, int level, double MuTurb[]);
   void GetLevelElemAlphaTurb(int iel, int level, double AlphaTurb[]);
   void GetLevelElemNodeWallDist(int iel, int level, double NodeWallDist[]);
+  
+  ParaMEDMEM::MEDCouplingFieldDouble * BuildInitTurbField(int TurbVar);
 };
 
 
