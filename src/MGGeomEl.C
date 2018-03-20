@@ -4,9 +4,7 @@
 #include <cstdlib>
 
 
-
     MGGeomEl::MGGeomEl()     {
-
       
 if( ELTYPE == 27) {
 #if DIMENSION==1
