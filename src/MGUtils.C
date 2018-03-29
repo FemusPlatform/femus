@@ -2,6 +2,7 @@
 #include "MGUtils.h"
 #include "Solverlib_conf.h"  // petsc conf
 #include "Printinfo_conf.h"  // petsc conf
+
 // std libraries ----------------
 #include <iomanip>
 #include <cstdlib>
@@ -126,11 +127,34 @@ void MGUtils::read_par() { // READ PARAMETER FILES AND FILL RELATIVE MAPS ======
     }
 #ifdef PRINT_INFO
     std::cout << "End Reading file " <<  filename.str() << std::endl;
-#endif
-
+#endif   
     fin.close();
   }// END CYCLE ON FILES TO READ ----------------------------------------------------------
   maps.clear();
+  
+
+_SolverTypeMap["CGNM"]             =  CGNM              ;
+_SolverTypeMap["CGSM"]             =  CGSM             ;
+_SolverTypeMap["CRM"]              =  CRM               ;
+_SolverTypeMap["QMRM"]             =  QMRM              ;
+_SolverTypeMap["TCQMRM"]           =  TCQMRM            ;
+_SolverTypeMap["TFQMRM"]           =  TFQMRM            ;
+_SolverTypeMap["BICGM"]            =  BICGM             ;
+_SolverTypeMap["BICGSTABM"]        =  BICGSTABM         ;
+_SolverTypeMap["MINRESM"]          =  MINRESM           ;
+_SolverTypeMap["GMRESM"]           =  GMRESM            ;
+_SolverTypeMap["VANKATM"]          =  VANKATM           ;
+_SolverTypeMap["VANKANSM"]         =  VANKANSM          ;
+_SolverTypeMap["LSQRM"]            =  LSQRM             ;
+_SolverTypeMap["JACOBIM"]          =  JACOBIM           ;
+_SolverTypeMap["SOR_FORWARDM"]     =  SOR_FORWARDM      ;
+_SolverTypeMap["SOR_BACKWARDM"]    =  SOR_BACKWARDM     ;
+_SolverTypeMap["SSORM"]            =  SSORM         ;
+_SolverTypeMap["RICHARDSONM"]      =  RICHARDSONM       ;
+_SolverTypeMap["CHEBYSHEVM"]       =  CHEBYSHEVM;   
+_SolverTypeMap["LUMPM"]            =  LUMPM        ;
+_SolverTypeMap["INVALID_SOLVERM"]  =  INVALID_SOLVERM    ;
+  
   return;
 }// END READ_PAR FUNCTION ================================================================
 
