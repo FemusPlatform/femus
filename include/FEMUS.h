@@ -357,6 +357,7 @@ void set_mgcc(MGSolCC & cc);
 		const int index_medmesh = 0);
 
   void InitTurbulence ();
+  void InitTurbulence ( int MeshID );
   void CalcTurbulence ();
 
 #endif

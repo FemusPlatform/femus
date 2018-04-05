@@ -46,6 +46,7 @@ private:
  
   const int __Levels;
   const int __Proc;
+  int       _MeshID;
   
   int _LibToMed_3D[27]    = {7, 4, 5, 6, 3, 0, 1, 2, 19, 16, 17, 18, 11, 8, 9, 10, 15, 12, 13, 14, 25, 24, 21, 22, 23, 20, 26};
   int _LibToMed_2D[9]    = {0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -128,6 +129,12 @@ public:
             std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
             bool DynTurb, 
             bool TherTurb);
+  TurbUtils ( int proc,
+            int levels,
+            std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
+            bool DynTurb,
+            bool TherTurb,
+	        int MeshID);
   ~TurbUtils();
   void read_file();
   void print_par();

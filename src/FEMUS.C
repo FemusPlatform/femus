@@ -281,6 +281,19 @@ void FEMUS::InitTurbulence() {
     return;
 }
 
+void FEMUS::InitTurbulence(int MeshID) {
+    bool DynTurb, TherTurb;
+
+    ( stoi ( _mg_utils->_sim_config["DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
+    ( stoi ( _mg_utils->_sim_config["ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
+
+//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
+
+    TurbUtils *Parameters = new TurbUtils ( get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb, MeshID );
+    _mg_utils->set_turbulence_info ( Parameters );
+    return;
+}
+
 void FEMUS::CalcTurbulence() {
     int FinerLevel = _mg_mesh->_NoLevels;
     if ( _mg_utils->_TurbParameters->_IsWallDistSet == false ) {

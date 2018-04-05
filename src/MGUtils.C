@@ -22,7 +22,7 @@ MGUtils::MGUtils() :_ProbID(-1){
 MGUtils::MGUtils(int a) :_ProbID(a){
 
   std::ostringstream loc_par_file;
-  loc_par_file << "/DATA/param_files_msh"<< a <<".in";
+  loc_par_file << "/DATA/param_files_msh"<< _ProbID <<".in";
   const std::string &name=loc_par_file.str();
   read(name);
   StandardBuild();
@@ -42,6 +42,7 @@ void MGUtils::StandardBuild(){
   _mesh_dir = _user_dir + _mgfiles.find("MESH_DIR")->second ;
 //     _mesh_dir = _user_dir + "/MESH/";
   _data_dir = _app_dir + "/DATA/";
+  if(NUM_MESH>1) {_data_dir = _app_dir + "/DATA/DATA"+ std::to_string(_ProbID) + "/";}
   _fem_dir = _femus_dir + "/fem/";
   _contrib_dir=_femus_dir + "/contrib/";
   read_par();       // read parameters

@@ -696,7 +696,7 @@ void BoundInterp::FillParameters (
         _AlreadyInitialized=1;
     }
     const int Quad4[8] = {-1, 1, 1,-1, -1,-1, 1, 1  }; // (xi,eta,zeta)
-
+    const int Edge2[2] = {-1, 1}; // (xi,eta,zeta)
     switch ( DomainType ) {
     case ( Boundary ) :
         // ********* Loop over the target  mesh cells ************** //
@@ -839,8 +839,9 @@ void BoundInterp::FillParameters (
                                 }
                                 ElCoord1.clear();
                             }
-                            XiEtaCalc_2D ( NodeCoord, XiEtaBound,Quad4 );
-
+                            if ( _MeshDim==2 ) XiEtaCalc_2D ( NodeCoord, XiEtaBound,Quad4 );
+                            if ( _MeshDim==1 ) XiEtaCalc_1D ( NodeCoord, XiEtaBound );
+                            
                             if ( _MeshDim==2 ) { // ---------------------------------------------------------------------------------------------
                                 if ( fabs ( XiEtaBound[0] ) <= 1.+1.e-5 &&  fabs ( XiEtaBound[1] ) <= 1.+1.e-5 ) {
                                     CellFound = true;
@@ -876,7 +877,8 @@ void BoundInterp::FillParameters (
                             SrcNodesConn.clear();   // clear connectivity
                             _CoordMatrix.clear();
                         } // end while ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+                       if(!CellFound) std::cout<< " cell not found for node ************ " <<j<<" of cell "<<iCell<<" after "<<FirstTry+1 <<" out of "<<numberOfCell <<" attempts "
+                           <<" xi: "<<XiEtaBound[0]<<std::endl;
 //             else
                     } // end if numeroCelle > 1.5 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1915,6 +1917,14 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
             std::vector<double> XiEtaBound;
             GetXiEta ( iNode, XiEtaBound );
 
+            if ( BoundingNodes[0] == -1 ) {
+                for ( int icomp=0; icomp<NComp; icomp++ ) {
+                    double TargetFieldValue = TargetField->getIJ ( iNode,icomp );
+                    targetArray->setIJ ( iNode,icomp,TargetFieldValue );
+                }
+                BoundingNodes.clear(); //       break;
+            } else{
+            
             double CanPos[_MeshDim];
             for ( int dim=0; dim<_MeshDim; dim++ ) {
                 CanPos[dim]=XiEtaBound[dim];
@@ -1951,6 +1961,7 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
             }
             BoundingNodes.clear();
             XiEtaBound.clear();
+            }
         }
         break;
 
@@ -2037,6 +2048,12 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
             std::vector<double> XiEtaBound;
             GetXiEta ( iNode, XiEtaBound );
 
+            if ( BoundingNodes[0] == -1 ) {
+                for ( int icomp=0; icomp<NComp; icomp++ ) {
+                    targetArray->setIJ ( iNode,icomp,DefaultValue );
+                }
+                BoundingNodes.clear(); //       break;
+            } else{
             double CanPos[_MeshDim];
             for ( int dim=0; dim<_MeshDim; dim++ ) {
                 CanPos[dim]=XiEtaBound[dim];
@@ -2076,6 +2093,7 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
             }
             BoundingNodes.clear();
             XiEtaBound.clear();
+            }
         }
         break;
 

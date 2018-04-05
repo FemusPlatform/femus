@@ -29,7 +29,7 @@ protected:
   // data ---------------------------------------
   std::map<std::string, double>       _param_utils; ///< Parameters map  
   int                                 _name;        ///< Problem name
-  const int                           _ProbID;
+  int                           _ProbID;
 public:
   std::map<std::string, double>       _geometry;    ///< Geometry properties: bounding box for libmesh mesh generation, axisym, wall_dist
   std::map<std::string, double>       _mat_prop;    ///< Material properties: density, viscosity and other physical prop.
@@ -65,6 +65,7 @@ public:
   MGUtils(int a, TurbUtils TurbParameters);
   
   void StandardBuild();
+  void StandardBuild(int a);
   /// Destructor
   ~MGUtils() {clean();}
   void clean(){

@@ -1,4 +1,5 @@
 #include "TurbUtils.h"
+#include "Domain_conf.h"
 #include <sstream>
 #include <math.h>
 #include <iostream>
@@ -28,6 +29,74 @@ TurbUtils::TurbUtils ( int proc,
                        bool TherTurb
                      ) :
 __Proc ( proc ), __Levels ( levels ) {
+    int MeshID = 0;
+    FillModelMap();
+    FillParameters(); // DEFAULT VALUES
+
+    _NodeMap  = NodeMap;
+
+    double *FinerMap  = const_cast<double*> ( _NodeMap[_NodeMap.size() -1]->getArray()->getPointer() );
+    for ( int i=0; i< _NodeMap[__Levels-1]->getMesh()->getNumberOfNodes(); i++ ) {
+        _MgToMed.insert ( std::pair<int,int> ( ( int ) FinerMap[i], i ) );
+    }
+    FinerMap=NULL;
+
+    for ( int lev=0; lev<__Levels; lev++ ) {
+        const int NumNodes = _NodeMap[lev]->getMesh()->getNumberOfNodes();
+
+        ParaMEDMEM::DataArrayDouble *NodeDist = ParaMEDMEM::DataArrayDouble::New();
+        NodeDist->alloc ( NumNodes, 1 );
+        NodeDist->fillWithZero();
+        NodeDist->setName ( "NodeWallDist" );
+
+        _NodeWallDist.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+        _NodeWallDist[lev]->setMesh ( _NodeMap[lev]->getMesh() );
+        _NodeWallDist[lev]->setArray ( NodeDist );
+        _NodeWallDist[lev]->setName ( "NodeWallDist_Lev_"+to_string ( lev ) );
+        NodeDist->decrRef();
+
+        if ( DynTurb ) {
+            ParaMEDMEM::DataArrayDouble *MuTurbArray = ParaMEDMEM::DataArrayDouble::New();
+            MuTurbArray->alloc ( NumNodes, 1 );
+            MuTurbArray->fillWithZero();
+            MuTurbArray->setName ( "MuTurb" );
+
+            _MuTurbField.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+            _MuTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
+            _MuTurbField[lev]->setArray ( MuTurbArray );
+            _MuTurbField[lev]->setName ( "MuTurb_Lev_"+to_string ( lev ) );
+            MuTurbArray->decrRef();
+        }
+        if ( TherTurb ) {
+            ParaMEDMEM::DataArrayDouble *AlphaTurbArray = ParaMEDMEM::DataArrayDouble::New();
+            AlphaTurbArray->alloc ( NumNodes, 1 );
+            AlphaTurbArray->fillWithZero();
+            AlphaTurbArray->setName ( "AlphaTurb" );
+
+            _AlphaTurbField.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+            _AlphaTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
+            _AlphaTurbField[lev]->setArray ( AlphaTurbArray );
+            _AlphaTurbField[lev]->setName ( "AlphaTurb_Lev_"+to_string ( lev ) );
+            AlphaTurbArray->decrRef();
+        }
+    }
+    _CanElemMap = new int*[2];
+    _CanElemMap[0] = new int[9];
+    _CanElemMap[1] = new int[27];
+    for ( int i=0; i<27; i++ ) {
+        if ( i<9 ) _CanElemMap[0][i] = _LibToMed_2D[i];
+        _CanElemMap[1][i] = _LibToMed_3D[i];
+    }
+}
+
+TurbUtils::TurbUtils ( int proc,
+                       int levels,
+                       std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
+                       bool DynTurb,
+                       bool TherTurb,
+		       int MeshID
+                     ) :
+__Proc ( proc ), __Levels ( levels ), _MeshID ( MeshID ) {
     FillModelMap();
     FillParameters(); // DEFAULT VALUES
 
@@ -773,10 +842,19 @@ void TurbUtils::read_file() { // READING Tparameter.in =========================
     std::ostringstream file, file1, file2;
     std::vector<std::string> FILES;
 
+    if(NUM_MESH>1)
+    {
+    file   <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/DATA"<< std::to_string(_MeshID) <<"/Turbulence.in";
+    file1  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/DATA"<<std::to_string(_MeshID)<<"/GeometrySettings.in";
+    file2  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/DATA"<<std::to_string(_MeshID)<<"/MaterialProperties.in";
+    }
+    else
+    {
     file   <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/Turbulence.in";
     file1  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/GeometrySettings.in";
     file2  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/MaterialProperties.in";
-
+    }
+    
     FILES.push_back ( file1.str() );
     FILES.push_back ( file.str() );
     FILES.push_back ( file2.str() );
