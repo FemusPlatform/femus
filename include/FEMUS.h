@@ -119,7 +119,7 @@ void set_mgcc(MGSolCC & cc);
     return MeshName;
   };
   //! Function getting mesh dir 
-  inline string GetMeshDir ()
+  inline std::string GetMeshDir ()
   {
     return _mg_utils->_mesh_dir;
   };
@@ -347,7 +347,7 @@ void set_mgcc(MGSolCC & cc);
   //! This routin gets original support of the interface 
   const ParaMEDMEM::MEDCouplingUMesh * getUMesh_orig (int name);
 
-  void GetInfo (string medfile_name,
+  void GetInfo (std::string medfile_name,
 		std::string & mesh_dir,
 		std::string & localFile,
 		std::string & filename,

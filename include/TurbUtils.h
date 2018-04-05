@@ -97,6 +97,11 @@ public:
 //     natural_omega = 20,
 //     logarithmic_omega = 21
     // NAGANO BASED MODELS
+    nagano_ke   =1,
+    nagano_kw   =2,
+    nagano_log  =3,
+    wilcox      =4,
+    wilcox_log  =5,
     nagano_k    =10,
     nagano_logk =11,
     nagano_w    =10,
@@ -201,6 +206,9 @@ public:
   void FillModelMap();
   
   void PrintStatus(std::vector<std::string> TurbModel);
+  
+  void DynTurNearWallValues(double & kappa, double & omega, double WallDist, double Utau);
+  
   
   void DynTurInitValues(double & kappa, double & omega, double WallDist, bool FlatProfile);
   void DynTurInitValues(double & kappa, double & omega, double WallDist, double Utau);

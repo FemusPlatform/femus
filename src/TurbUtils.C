@@ -201,14 +201,67 @@ void TurbUtils::FillParameters() {
     int SDE = _DynamicModel[_FileMap["SecondDynamicEquation"]];
     int FTE = _ThermalModel[_FileMap["FirstThermalEquation"]];
     int STE = _ThermalModel[_FileMap["SecondThermalEquation"]];
-
+//
     _Nagano = ( FDE/10 ) %2;
     _Wilcox = ( ( FDE/10 ) &2 ) >>1;
-
     _klog  = ( FDE%10 ) %2;
     _wlog  = ( SDE%10 ) %2;
     _emod  = ( ( SDE%10 ) &2 ) >>1;
     _numod = ( ( FDE%10 ) &2 ) >>1;
+
+
+
+    int RANS_dynamic = _DynamicModel[_FileMap["RANS_dynamic"]];
+    switch ( RANS_dynamic ) {
+    case nagano_ke:
+        _Nagano = 1;
+        _Wilcox = 0;
+        _klog  = 0;
+        _wlog  = 0;
+        _emod  = 1;
+        _numod = 0;
+        break;
+    case nagano_kw:
+        _Nagano = 1;
+        _Wilcox = 0;
+        _klog  = 0;
+        _wlog  = 0;
+        _emod  = 0;
+        _numod = 0;
+        break;
+    case nagano_log:
+        _Nagano = 1;
+        _Wilcox = 0;
+        _klog  = 1;
+        _wlog  = 1;
+        _emod  = 0;
+        _numod = 0;
+        break;
+    case wilcox:
+        _Nagano = 0;
+        _Wilcox = 1;
+        _klog  = 0;
+        _wlog  = 0;
+        _emod  = 0;
+        _numod = 0;
+        break;
+    case wilcox_log:
+        _Nagano = 0;
+        _Wilcox = 1;
+        _klog  = 1;
+        _wlog  = 1;
+        _emod  = 0;
+        _numod = 0;
+        break;
+    default:
+        std::cout<<"\033[1;31m\n=====================================================\n"
+        <<"   TURB_UTILS: unknown turbulence model "<<_FileMap["RANS_dynamic"]
+        <<"\n=====================================================\n\033[0m";
+        abort();
+        break;
+    }
+
+
 
     _khlog = FTE%10;
     _whlog = STE%10;
@@ -241,6 +294,12 @@ void TurbUtils::FillParameters() {
         std::cerr <<"    SDE        "<<SDE<<std::endl;
         std::cerr <<"    FTE        "<<FTE<<std::endl;
         std::cerr <<"    STE        "<<STE <<std::endl;
+        std::cerr <<"   _Nagano      "<<_Nagano<<std::endl;
+        std::cerr <<"   _Wilcox      "<<_Wilcox<<std::endl;
+        std::cerr <<"   _klog        "<<_klog  <<std::endl;
+        std::cerr <<"   _wlog        "<<_wlog   <<std::endl;
+        std::cerr <<"   _emod        "<<_emod  <<std::endl;
+        std::cerr <<"   _numod       "<<_numod  <<std::endl;
         std::cerr <<" =====================================================\n";
     }
 
@@ -341,6 +400,12 @@ void TurbUtils::FillModelMap() {
     _DynamicModel["wilcox_w"]      = wilcox_w    ;
     _DynamicModel["wilcox_logw"]   = wilcox_logw ;
 
+
+    _DynamicModel["nagano_ke"]  =     nagano_ke  ;
+    _DynamicModel["nagano_kw"]  =     nagano_kw  ;
+    _DynamicModel["nagano_log"] =     nagano_log ;
+    _DynamicModel["wilcox"]     =     wilcox     ;
+    _DynamicModel["wilcox_log"] =     wilcox_log ;
 
     _ThermalModel["natural_kh"] = natural_kh;
     _ThermalModel["logarithmic_kh"] = logarithmic_kh;
@@ -492,12 +557,11 @@ double TurbUtils::CalcMuTurb ( double KappaAndOmega[], double dist, double vel_s
         {
             // REAL K, OMEGA AND EPSILON CALCULATION
             kappa = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
+            kappa = ( kappa>1.e-20 ) ? kappa:1.e-20;
             if ( _emod ) {
                 epsilon = KappaAndOmega[1];
                 omega   = epsilon/ ( kappa*__CMU );
             } else omega = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
-
-            kappa = ( kappa>1.e-20 ) ? kappa:1.e-20;
             omega = ( omega>1.e-20 ) ? omega:1.e-20;
         }
 
@@ -511,8 +575,14 @@ double TurbUtils::CalcMuTurb ( double KappaAndOmega[], double dist, double vel_s
                 __fmu   = ( 1.-exp ( -1.*__Rd/14. ) ) * ( 1.-exp ( -1.*__Rd/14. ) );
                 __fcorr = 1. + 5./pow ( __Rt,0.75 ) *exp ( -1.*__Rt*__Rt/40000. );
                 _MuTurb *= __fcorr*__fmu;
+            } else { // fmu and fcorr set to 1 -> in CalcAlphaTurb we calculate nut/__fmu*__fcorr
+                __fmu = 1;
+                __fcorr = 1;
             }
         }
+
+//         std::cout<<kappa<<"  "<<KappaAndOmega[1]<<"  "<<kappa*kappa/epsilon<<"   "<<_MuTurb*_nu<<std::endl;
+
 //     if(_Durbin){
 //      if (_MuTurb > kappa/(sqrt(vel_sp + 1.e-10)*_nu)) {
 //         _MuTurb = kappa/(sqrt(vel_sp + 1.e-10)*_nu);
@@ -520,7 +590,7 @@ double TurbUtils::CalcMuTurb ( double KappaAndOmega[], double dist, double vel_s
 //     if (muturb > sqrt(2./3.)*kappa/(sqrt(0.5*vel_sp)*_nu)) muturb = sqrt(2./3.)*kappa/(sqrt(0.5*vel_sp)*_nu);  // 3D
 //     }
     }
-//      std::cout<<_MuTurb<<"  "<<KappaAndOmega[0]<<"  "<<KappaAndOmega[1]<<"  "<<dist<<std::endl;
+//      std::cout<<_MuTurb*_nu<<"  "<<KappaAndOmega[0]*KappaAndOmega[0]/KappaAndOmega[1]<<"  "<<dist<<std::endl;
     return _MuTurb;
 }
 
@@ -669,11 +739,14 @@ void TurbUtils::CalcThermTurSourceAndDiss ( double KappaAndOmega[], // Dynamic T
         double source[],          // Source terms
         double diss[],            // Dissipation terms
         double meccterm[] ) {     // Mechanical contribution
+
     // REAL K AND OMEGA, MECHANICAL AND THERMAL
     double kappa  = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
     double omega  = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
     double kappaT = ( 1.-_khlog ) * TKappaAndOmega[0] + _khlog*exp ( _khlog*TKappaAndOmega[0] );
     double omegaT = ( 1.-_whlog ) * TKappaAndOmega[1] + _whlog*exp ( _whlog*TKappaAndOmega[1] );
+
+    kappa = ( kappa>0 ) ? kappa:1.e-10;
 
     // ALPHA_TURB CALCULATION
     // __fmu __fcorr __Ret __Rt __Rd __rT __F1t __F2at __F2bt
@@ -724,9 +797,9 @@ void TurbUtils::DynTurInitValues ( double & kappa, double & omega, double WallDi
         const double n_in    = k_in/w_in;
 
         if ( _numod ) kappa = n_in;
-        else          kappa = k_in;
+        else          kappa = ( 1-_klog ) *k_in + _klog*log ( k_in );
         if ( _emod ) omega = e_in;
-        else         omega = w_in;
+        else         omega = ( 1-_wlog ) *w_in + _wlog*log ( w_in );
     } else {
         // FIRST MESH POINT ASSUMED TO BE AT y+ = 10.
         const double utau = ( _InputUtau<0 ) ? 0.5*_nu/_BoundWallDist : _InputUtau;
@@ -754,17 +827,17 @@ void TurbUtils::DynTurInitValues ( double & kappa, double & omega, double WallDi
     double k3   = Utau*Utau*pow ( yp,-0.2 ) *9;
     k = 1./ ( 1./klin + 1./k3 );
 
-    double k_log2 = 1/(5*(yp+1.e-10));
+    double k_log2 = 1/ ( 5* ( yp+1.e-10 ) );
     k = 1./ ( 1./k + 1./k_log2 );
 //     k = Utau*Utau/sqrt(__CMU);
 //     if(k < exp(-11.)) k = exp(-11.);
 //     w = w_log/3.;
 
     if ( _numod ) kappa = nut;
-    else  kappa = k;
+    else  kappa = ( 1-_klog ) *k + _klog*log ( k );
 
     if ( _emod ) omega = Utau*Utau*Utau/ ( 0.41*WD );
-    else omega = w;
+    else omega = ( 1-_wlog ) *w + _wlog*log ( w );
 
     return;
 }
@@ -1016,17 +1089,18 @@ void TurbUtils::GetLevelElemAlphaTurb (
 
 void TurbUtils::CalcWallFuncKappaAndOmega ( double KappaAndOmega[], int NodeOnBound, double WallDist, double utau ) {
     double k,w;
-    double yplus = WallDist*utau/_nu;
-    const double wlin  = 2.*_nu/ ( 0.09*WallDist*WallDist );
-    const double wlog  = utau/ ( 0.41 * WallDist * sqrt ( 0.09 ) );
+    double wd = WallDist + 1.e-10;
+    double yplus = wd*utau/_nu;
+    const double wlin  = 2.*_nu/ ( 0.09*wd*wd );
+    const double wlog  = utau/ ( 0.41 * wd * sqrt ( 0.09 ) );
 
-    const double w_der_lin = -4.*_nu/ ( 0.09*WallDist*WallDist*WallDist );
-    const double w_der_log = -1.*utau/ ( sqrt ( 0.09 ) *0.41*WallDist*WallDist );
+    const double w_der_lin = -4.*_nu/ ( 0.09*wd*wd*wd );
+    const double w_der_log = -1.*utau/ ( sqrt ( 0.09 ) *0.41*wd*wd );
 
     w = ( yplus<10. ) ?  wlin: wlog;
     const double WDerMidPoint = ( yplus<10. ) ? w_der_lin:w_der_log;
     if ( fabs ( utau ) <1.e-9 )   w = wlin;
-    if ( NodeOnBound == 0 )   w = w - WDerMidPoint*WallDist;
+    if ( NodeOnBound == 0 )   w = w - WDerMidPoint*wd;
     double Mulin = _nu* ( 0.001093*yplus*yplus*yplus );
     double Mulog = _nu* ( 0.41*yplus );
     double Mu = 1/ ( 1/ ( Mulin ) + 1/ ( Mulog ) );
@@ -1098,9 +1172,9 @@ ParaMEDMEM::MEDCouplingFieldDouble * TurbUtils::BuildInitTurbField ( int TurbVar
             InitVal[i] = initial_value[TurbVar];
         }
     }
-    InitField->setArray(FieldArray);
-    InitField->setMesh(_NodeMap[__Levels-1]->getMesh());
-    InitField->setName("TurbField");
+    InitField->setArray ( FieldArray );
+    InitField->setMesh ( _NodeMap[__Levels-1]->getMesh() );
+    InitField->setName ( "TurbField" );
 //     if ( TurbVar>1 ) {// THERMAL TURBULENCE
 //         for ( int i=0; i<NumNodes; i++ ) {
 //             double kappa, omega, initial_value[2];
@@ -1114,4 +1188,44 @@ ParaMEDMEM::MEDCouplingFieldDouble * TurbUtils::BuildInitTurbField ( int TurbVar
 //     }
 
     return InitField;
+}
+
+
+void TurbUtils::DynTurNearWallValues ( double & kappa, double & omega, double WallDist, double Utau ) {
+
+    const double y_plus = WallDist * Utau / _nu;
+  
+    // omega derivative on cell mid point
+    const double w_der_lin = -4.*_nu/ ( 0.09*WallDist*WallDist*WallDist );
+    const double w_der_log = -1.*Utau/ ( sqrt ( 0.09 ) *0.41*WallDist*WallDist );    
+    double OmegaNearWallDer = ( y_plus<5. ) ? w_der_lin:w_der_log;
+    // omega modelled value on cell mid point
+    const double wlin  = 2.*_nu/ ( 0.09*WallDist*WallDist );
+    const double wlog  = Utau/ ( 0.41 * WallDist * sqrt ( 0.09 ) );
+    double OmegaNearWall = (y_plus<5)? wlin:wlog;
+    // omega linear reconstruction up to wall  
+    double OmegaWall = OmegaNearWall - WallDist * OmegaNearWallDer;
+    
+    // eddy viscosity on cell mid point
+    double a = 0.41;
+    double c = 0.001093;
+    double den = (a + c*y_plus*y_plus);
+    
+    double Mu = _nu/ ( 1./ ( c*y_plus*y_plus*y_plus ) + 1./ ( 0.41*y_plus ) );
+    double MuDer = _nu*c*a * (3.*a*y_plus*y_plus + c*y_plus*y_plus*y_plus*y_plus)/(den*den);
+    double Mu2Der = _nu*c*a *2*y_plus*c* (a*y_plus*y_plus - 3.*c)/(den*den*den);
+    
+    // eddy viscosity reconstructed up to wall
+    double MuWall = Mu - MuDer * y_plus + Mu2Der*y_plus*y_plus;
+    MuWall = (MuWall > 0)? MuWall:1.e-20;    
+    
+    // reconstruction of kappa wall value 
+    double KappaWall = MuWall * OmegaWall;
+
+    if ( _numod ) kappa = MuWall;
+    else  kappa = ( 1-_klog ) *KappaWall + _klog*log ( KappaWall );
+
+    if ( _emod ) omega = __CMU * KappaWall * OmegaWall;
+    else omega = ( 1-_wlog ) *OmegaNearWall + _wlog*log ( OmegaNearWall );
+    return;
 }

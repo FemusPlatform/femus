@@ -4,7 +4,7 @@
 
 #include "Solverlib_conf.h"
 
-#define USE_FEMUS (0)
+#define USE_FEMUS (1)
 
 #ifdef HAVE_MED
 
@@ -129,8 +129,8 @@ public:
 								 int IsVelCoupled	///[in] Flag (1 or 0) to say if the velocity field is calculated with coupled (1) or uncoupled (0) system
     );
 #endif
-  virtual void GaussLoop (vector < double >NodeVar,
-			  vector < double >Velocity,
+  virtual void GaussLoop (std::vector < double >NodeVar,
+			  std::vector < double >Velocity,
 			  bool BulkMedium,
 			  const int dim,
 			  const int DimRelToMax,
@@ -150,8 +150,8 @@ public:
   void IntCoefficients (int rad);
   void FieldNodes (const int NodesPerCell, int &Fcc, int order);
   double GetIntResult (int method);
-
-  void InitFe ();
+  ParaMEDMEM::MEDCouplingFieldDouble * GetCellField(const ParaMEDMEM::MEDCouplingFieldDouble* SourceField);
+  void  InitFe();
   virtual ParaMEDMEM::MEDCouplingFieldDouble * InterpolatedField (const ParaMEDMEM::MEDCouplingFieldDouble * SourceField,
 							       /**< Source mesh field containing the solution used for the interpolation */
 								  int order =

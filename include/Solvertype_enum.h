@@ -1,6 +1,5 @@
 #ifndef _solvertypeM_
 #define _solvertypeM_
-
     enum SolverTypeM {CGM=0,
 		   CGNM,
 		   CGSM,
@@ -24,5 +23,4 @@
 		   LUMPM,	   
 		   INVALID_SOLVERM
 		        };
-
 #endif

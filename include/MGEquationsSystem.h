@@ -22,13 +22,13 @@ class MGEquationsSystem: public MGSystem {
 
   protected:
     // data --------------------------------
-    map<string, MGSolBase*> _equations;   // system map
+    map<std::string, MGSolBase*> _equations;   // system map
    
 public:  
 //     MGUtils& _mgutils;  ///< MGUtils class  pointer
 //     MGSystem& _mgphys;  ///< MGSystem class pointer
 //     MGMesh&   _mgmesh;  ///< MGMesh  class  pointer
-    map<string,int> _num_equations;   // system map
+    map<std::string,int> _num_equations;   // system map
     MGFEMap& _mgfemap;  ///< MGFEMap class  pointer
     
   // Constructor / Destructor -----------------------------------
@@ -51,16 +51,16 @@ public:
   ///@}
 //---------------------------------------------------------------------------------------------
   ///@{ \name EQUATIONS GET/SET
-  inline            void  set_num_eqs(string name,int num)          {_num_equations.insert(make_pair(name,num));}
+  inline            void  set_num_eqs(std::string name,int num)          {_num_equations.insert(make_pair(name,num));}
   inline            void  set_eqs(MGSolBase* value)          {_equations.insert(make_pair(value->_eqname,value));}
-  inline       MGSolBase* get_eqs(const string & name)       {return _equations.find(name)->second;}
-  inline const MGSolBase* get_eqs(const string & name) const {return _equations.find(name)->second;}
-  void get_eqs_names(std::vector<string> &FieldsNames);
+  inline       MGSolBase* get_eqs(const std::string & name)       {return _equations.find(name)->second;}
+  inline const MGSolBase* get_eqs(const std::string & name) const {return _equations.find(name)->second;}
+  void get_eqs_names(std::vector<std::string> &FieldsNames);
   ///@}
 //-----------------------------------------------------------------------------------------------
   ///@{ \name ITERATORS FOR EQUATION MAP
-  typedef std::map<string, MGSolBase*>::iterator iterator;
-  typedef std::map<string, MGSolBase*>::const_iterator const_iterator;
+  typedef std::map<std::string, MGSolBase*>::iterator iterator;
+  typedef std::map<std::string, MGSolBase*>::const_iterator const_iterator;
 
   inline iterator       begin()       { return _equations.begin();}
   inline iterator         end()       { return _equations.end();}

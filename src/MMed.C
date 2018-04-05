@@ -25,6 +25,8 @@
 #endif
 #include "numeric_vectorM.h"
 
+// // #define USE_FEMUS (1)   uncomment to use
+
 #ifdef USE_FEMUS==1
 #include "InterfaceFunctionM.h"
 #include "MGFEMap.h"
@@ -545,7 +547,7 @@ void MMed::GaussLoop(
   const int VOrd,            ///< interpolation order for velocity field
   const int NodesPerCell,    ///< nodes for cell
   std::vector<double> PointsCoords,   ///< cell node coordinates
-  int Fcc                       ///< # of field cell nodes
+  int Fcc                    ///< # of field cell nodes
 ) {
 
   const int WeightDim = ((DimRelToMax==0) ? dim-1:dim-2);
@@ -641,6 +643,61 @@ MEDCouplingFieldDouble *MMed::GetVelocityField(
 }
 
 #endif
+
+MEDCouplingFieldDouble* MMed::GetCellField(const MEDCouplingFieldDouble* SourceField){
+  MEDCouplingFieldDouble* f = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS);
+  const MEDCouplingMesh *SourceMesh = SourceField->getMesh();
+  f->setMesh(SourceMesh);
+  
+  const int MeshDim = SourceMesh->getMeshDimension();
+  const int SpaceDim = SourceMesh->getSpaceDimension();
+  
+  std::vector<int> CellConn;
+  SourceMesh->getNodeIdsOfCell(0,CellConn);
+  
+  const int nCells = SourceMesh->getNumberOfCells();
+  const int nNodesPerCell = CellConn.size();
+  CellConn.clear();
+  
+  std::vector<double> CellField;
+  CellField.resize(nNodesPerCell);
+  std::vector<double> coord;
+  std::vector<double> PointsCoords; PointsCoords.resize(nNodesPerCell*SpaceDim);
+  std::vector<double> NodeVar; NodeVar.resize(nNodesPerCell);
+  std::vector<double> NodeVel;
+ 
+  DataArrayDouble * CellArray = DataArrayDouble::New();
+  CellArray->alloc(nCells,SourceField->getNumberOfComponents());
+  
+  
+  for(int i_cell=0; i_cell<nCells; i_cell++){
+    SourceMesh->getNodeIdsOfCell(i_cell,CellConn);
+    for(int i_cnode=0; i_cnode < nNodesPerCell; i_cnode++) {         // Loop over the element nodes
+      SourceMesh -> getCoordinatesOfNode(CellConn[i_cnode],coord);
+      for(int j =0; j<SpaceDim; j++) {
+        PointsCoords[i_cnode + j*nNodesPerCell] = coord[j];
+      }
+      coord.clear();
+    }
+    for(int i_comp=0; i_comp<SourceField->getNumberOfComponents(); i_comp++){
+      for(int i_cnode = 0; i_cnode<nNodesPerCell; i_cnode ++) NodeVar[i_cnode]=SourceField->getIJ(CellConn[i_cnode],i_comp); 
+//       for(int i_cnode = 0; i_cnode<nNodesPerCell; i_cnode ++) NodeVar[i_cnode]=SourceField->getIJ(CellConn[NDOF_FEM-1],i_comp);
+      _INTEGRAL=0.;
+      _AREA=0.;
+      GaussLoop(NodeVar,NodeVel, false, SpaceDim, SpaceDim-MeshDim, 2, 2, 2,nNodesPerCell,PointsCoords,nNodesPerCell);
+      CellArray->setIJ(i_cell,i_comp,_INTEGRAL/_AREA);
+//       CellArray->setIJ(i_cell,i_comp,NodeVar[nNodesPerCell-1]);
+    }
+//    std::cout<<SourceField->getNumberOfComponents()<<std::endl;
+//     CellArray->setIJ(i_cell,0,0);
+    CellConn.clear();
+  }
+  f->setArray(CellArray);
+  f->setName(SourceField->getName());
+  SourceMesh->decrRef();
+  CellArray->decrRef();
+  return f;
+}
 
 #endif
 

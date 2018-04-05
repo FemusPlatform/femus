@@ -215,6 +215,7 @@ void FEMUS::setSystem (
 
     _MgEquationMapInitialized = true;
 
+    std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
     init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
     init_par_interface ( 2,true );
     return;

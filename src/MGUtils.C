@@ -36,6 +36,8 @@ MGUtils::MGUtils(int a) :_ProbID(a){
 }
 
 void MGUtils::StandardBuild(){
+  FillSolverMap();
+  
   _user_dir = _femus_dir +  "/USER_APPL/";
   _app_dir= _user_dir + _myapp_name;
   _inout_dir = _app_dir + "/RESU/";
@@ -133,28 +135,41 @@ void MGUtils::read_par() { // READ PARAMETER FILES AND FILL RELATIVE MAPS ======
   }// END CYCLE ON FILES TO READ ----------------------------------------------------------
   maps.clear();
   
+  return;
+}// END READ_PAR FUNCTION ================================================================
 
-// _SolverTypeMap["CGNM"]             =  CGNM              ;
-// _SolverTypeMap["CGSM"]             =  CGSM             ;
-// _SolverTypeMap["CRM"]              =  CRM               ;
-// _SolverTypeMap["QMRM"]             =  QMRM              ;
-// _SolverTypeMap["TCQMRM"]           =  TCQMRM            ;
-// _SolverTypeMap["TFQMRM"]           =  TFQMRM            ;
-// _SolverTypeMap["BICGM"]            =  BICGM             ;
-// _SolverTypeMap["BICGSTABM"]        =  BICGSTABM         ;
-// _SolverTypeMap["MINRESM"]          =  MINRESM           ;
-// _SolverTypeMap["GMRESM"]           =  GMRESM            ;
-// _SolverTypeMap["VANKATM"]          =  VANKATM           ;
-// _SolverTypeMap["VANKANSM"]         =  VANKANSM          ;
-// _SolverTypeMap["LSQRM"]            =  LSQRM             ;
-// _SolverTypeMap["JACOBIM"]          =  JACOBIM           ;
-// _SolverTypeMap["SOR_FORWARDM"]     =  SOR_FORWARDM      ;
-// _SolverTypeMap["SOR_BACKWARDM"]    =  SOR_BACKWARDM     ;
-// _SolverTypeMap["SSORM"]            =  SSORM         ;
-// _SolverTypeMap["RICHARDSONM"]      =  RICHARDSONM       ;
-// _SolverTypeMap["CHEBYSHEVM"]       =  CHEBYSHEVM;   
-// _SolverTypeMap["LUMPM"]            =  LUMPM        ;
-// _SolverTypeMap["INVALID_SOLVERM"]  =  INVALID_SOLVERM    ;
+
+void MGUtils::read_temp(const std::string &name_file_in) { // READ PARAMETER FILES AND FILL RELATIVE MAPS ===========================
+
+
+    std::string string_value; std::string buf=""; // read double, string, dummay
+
+
+    std::ostringstream filename;   
+    filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" << name_file_in;
+    std::ifstream fin;  fin.open(filename.str().c_str()); // stream file
+    buf="";
+#ifdef PRINT_INFO
+    if(fin.is_open()) {  std::cout << "Init Reading = " << filename.str() <<  std::endl; }
+#endif
+    if(fin.is_open()) {  // -------------------------------------------------------------
+      while(buf != "/") { fin >> buf; }  // find "/" file start
+      fin >> buf;
+      while(buf != "/") {
+        if(buf == "#") { getline(fin, buf); }  // comment line
+        else {
+          fin >> string_value; set_temp(buf,string_value); 
+        }
+        fin >> buf;// std::cerr <<buf.c_str() << "\n ";
+      }
+    } // --------------------------------------------------------------------------------------
+    else {
+      std::cerr << "MGUtils::read_par: no "<< name_file_in <<" file found" << std::endl;   abort();
+    }
+#ifdef PRINT_INFO
+    std::cout << "End Reading file " <<  filename.str() << std::endl;
+#endif   
+    fin.close();
   
   return;
 }// END READ_PAR FUNCTION ================================================================
@@ -204,7 +219,7 @@ void MGUtils::read(const std::string &name_file_in) {
       else { fin >> value;  set(buf,value);} // set new parameter
     }
   } else {
-    std::cerr << " MGFiles::read: no parameter file found" << std::endl;
+    std::cerr << " MGFiles::read: "<<name_file_in<<" file not found" << std::endl;
     abort();
   }
   // cleaning and check
@@ -401,3 +416,30 @@ hid_t MGUtils::read_Ihdf5(hid_t file,const std::string &name,int data[]) {
   return status;
 }
 #endif
+
+void MGUtils::FillSolverMap(){
+  
+_SolverTypeMap["CGNM"]             =  CGNM              ;
+_SolverTypeMap["CGSM"]             =  CGSM             ;
+_SolverTypeMap["CRM"]              =  CRM               ;
+_SolverTypeMap["QMRM"]             =  QMRM              ;
+_SolverTypeMap["TCQMRM"]           =  TCQMRM            ;
+_SolverTypeMap["TFQMRM"]           =  TFQMRM            ;
+_SolverTypeMap["BICGM"]            =  BICGM             ;
+_SolverTypeMap["BICGSTABM"]        =  BICGSTABM         ;
+_SolverTypeMap["MINRESM"]          =  MINRESM           ;
+_SolverTypeMap["GMRESM"]           =  GMRESM            ;
+_SolverTypeMap["VANKATM"]          =  VANKATM           ;
+_SolverTypeMap["VANKANSM"]         =  VANKANSM          ;
+_SolverTypeMap["LSQRM"]            =  LSQRM             ;
+_SolverTypeMap["JACOBIM"]          =  JACOBIM           ;
+_SolverTypeMap["SOR_FORWARDM"]     =  SOR_FORWARDM      ;
+_SolverTypeMap["SOR_BACKWARDM"]    =  SOR_BACKWARDM     ;
+_SolverTypeMap["SSORM"]            =  SSORM         ;
+_SolverTypeMap["RICHARDSONM"]      =  RICHARDSONM       ;
+_SolverTypeMap["CHEBYSHEVM"]       =  CHEBYSHEVM;   
+_SolverTypeMap["LUMPM"]            =  LUMPM        ;
+_SolverTypeMap["INVALID_SOLVERM"]  =  INVALID_SOLVERM    ;
+  
+  return;
+}

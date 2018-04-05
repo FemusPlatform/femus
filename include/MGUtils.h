@@ -12,6 +12,7 @@
 #include "hdf5.h"
 // #ifdef TBK_EQUATIONS
 #include "TurbUtils.h"
+#include "Solvertype_enum.h"
 // #include "IbUtils.h"
 // #endif
 // Forwarding class -------------------
@@ -35,7 +36,8 @@ public:
   std::map<std::string, double>       _mat_prop;    ///< Material properties: density, viscosity and other physical prop.
   std::map<std::string, std::string>  _mgfiles;     ///< Files map
   std::map<std::string, std::string>  _sim_config;  ///< Simulation properties: dt, print step, n. of steps, etc.  
-    
+  std::map<std::string, std::string>  _temp_info;  ///< Simulation properties: dt, print step, n. of steps, etc.  
+  std::map<std::string, SolverTypeM>  _SolverTypeMap;
   double _factor = 1.;  
   double _press  = 0.;
   ///@{ \name USEFUL DIRECTORY NAMES
@@ -114,7 +116,9 @@ public:
   inline void   set_sim_par(const std::string & name, std::string value)  {
     _sim_config[name] = value;
   }
-  
+  inline void   set_temp(const std::string & name, std::string value)  {
+    _temp_info[name] = value;
+  }  
 // #ifdef TBK_EQUATIONS
   inline void set_turbulence_info(TurbUtils *Parameters){
     _TurbParameters =  Parameters;
@@ -122,12 +126,19 @@ public:
   inline void set_IB_info(IbUtils *Parameters){
     _IBParameter =  Parameters;
   }
+  
+  void FillSolverMap();
+  
+  inline void ClearTemp(){
+    _temp_info.clear();
+  }
 // #endif
   ///@}
   //-----------------------------------------------------------------------------------------
   ///@{ \name READ-PRINT (IN CONSTRUCTOR)
   void read_par();                                            ///< Read parameters from file
   void read(const std::string & name="/DATA/param_files.in"); ///< Read file names from file
+  void read_temp(const std::string & name); ///< Read file names from file
   void print();                                               ///< Print in console the file names
   
   /// Print in console the parameters read
