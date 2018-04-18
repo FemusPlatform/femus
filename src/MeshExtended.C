@@ -461,12 +461,14 @@ void MeshExtended::print_med(int Level, std::string filename) {
   delete []conn_bd;   delete []conn;
   elem_bd_id2.clear();
   vol_group_elements.clear(); bd_group_elements.clear();
-//    for (int idel=0;idel<n_bd_group;idel++){
-//      g_bd[idel]->decrRef(); gr_bd[idel]->decrRef();
-//    }
-//    for (int idel=0;idel<n_vol_group;idel++){
-//      g_vol[idel]->decrRef(); gr_vol[idel]->decrRef();
-//    }
+   for (int idel=0;idel<n_bd_group;idel++){
+     g_bd[idel]->decrRef(); 
+   }
+   delete[] g_bd; gr_bd.clear();
+   for (int idel=0;idel<n_vol_group;idel++){
+     g_vol[idel]->decrRef(); 
+   }
+   delete[] g_vol; gr_vol.clear();
   return;
 }
 
