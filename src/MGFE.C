@@ -2102,10 +2102,10 @@ void   MGFE::get_dphi_gl_g (
 
     for ( int eln=0; eln<el_nnodes; eln++ )    {
         int lqp=eln* el_ngauss+qp;
-        for ( int idim=0; idim<_dim; idim++ ) gradphi_g[idim] = _dphidxez_map1[kdim-1][lqp+idim*goffset];
-        for ( int idim=0; idim<_dim; idim++ ) {
+        for ( int idim=0; idim<kdim; idim++ ) gradphi_g[idim] = _dphidxez_map1[kdim-1][lqp+idim*goffset];
+        for ( int idim=0; idim<kdim; idim++ ) {
             double sum = 0.;
-            for ( int jdim=0; jdim<_dim; jdim++ ) sum += InvJac[jdim+idim*_dim]*gradphi_g[jdim];
+            for ( int jdim=0; jdim<kdim; jdim++ ) sum += InvJac[jdim+idim*_dim]*gradphi_g[jdim];
             dphi[eln+idim* el_nnodes] = sum;
         }
     }
