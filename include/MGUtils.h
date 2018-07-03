@@ -162,7 +162,7 @@ public:
  ///@}
  void cross(const double* a,const double* b, double* res) const;
  
- void FillFieldsVector(std::vector<FIELDS> &myproblemP);
+ void FillFieldsVector( FIELDS_class &map_str2fieldclass, std::vector<FIELDS> &myproblemP);
 };
 
 inline void MGUtils::cross(const double* a,const double* b, double* res) const {

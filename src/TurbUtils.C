@@ -24,7 +24,7 @@ __Proc ( 0 ), __Levels ( 0 ) {
 
 TurbUtils::TurbUtils ( int proc,
                        int levels,
-                       std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
+                       std::vector<MEDCoupling::MEDCouplingFieldDouble *>NodeMap,
                        bool DynTurb,
                        bool TherTurb
                      ) :
@@ -44,36 +44,36 @@ __Proc ( proc ), __Levels ( levels ) {
     for ( int lev=0; lev<__Levels; lev++ ) {
         const int NumNodes = _NodeMap[lev]->getMesh()->getNumberOfNodes();
 
-        ParaMEDMEM::DataArrayDouble *NodeDist = ParaMEDMEM::DataArrayDouble::New();
+        MEDCoupling::DataArrayDouble *NodeDist = MEDCoupling::DataArrayDouble::New();
         NodeDist->alloc ( NumNodes, 1 );
         NodeDist->fillWithZero();
         NodeDist->setName ( "NodeWallDist" );
 
-        _NodeWallDist.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+        _NodeWallDist.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
         _NodeWallDist[lev]->setMesh ( _NodeMap[lev]->getMesh() );
         _NodeWallDist[lev]->setArray ( NodeDist );
         _NodeWallDist[lev]->setName ( "NodeWallDist_Lev_"+to_string ( lev ) );
         NodeDist->decrRef();
 
         if ( DynTurb ) {
-            ParaMEDMEM::DataArrayDouble *MuTurbArray = ParaMEDMEM::DataArrayDouble::New();
+            MEDCoupling::DataArrayDouble *MuTurbArray = MEDCoupling::DataArrayDouble::New();
             MuTurbArray->alloc ( NumNodes, 1 );
             MuTurbArray->fillWithZero();
             MuTurbArray->setName ( "MuTurb" );
 
-            _MuTurbField.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+            _MuTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
             _MuTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
             _MuTurbField[lev]->setArray ( MuTurbArray );
             _MuTurbField[lev]->setName ( "MuTurb_Lev_"+to_string ( lev ) );
             MuTurbArray->decrRef();
         }
         if ( TherTurb ) {
-            ParaMEDMEM::DataArrayDouble *AlphaTurbArray = ParaMEDMEM::DataArrayDouble::New();
+            MEDCoupling::DataArrayDouble *AlphaTurbArray = MEDCoupling::DataArrayDouble::New();
             AlphaTurbArray->alloc ( NumNodes, 1 );
             AlphaTurbArray->fillWithZero();
             AlphaTurbArray->setName ( "AlphaTurb" );
 
-            _AlphaTurbField.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+            _AlphaTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
             _AlphaTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
             _AlphaTurbField[lev]->setArray ( AlphaTurbArray );
             _AlphaTurbField[lev]->setName ( "AlphaTurb_Lev_"+to_string ( lev ) );
@@ -91,7 +91,7 @@ __Proc ( proc ), __Levels ( levels ) {
 
 TurbUtils::TurbUtils ( int proc,
                        int levels,
-                       std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
+                       std::vector<MEDCoupling::MEDCouplingFieldDouble *>NodeMap,
                        bool DynTurb,
                        bool TherTurb,
 		       int MeshID
@@ -111,36 +111,36 @@ __Proc ( proc ), __Levels ( levels ), _MeshID ( MeshID ) {
     for ( int lev=0; lev<__Levels; lev++ ) {
         const int NumNodes = _NodeMap[lev]->getMesh()->getNumberOfNodes();
 
-        ParaMEDMEM::DataArrayDouble *NodeDist = ParaMEDMEM::DataArrayDouble::New();
+        MEDCoupling::DataArrayDouble *NodeDist = MEDCoupling::DataArrayDouble::New();
         NodeDist->alloc ( NumNodes, 1 );
         NodeDist->fillWithZero();
         NodeDist->setName ( "NodeWallDist" );
 
-        _NodeWallDist.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+        _NodeWallDist.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
         _NodeWallDist[lev]->setMesh ( _NodeMap[lev]->getMesh() );
         _NodeWallDist[lev]->setArray ( NodeDist );
         _NodeWallDist[lev]->setName ( "NodeWallDist_Lev_"+to_string ( lev ) );
         NodeDist->decrRef();
 
         if ( DynTurb ) {
-            ParaMEDMEM::DataArrayDouble *MuTurbArray = ParaMEDMEM::DataArrayDouble::New();
+            MEDCoupling::DataArrayDouble *MuTurbArray = MEDCoupling::DataArrayDouble::New();
             MuTurbArray->alloc ( NumNodes, 1 );
             MuTurbArray->fillWithZero();
             MuTurbArray->setName ( "MuTurb" );
 
-            _MuTurbField.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+            _MuTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
             _MuTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
             _MuTurbField[lev]->setArray ( MuTurbArray );
             _MuTurbField[lev]->setName ( "MuTurb_Lev_"+to_string ( lev ) );
             MuTurbArray->decrRef();
         }
         if ( TherTurb ) {
-            ParaMEDMEM::DataArrayDouble *AlphaTurbArray = ParaMEDMEM::DataArrayDouble::New();
+            MEDCoupling::DataArrayDouble *AlphaTurbArray = MEDCoupling::DataArrayDouble::New();
             AlphaTurbArray->alloc ( NumNodes, 1 );
             AlphaTurbArray->fillWithZero();
             AlphaTurbArray->setName ( "AlphaTurb" );
 
-            _AlphaTurbField.push_back ( ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES ) );
+            _AlphaTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
             _AlphaTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
             _AlphaTurbField[lev]->setArray ( AlphaTurbArray );
             _AlphaTurbField[lev]->setName ( "AlphaTurb_Lev_"+to_string ( lev ) );
@@ -496,8 +496,8 @@ double TurbUtils::Musker ( double dist, double utau ) {
 }
 
 void TurbUtils::CalcMuTurb (
-    ParaMEDMEM::MEDCouplingFieldDouble * FirstDynVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * SecDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * FirstDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * SecDynVar,
     int Level
 ) { // CALCULATION OF MU_TURB ON WHOLE PROC DOMAIN
 
@@ -654,10 +654,10 @@ void TurbUtils::CalcDynTurSourceAndDiss ( double KappaAndOmega[], double dist, d
 
 
 void TurbUtils::CalcAlphaTurb (
-    ParaMEDMEM::MEDCouplingFieldDouble * FirstDynVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * SecDynVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * FirstThermVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * SecThermVar,
+    MEDCoupling::MEDCouplingFieldDouble * FirstDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * SecDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * FirstThermVar,
+    MEDCoupling::MEDCouplingFieldDouble * SecThermVar,
     int Level ) { // CALCULATION OF MU_TURB ON WHOLE PROC DOMAIN
 
     if ( _NodeWallDist.size() < Level ) {
@@ -980,7 +980,7 @@ void TurbUtils::print_par() {
 }
 
 
-void TurbUtils::SetMuTurbFieldAtLevel ( int Level, ParaMEDMEM::MEDCouplingFieldDouble * MuTurb ) {
+void TurbUtils::SetMuTurbFieldAtLevel ( int Level, MEDCoupling::MEDCouplingFieldDouble * MuTurb ) {
     if ( _MuTurbField.size() >Level ) {
         _MuTurbField[Level]->setArray ( MuTurb->getArray() );
     }
@@ -1002,7 +1002,7 @@ void TurbUtils::SetMuTurbFieldAtLevel ( int Level, ParaMEDMEM::MEDCouplingFieldD
     return;
 };
 
-void TurbUtils::SetAlphaTurbFieldAtLevel ( int Level, ParaMEDMEM::MEDCouplingFieldDouble * AlphaTurb ) {
+void TurbUtils::SetAlphaTurbFieldAtLevel ( int Level, MEDCoupling::MEDCouplingFieldDouble * AlphaTurb ) {
     if ( _AlphaTurbField.size() >Level ) {
         _AlphaTurbField[Level]->setArray ( AlphaTurb->getArray() );
     }
@@ -1024,7 +1024,7 @@ void TurbUtils::SetAlphaTurbFieldAtLevel ( int Level, ParaMEDMEM::MEDCouplingFie
     return;
 };
 
-void TurbUtils::SetWallDistAtLevel ( int Level, ParaMEDMEM::MEDCouplingFieldDouble * WallDist ) {
+void TurbUtils::SetWallDistAtLevel ( int Level, MEDCoupling::MEDCouplingFieldDouble * WallDist ) {
     if ( _NodeWallDist.size() >Level ) {
         _NodeWallDist[Level]->setArray ( WallDist->getArray() );
     }
@@ -1151,9 +1151,9 @@ void TurbUtils::CalcWallFuncThermalKappaAndOmega ( double KappaAndOmega[], int N
     }
     return;
 }
-ParaMEDMEM::MEDCouplingFieldDouble * TurbUtils::BuildInitTurbField ( int TurbVar ) {
-    ParaMEDMEM::MEDCouplingFieldDouble * InitField = ParaMEDMEM::MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
-    ParaMEDMEM::DataArrayDouble * FieldArray = ParaMEDMEM::DataArrayDouble::New();
+MEDCoupling::MEDCouplingFieldDouble * TurbUtils::BuildInitTurbField ( int TurbVar ) {
+    MEDCoupling::MEDCouplingFieldDouble * InitField = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
+    MEDCoupling::DataArrayDouble * FieldArray = MEDCoupling::DataArrayDouble::New();
     const int NumNodes = _NodeMap[__Levels-1]->getMesh()->getNumberOfNodes();
     FieldArray->alloc ( NumNodes,1 );
 

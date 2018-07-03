@@ -162,13 +162,13 @@ void MGEquationsSystem::eqnmap_steady_loop(
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::set_uooold(
    const int & flag,  ///<  0 xold-> x_ooold   1 x_ooold-> xold
-  const double & toll,  ///< tolerance
+  const double & /*toll*/,  ///< tolerance
   const double delta_t_step_in,  //   (in)
   const int  & eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
   const int     &  eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
 ) {
   // loop for time steps
-  int NoLevels=0;
+   int NoLevels=0;
   
       for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
         MGSolBase* mgsol = eqn->second;
@@ -500,7 +500,7 @@ void MGEquationsSystem::print_case_h5(const int t_init) {
   hid_t   file = H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT);
   mgmesh.print_subdom_hf5(filename.str())  ; // PID (n processor)
 
- if(stoi(_mgutils._sim_config["DynamicalTurbulence"])!=0)  mgmesh.print_dist_hf5(filename.str(),mgmesh._dist,"DIST")  ; // PID (n processor)
+ if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0)  mgmesh.print_dist_hf5(filename.str(),mgmesh._dist,"DIST")  ; // PID (n processor)
  
   H5Fclose(file);
 
@@ -615,7 +615,7 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
   out << basecase << "."
       << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":PID\n";
   out << "</DataItem>\n" << "</Attribute>\n";
- if(stoi(_mgutils._sim_config["DynamicalTurbulence"])!=0){
+ if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
   // ----------------------------------------------------------
   out << "<Attribute Name=\"DIST\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
   out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""

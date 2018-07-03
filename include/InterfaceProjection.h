@@ -6,7 +6,7 @@
 #include "Solverlib_conf.h"
 #include<map>
 #ifdef HAVE_MED
-namespace ParaMEDMEM {
+namespace MEDCoupling {
 class MEDCouplingUMesh;
 class MEDCouplingFieldDouble;
 class DataArrayInt;
@@ -39,8 +39,8 @@ public:
    
    //! Constructor of the BoundInterp Class
    BoundInterp  (
-               const ParaMEDMEM::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
-	       const ParaMEDMEM::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
+               const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
+	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
 	       int DomainType = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
    
@@ -50,10 +50,10 @@ public:
    void setMesh();
    
    void FillParameters(
-     const ParaMEDMEM::MEDCouplingUMesh * SourceMesh, ///< Mesh support of the source geometry 
-     const ParaMEDMEM::MEDCouplingUMesh * TargetMesh, ///< Mesh support of the target geometry 
-     int DomainType = Boundary, ///< Domain type of the mesh group (Boundary of Volume) 
-     double XiEtaToll = 1.e-3
+     const MEDCoupling::MEDCouplingUMesh * SourceMesh, ///< Mesh support of the source geometry 
+     const MEDCoupling::MEDCouplingUMesh * TargetMesh, ///< Mesh support of the target geometry 
+     int DomainType = Boundary,                        ///< Domain type of the mesh group (Boundary of Volume) 
+     double XiEtaToll = 1.e-3                          ///< tolerance
   );
    
    //! Space Dimension of the solved geometry
@@ -109,25 +109,25 @@ public:
    // ====================================================================================================================
    //! Nodes of source mesh
    /*!
-    * This is a ParaMEDMEM::DataArrayInt* where we store the ids of the source mesh nodes 
+    * This is a MEDCoupling::DataArrayInt* where we store the ids of the source mesh nodes 
     * that are used for the interpolation of the solution on a given target mesh node.
     * This object contains #_TrgNodes tuples, each one with dimension #_SrcCellNodes
     */
-   ParaMEDMEM::DataArrayInt * BoundingNodes;
+   MEDCoupling::DataArrayInt * BoundingNodes;
    // ====================================================================================================================
    //! Coordinates in reference element
    /*!
-    * This is a ParaMEDMEM::DataArrayDouble* where we store the coordinates in the reference
+    * This is a MEDCoupling::DataArrayDouble* where we store the coordinates in the reference
     * element of a given point of the target mesh.that are used for the interpolation of the solution on a given target mesh node.
     * This object contains #_TrgNodes tuples, each one with dimension #_MeshDim
     */
-   ParaMEDMEM::DataArrayDouble * XiEta;
+   MEDCoupling::DataArrayDouble * XiEta;
    // ====================================================================================================================
    //! \f$ (\xi,\eta) \f$ coordinates for boundary mesh groups
    /*!
     * The function returns the coordinates \f$ (\xi,\eta) \f$ (if _SpaceDim=3) 
     * or \f$ (\xi) \f$ (if _SpaceDim=2) for boundary mesh groups.
-    * The coordinates are read from the XiEta DataArrayDouble* and are written
+    * The coordinates ar from the XiEta DataArrayDouble* and are written
     * inside the XiEta vector given as input parameter for the GetXiEta function
     */
    void GetXiEta(int node, /**< Id of target mesh node */
@@ -282,25 +282,25 @@ int  npt_el=2
    //! Function for the interpolation
    /*!
     * This function calculates the interpolated field on the target mesh. 
-    * The function return a ParaMEDMEM::MEDCouplingFieldDouble * object containing the interpolated solution for the target mesh
+    * The function return a MEDCoupling::MEDCouplingFieldDouble * object containing the interpolated solution for the target mesh
     */
-   ParaMEDMEM::MEDCouplingFieldDouble * InterpolatedField(
-      const ParaMEDMEM::MEDCouplingFieldDouble* SourceField, /**< Source mesh field containing the solution used for the interpolation */
+   MEDCoupling::MEDCouplingFieldDouble * InterpolatedField(
+      const MEDCoupling::MEDCouplingFieldDouble* SourceField, /**< Source mesh field containing the solution used for the interpolation */
       const int order = 2
    );
    
    // Funzione per interpolare con input aggiuntivo per il campo del problema FEMuS 
    
-   ParaMEDMEM::MEDCouplingFieldDouble * InterpolatedField(
-      const ParaMEDMEM::MEDCouplingFieldDouble* SourceField, /**< Source mesh field containing the solution used for the interpolation */
-      const ParaMEDMEM::MEDCouplingFieldDouble* TargetField, /**< Target mesh field */
+   MEDCoupling::MEDCouplingFieldDouble * InterpolatedField(
+      const MEDCoupling::MEDCouplingFieldDouble* SourceField, /**< Source mesh field containing the solution used for the interpolation */
+      const MEDCoupling::MEDCouplingFieldDouble* TargetField, /**< Target mesh field */
       const int order = 2
    );
    
    
     
-   ParaMEDMEM::MEDCouplingFieldDouble * InterpolatedField(
-      const ParaMEDMEM::MEDCouplingFieldDouble* SourceField, /**< Source mesh field containing the solution used for the interpolation */
+   MEDCoupling::MEDCouplingFieldDouble * InterpolatedField(
+      const MEDCoupling::MEDCouplingFieldDouble* SourceField, /**< Source mesh field containing the solution used for the interpolation */
       double DefaultValue,
       const int order = 2
    );
@@ -316,9 +316,9 @@ int  npt_el=2
   /// \f$ \xi,\eta,\chi \f$ coordinates of the HEX27 nodes
   const int _CoordHex27[27*3]={
   // 1   2    3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26 27
-    -1,  1.,  1, -1, -1,  1,  1, -1,  0,  1,  0, -1,  0,  1,  0, -1, -1,  1,  1, -1,  0,  0,  1,  0, -1,  0, 0,  /// xi
-    -1, -1.,  1,  1, -1, -1,  1,  1, -1,  0,  1,  0, -1,  0,  1,  0, -1, -1,  1,  1,  0, -1,  0,  1,  0,  0, 0,  /// eta
-    -1, -1., -1, -1,  1,  1,  1,  1, -1, -1, -1, -1,  1,  1,  1,  1,  0,  0,  0,  0, -1,  0,  0,  0,  0,  1, 0   /// chi
+    -1,  1,  1, -1, -1,  1,  1, -1,  0,  1,  0, -1,  0,  1,  0, -1, -1,  1,  1, -1,  0,  0,  1,  0, -1,  0, 0,  /// xi
+    -1, -1,  1,  1, -1, -1,  1,  1, -1,  0,  1,  0, -1,  0,  1,  0, -1, -1,  1,  1,  0, -1,  0,  1,  0,  0, 0,  /// eta
+    -1, -1, -1, -1,  1,  1,  1,  1, -1, -1, -1, -1,  1,  1,  1,  1,  0,  0,  0,  0, -1,  0,  0,  0,  0,  1, 0   /// chi
   }; 
   
   /// \f$ \xi,\eta \f$ coordinates of the QUAD9 nodes
@@ -352,29 +352,29 @@ int  npt_el=2
   short int* _Scount[4];
   short int* _SubSec[4];
   
- ParaMEDMEM::DataArrayDouble* _sec0;// = ParaMEDMEM::DataArrayDouble::New();
- ParaMEDMEM::DataArrayDouble* _sec2;// = ParaMEDMEM::DataArrayDouble::New();
- ParaMEDMEM::DataArrayDouble* _sec1;// = ParaMEDMEM::DataArrayDouble::New();
- ParaMEDMEM::DataArrayDouble* _sec3;// = ParaMEDMEM::DataArrayDouble::New();
+ MEDCoupling::DataArrayDouble* _sec0;// = MEDCoupling::DataArrayDouble::New();
+ MEDCoupling::DataArrayDouble* _sec2;// = MEDCoupling::DataArrayDouble::New();
+ MEDCoupling::DataArrayDouble* _sec1;// = MEDCoupling::DataArrayDouble::New();
+ MEDCoupling::DataArrayDouble* _sec3;// = MEDCoupling::DataArrayDouble::New();
   
  std::vector<double> _coord; 
  void CheckBelonging(bool &found);
  double _pos[3];
-//   ParaMEDMEM::DataArrayDouble* _secArray;
+//   MEDCoupling::DataArrayDouble* _secArray;
  
   bool IsFilled(){return __Filled;}
  
 private:
   // Private parameters are characterised by double underscore
-  const ParaMEDMEM::MEDCouplingUMesh * __InMesh;
-  const ParaMEDMEM::MEDCouplingUMesh * __OutMesh;
+  const MEDCoupling::MEDCouplingUMesh * __InMesh;
+  const MEDCoupling::MEDCouplingUMesh * __OutMesh;
   int  __BoundNodesPerCell;
   int  __TrgNodes;
   int  __Domain;
   bool __Filled = false;
   
-//   ParaMEDMEM::DataArrayInt * BoundingNodes;
-//   ParaMEDMEM::DataArrayDouble * XiEta; 
+//   MEDCoupling::DataArrayInt * BoundingNodes;
+//   MEDCoupling::DataArrayDouble * XiEta; 
 };
 #endif
  #endif

@@ -6,7 +6,7 @@
 #include "Solverlib_conf.h"
 
 #ifdef HAVE_MED
-namespace ParaMEDMEM
+namespace MEDCoupling
 {
   class MEDCouplingUMesh;
   class MEDCouplingFieldDouble;
@@ -29,7 +29,7 @@ class EquationSystemsExtendedM:public MGEquationsSystem
 protected:
   const MeshExtended *_mg_mesh;	///< MultiGrid mesh
 #ifdef HAVE_MED
-  const ParaMEDMEM::MEDCouplingUMesh * _med_mesh;	///< MED mesh
+  const MEDCoupling::MEDCouplingUMesh * _med_mesh;	///< MED mesh
   std::map < int, InterfaceFunctionM * >_interfaceFunMap;	///< Map where interface pointes are stored
 #endif
 
@@ -61,12 +61,12 @@ public:
   void print_case_bc_h5 (const int t_init);
 
 #ifdef HAVE_MED
-  const ParaMEDMEM::MEDCouplingUMesh * getMeshMED () const
+  const MEDCoupling::MEDCouplingUMesh * getMeshMED () const
   {
     return _med_mesh;
   }
 
-  void set_mesh_med (ParaMEDMEM::MEDCouplingUMesh & mg_mesh_med_in)
+  void set_mesh_med (MEDCoupling::MEDCouplingUMesh & mg_mesh_med_in)
   {
     _med_mesh = &mg_mesh_med_in;
     return;
@@ -93,7 +93,7 @@ public:
   ///  in the interface-function boundary map (_interfaceFunMap):
   ///  the field in the interface-function is not assigned here
   void add_interface_fun (const int interface_name, const int bd_name_int,	///<[in] boundary id (int)     (in)
-			  const ParaMEDMEM::MEDCouplingUMesh * b,	///<[in] med-submesh           (in)
+			  const MEDCoupling::MEDCouplingUMesh * b,	///<[in] med-submesh           (in)
 			  const bool on_nodes,	///<[in] values on nodes (true)
 			  const int order_cmp = 2	///<[in] order component (2=quad;lin=1)
     );
@@ -112,7 +112,7 @@ public:
   //! This function writes a field starting from a MED numerical field
   void setBC (int InterfaceName,					/**<[in] Interface ID */
 	      int NumOfComp,						/**<[in] Number of field components to write */
-	      const ParaMEDMEM::MEDCouplingFieldDouble * NumericField	/**<[in] MED field containing the values to write */
+	      const MEDCoupling::MEDCouplingFieldDouble * NumericField	/**<[in] MED field containing the values to write */
     );
 
   //! Set a MED field in system solution
@@ -132,15 +132,15 @@ public:
    * The MED field values are not written into #MGSolBase::x_old numeric vector
    */
   void write_Boundary_value (std::string mgsystem_name,	///[in] Equation name
-			     ParaMEDMEM::MEDCouplingFieldDouble * bcField	///[in] MED field to write
+			     MEDCoupling::MEDCouplingFieldDouble * bcField	///[in] MED field to write
     );
-  ParaMEDMEM::MEDCouplingFieldDouble * GetField(const std::string &systemName);
+  MEDCoupling::MEDCouplingFieldDouble * GetField(const std::string &systemName);
   //! Get values on mesh nodes
   /*!
    *  The function returns a MED field containing the solution of equation with name <system_name>.
    *  The values are relative to mesh nodes of interface with name <id>
    */
-  ParaMEDMEM::MEDCouplingFieldDouble * getValuesOnBoundary_nodes (int id,	///< [in] Interface ID
+  MEDCoupling::MEDCouplingFieldDouble * getValuesOnBoundary_nodes (int id,	///< [in] Interface ID
 								  const char *system_name,	///< [in] Equation name
 								  int n_cmp,	///< [in] Number of components
 								  int first_cmp = 0	///< [in] First component
@@ -151,7 +151,7 @@ public:
    *  The function returns a MED field containing the solution of equation with name <system_name>.
    *  The values are relative to mesh cells of interface with name <id>
    */
-  ParaMEDMEM::MEDCouplingFieldDouble * getValuesOnBoundary_elem (int id,	///< [in] Interface ID
+  MEDCoupling::MEDCouplingFieldDouble * getValuesOnBoundary_elem (int id,	///< [in] Interface ID
 								 const char *system_name,	///< [in] Equation name
 								 int n_cmp,	///< [in] Number of components
 								 int first_cmp = 0	///< [in] First component
@@ -163,7 +163,7 @@ public:
    *  This function returns a MED field containing the solution of equation with name <system_name>.
    *  The solution values are relative to the nodes belonging to proc mesh
    */
-  ParaMEDMEM::MEDCouplingFieldDouble * getProcValues (ParaMEDMEM::MEDCouplingFieldDouble * NodeMap,	///<[in] MED field containing the map of proc nodes
+  MEDCoupling::MEDCouplingFieldDouble * getProcValues (MEDCoupling::MEDCouplingFieldDouble * NodeMap,	///<[in] MED field containing the map of proc nodes
 						      int InterfaceId,	///<[in] Interface ID
 						      const char *system_name,	///<[in] System name           
 						      int n_cmp,	///<[in] Number of components to get
@@ -172,14 +172,14 @@ public:
     );
 
 
-  const ParaMEDMEM::MEDCouplingUMesh * getUMeshCoupling (int name);
+  const MEDCoupling::MEDCouplingUMesh * getUMeshCoupling (int name);
 
   inline void getEqsNames (std::vector < string > &FieldNames)
   {
     get_eqs_names (FieldNames);
   };
 
-  const ParaMEDMEM::MEDCouplingUMesh * getUMeshCoupling_orig (int name);
+  const MEDCoupling::MEDCouplingUMesh * getUMeshCoupling_orig (int name);
 #endif
 
 

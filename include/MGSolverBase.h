@@ -79,7 +79,7 @@ public:
   std::vector<NumericVectorM *> x_ooold;  ///< vector for multiple uses
   std::vector<double> _weight_ctrl;       ///<controlled region for optimal control problems
 #ifdef HAVE_MED
-  ParaMEDMEM::MEDCouplingFieldDouble * _ExtField;
+  MEDCoupling::MEDCouplingFieldDouble * _ExtField;
 #endif  
    ///< 
   ///@}
@@ -117,6 +117,14 @@ public:
     const int nvars_in[],              ///< \param[in] <> number of variables
     std::string eq_name_in="Base"      ///< \param[in] <> equation name
   );                          ///< Level constructor
+  MGSolBase (
+    MGUtils &mgutils_in,
+    MGFEMap &mgfemap_in,
+    MGMesh &mgmesh_in,
+                      const int nvars_in[],            // # variables
+                      std::string eqname_in     // equation name
+                     ); 
+  
 //-------------------------------------------------------------------------
   /// Destructor (level structure)
   ~MGSolBase();               

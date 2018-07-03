@@ -1440,7 +1440,7 @@ void MGFE::write_c (
 ) { // ================================================
 
     if ( !out ) {
-        std::cout<<" Gauss Outfile "<<out<<" not opened."<<std::endl;
+        std::cout<<" Gauss Outfile MGFE::write_c not opened."<<std::endl;
         exit ( 3 );
     }
 
@@ -2102,8 +2102,8 @@ void   MGFE::get_dphi_gl_g (
 
     for ( int eln=0; eln<el_nnodes; eln++ )    {
         int lqp=eln* el_ngauss+qp;
-        for ( int idim=0; idim<kdim; idim++ ) gradphi_g[idim] = _dphidxez_map1[kdim-1][lqp+idim*goffset];
-        for ( int idim=0; idim<kdim; idim++ ) {
+        for ( int idim=0; idim<_dim; idim++ ) gradphi_g[idim] = _dphidxez_map1[kdim-1][lqp+idim*goffset];
+        for ( int idim=0; idim<_dim; idim++ ) {
             double sum = 0.;
             for ( int jdim=0; jdim<kdim; jdim++ ) sum += InvJac[jdim+idim*_dim]*gradphi_g[jdim];
             dphi[eln+idim* el_nnodes] = sum;

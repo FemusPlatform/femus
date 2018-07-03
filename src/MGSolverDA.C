@@ -139,11 +139,11 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
         n_index++; // update counter
       }
 
-  if(stoi(_mgutils._sim_config["NavierStokes"])!=0)
+  if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
     if(NDOF_K==1)
       for(int iname=0; iname<n_equations; iname++)
         if(pbName[iname]== NS_F) {
-          if(stoi(_mgutils._sim_config["NavierStokes"])==2) {
+          if(stoi(_mgutils._sim_config["MG_NavierStokes"])==2) {
             _data_eq[0].tab_eqs[P_F]=n_index;                      //  table
             _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0"); //Navier-Stokes equation pointer
             _data_eq[0].indx_ub[n_index+1] =_data_eq[0].indx_ub[n_index]+1;  // _data_eq[2].ub index
@@ -157,10 +157,10 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
 //=================================================================================
   n_index=0;//  linear index for _ub
   // NS
-  if(stoi(_mgutils._sim_config["NavierStokes"])!=0)
+  if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
     for(int iname=0; iname<n_equations; iname++)
       if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F) {
-        if(stoi(_mgutils._sim_config["NavierStokes"])==2) {
+        if(stoi(_mgutils._sim_config["MG_NavierStokes"])==2) {
           _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
           _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS2P"); //Navier-Stokes equation pointer
           _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
@@ -168,10 +168,10 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
           n_index++; // update counter
         }
       }
-  if(stoi(_mgutils._sim_config["AdjointNavierStokes"])!=0)
+  if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])!=0)
     for(int iname=0; iname<n_equations; iname++)
       if(pbName[iname]== NSA_F) {
-        if(stoi(_mgutils._sim_config["AdjointNavierStokes"])==2) {
+        if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])==2) {
           _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
           _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSAP"); //Navier-Stokes equation pointer
           _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
@@ -180,10 +180,10 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
         }
       }
   // FSI
-  if(stoi(_mgutils._sim_config["FluidStructure"])!=0)
+  if(stoi(_mgutils._sim_config["MG_FluidStructure"])!=0)
     for(int iname=0; iname<n_equations; iname++)
       if(pbName[iname]== FS_F) {
-        if(stoi(_mgutils._sim_config["FluidStructure"])==2) {
+        if(stoi(_mgutils._sim_config["MG_FluidStructure"])==2) {
           _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
           _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIP"); //Navier-Stokes equation pointer
           _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
@@ -192,10 +192,10 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
         }
       }
 
-  if(stoi(_mgutils._sim_config["AdjointFluidStructure"])!=0)
+  if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])!=0)
     for(int iname=0; iname<n_equations; iname++)
       if(pbName[iname]== FSA_F) {
-        if(stoi(_mgutils._sim_config["AdjointFluidStructure"])==2) {
+        if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])==2) {
           _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
           _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIAP"); //Navier-Stokes equation pointer
           _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
@@ -203,9 +203,9 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
           n_index++; // update counter
         }
       }
-  if(stoi(_mgutils._sim_config["DA"])!=0)
+  if(stoi(_mgutils._sim_config["MG_DA"])!=0)
     for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
-        if(stoi(_mgutils._sim_config["DA"])==2) {
+        if(stoi(_mgutils._sim_config["MG_DA"])==2) {
           _data_eq[1].tab_eqs[DA_P]=n_index;                      //  table
           _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
           _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
@@ -221,26 +221,26 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
   n_index=0; //  quadratic index for _ub
 
   // VECTOR FIELDS - MOMENTUM EQUATION
-  ActivateVectField("NavierStokes", NS_F, pbName, "NS0",n_index, n_equations);
-  ActivateVectField("AdjointNavierStokes", NSA_F, pbName, "NSA0",n_index, n_equations);
-  ActivateVectField("FluidStructure", FS_F, pbName, "FSI0",n_index, n_equations);   // fsi velocity
-  ActivateVectField("AdjointFluidStructure", FSA_F, pbName, "FSIA0",n_index, n_equations);
-  ActivateVectField("StructuralMechanics", SM_F, pbName, "SM0",n_index, n_equations);
-  ActivateVectField("Displacement", SDS_F, pbName, "SDS",n_index, n_equations); // fsi or sm disp
-  ActivateControl("Control", CTRL_F, pbName, "CTRL",n_index,n_equations ); // fsi or sm disp
+  ActivateVectField("MG_NavierStokes", NS_F, pbName, "NS0",n_index, n_equations);
+  ActivateVectField("MG_AdjointNavierStokes", NSA_F, pbName, "NSA0",n_index, n_equations);
+  ActivateVectField("MG_FluidStructure", FS_F, pbName, "FSI0",n_index, n_equations);   // fsi velocity
+  ActivateVectField("MG_AdjointFluidStructure", FSA_F, pbName, "FSIA0",n_index, n_equations);
+  ActivateVectField("MG_StructuralMechanics", SM_F, pbName, "SM0",n_index, n_equations);
+  ActivateVectField("MG_Displacement", SDS_F, pbName, "SDS",n_index, n_equations); // fsi or sm disp
+  ActivateControl("MG_ControlTemperature", CTRL_F, pbName, "CTRL",n_index,n_equations ); // fsi or sm disp
   
   // SCALAR FIELDS - ENERGY EQUATION
-  ActivateScalar("Temperature", T_F, pbName, "T",n_index, n_equations); // fsi or sm disp
+  ActivateScalar("MG_Temperature", T_F, pbName, "T",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Control", CO_F, pbName, "CTRL",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Laplacian", TA_F, pbName, "Lap",n_index, n_equations); // fsi or sm disp
-  ActivateScalar("AdjointTemperature", TA_F, pbName, "T_ad",n_index, n_equations); // fsi or sm disp
-  ActivateScalar("DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
+  ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "T_ad",n_index, n_equations); // fsi or sm disp
+  ActivateScalar("MG_DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
   
   
-  ActivateCoupled("ColorFunction", CO_F, pbName, "C", "CK",n_index, n_equations);
-  ActivateCoupled("DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
-  ActivateCoupled("ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
-  ActivateCoupled("AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
+  ActivateCoupled("MG_ColorFunction", CO_F, pbName, "C", "CK",n_index, n_equations);
+  ActivateCoupled("MG_DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
+  ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
+  ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
   
 /// c) Print
 // #ifdef PRINT_INFO // ====================================================
@@ -1561,14 +1561,14 @@ void MGSolDA::print_weight_med(
         }
     }
 
-    ParaMEDMEM::MEDCouplingUMesh *mesh=ParaMEDMEM::MEDCouplingUMesh::New("Mesh_1",_mgmesh._dim);
+    MEDCoupling::MEDCouplingUMesh *mesh=MEDCoupling::MEDCouplingUMesh::New("Mesh_1",_mgmesh._dim);
     mesh->allocateCells(n_elements);
     for(int  i = 0; i < n_elements; i++) {
         mesh->insertNextCell(MED_EL_TYPE,nodes_el,conn+i*nodes_el);
     }
     mesh->finishInsertingCells();
 
-    ParaMEDMEM::DataArrayDouble *coordarr=ParaMEDMEM::DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *coordarr=MEDCoupling::DataArrayDouble::New();
     coordarr->alloc(n_nodes,3);
     std::copy(coord,coord+n_nodes*3,coordarr->getPointer());
     mesh->setCoords(coordarr);
@@ -1580,10 +1580,10 @@ void MGSolDA::print_weight_med(
     const int offset=_mgmesh._NoNodes[_NoLevels-1];
     double *sol=new double[n_nodes+1];
 
-    ParaMEDMEM::MEDCouplingFieldDouble *f  = ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS);
+    MEDCoupling::MEDCouplingFieldDouble *f  = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
     f->setMesh(mesh);
     f->setName("weight");
-    ParaMEDMEM::DataArrayDouble *array = ParaMEDMEM::DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();
     array -> alloc(n_elements, 1);
     const int nel_e = _mgmesh._off_el[0][_NoLevels]; // start element
     const int nel_b = _mgmesh._off_el[0][_NoLevels-1];   // stop element
@@ -1600,7 +1600,7 @@ void MGSolDA::print_weight_med(
     f->setArray(array);
     std::string s = "weight_control";
     s += ".med";
-    MEDLoader::WriteField(s.c_str(), f, true);
+    MEDCoupling::WriteField(s.c_str(), f, true);
     coordarr->decrRef();
     mesh->decrRef();
     f->decrRef();
@@ -1648,18 +1648,18 @@ void MGSolDA::print_u_med(
 
 
 
-  ParaMEDMEM::MEDCouplingUMesh *mesh=ParaMEDMEM::MEDCouplingUMesh::New("Mesh_1",_mgmesh._dim);
+  MEDCoupling::MEDCouplingUMesh *mesh=MEDCoupling::MEDCouplingUMesh::New("Mesh_1",_mgmesh._dim);
   mesh->allocateCells(n_elements);
   for(int  i = 0; i < n_elements; i++) {
     mesh->insertNextCell(MED_EL_TYPE,nodes_el,conn+i*nodes_el);
   }
   mesh->finishInsertingCells();
 
-  ParaMEDMEM::DataArrayDouble *coordarr=ParaMEDMEM::DataArrayDouble::New();
+  MEDCoupling::DataArrayDouble *coordarr=MEDCoupling::DataArrayDouble::New();
   coordarr->alloc(n_nodes,3);
   std::copy(coord,coord+n_nodes*3,coordarr->getPointer());
   mesh->setCoords(coordarr);
-  MEDLoader::WriteUMesh(namefile.c_str(), mesh, true);
+  MEDCoupling::WriteUMesh(namefile.c_str(), mesh, true);
 //   coordarr->decRef();
 //   mesh->decRef();
 
@@ -1672,9 +1672,9 @@ void MGSolDA::print_u_med(
   const int offset=_mgmesh._NoNodes[_NoLevels-1];
   double *sol=new double[n_nodes+1];
 
-  ParaMEDMEM::MEDCouplingFieldDouble *f  = ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
+  MEDCoupling::MEDCouplingFieldDouble *f  = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
   f->setMesh(mesh);  f->setName(_var_names[0].c_str());
-  ParaMEDMEM::DataArrayDouble *array = ParaMEDMEM::DataArrayDouble::New();
+  MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();
   array -> alloc(n_nodes, 1);
 
   // print quad -------------------------------------
@@ -1691,7 +1691,7 @@ void MGSolDA::print_u_med(
   f->setArray(array);
   std::string s = "my_test3_sol_1";
   s += ".med";
-  MEDLoader::WriteField(s.c_str(), f, true);
+  MEDCoupling::WriteField(s.c_str(), f, true);
   return;
 }
 #endif

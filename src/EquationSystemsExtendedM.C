@@ -15,9 +15,9 @@
 #include "InterfaceFunctionM.h"
 #include "MEDCouplingUMesh.hxx"
 #include "MEDCouplingFieldDouble.hxx"
-
+#include "MEDLoader.hxx"
 // using namespace libMesh;
-using namespace ParaMEDMEM;
+using namespace MEDCoupling;
 #endif
 // ========================================================================
 /// Constructor
@@ -139,7 +139,7 @@ void EquationSystemsExtendedM::setBC(
 void EquationSystemsExtendedM::add_interface_fun(       ///<map position(return)
   const int  interface_name,
   const int  interface_id,    ///< boundary id (int)  (in)
-  const ParaMEDMEM::MEDCouplingUMesh * b,  ///< med-submesh        (in)
+  const MEDCoupling::MEDCouplingUMesh * b,  ///< med-submesh        (in)
 //   const int /*from_cmp*/,               ///< initial id component
 //   const int /*n_cmp*/,                  ///< n components
   const bool on_nodes,                     ///< values on nodes (true)
@@ -207,10 +207,10 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
   MGSolBase * mgsyst=get_eqs(system_name);
 
   // A new LibMesh function f
-  MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
-  f->setMesh(fct->getSupport());  f->setName(system_name);  f->setNature(ConservativeVolumic);
+  MEDCoupling::MEDCouplingFieldDouble * f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
+  f->setMesh(fct->getSupport());  f->setName(system_name);  f->setNature(IntensiveMaximum);
   // array function to fill f
-  DataArrayDouble *array = DataArrayDouble::New();  array->alloc(nNodes,n_cmp);  array->fillWithZero();
+  MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();  array->alloc(nNodes,n_cmp);  array->fillWithZero();
   int order = fct->get_order();
   int Dim   = fct->getSupport()->getSpaceDimension();
   int npt_elem=fct->getSupport()->getNumberOfNodesInCell(0);  // # of points in one element 
@@ -265,7 +265,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
   for(int kj=0; kj<n_cmp; kj++) { array->setInfoOnComponent(kj,std::to_string(kj+first_cmp)); }  // set info -> array
   f->setArray(array);   // set array -> f
   array->decrRef();     // delete array
-  f->checkCoherency();  // check f
+  f->checkConsistencyLight();  // check f
 //  fct->printOn(std::cout,name);   // print fct
 
   return f;
@@ -301,7 +301,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
   std::cerr << "\n EquationSystemsExtendedM nComp = " << n_cmp << std::endl;
 
   // A new LibMesh function f
-  MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
+  MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
   f->setMesh(fct->getSupport());
   f->setName(system_name);
 
@@ -321,7 +321,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
   }
   f->setArray(array);   // set array -> f
   array->decrRef();     // delete array
-  f->checkCoherency();  // check f
+  f->checkConsistencyLight();  // check f
 //   fct->printOn(std::cout,id);   // print fct
 
   return f;
@@ -334,7 +334,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
 //  "variable_id" on nodes on the boundary with identity "id" in the
 //  system "system_name"
 MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
-  ParaMEDMEM::MEDCouplingFieldDouble *NodeMap,
+  MEDCoupling::MEDCouplingFieldDouble *NodeMap,
   int InterfaceId,                                                               
   const char *system_name,           // system name             (in)
   int               n_cmp,           //  first variable       (in)
@@ -359,7 +359,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
   MGSolBase * mgsyst=get_eqs(system_name);
 
   // A new LibMesh function f
-  MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
+  MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
   f->setMesh(NodeMap->getMesh());
   f->setName(system_name);
 
@@ -390,7 +390,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
   }
   f->setArray(array);   // set array -> f
   array->decrRef();     // delete array
-  f->checkCoherency();  // check f
+  f->checkConsistencyLight();  // check f
 //   fct->printOn(std::cout,id);   // print fct
 
   return f;
@@ -412,7 +412,7 @@ void EquationSystemsExtendedM::write_Boundary_value(
 
 
   // interface support (mesh) fct -----------------------------------
-  const ParaMEDMEM::MEDCouplingUMesh *support= fct->getSupport();
+  const MEDCoupling::MEDCouplingUMesh *support= fct->getSupport();
   int nNodes_med = support->getNumberOfNodes();
   int n_nodes_mg  = fct->get_n();
   int * map_mg  = fct->get_map_mg();
@@ -493,17 +493,17 @@ void EquationSystemsExtendedM::write_Boundary_value(
 
 void EquationSystemsExtendedM::write_Boundary_value(
   std::string mgsystem_name,  /**< system name             (in)       */
-  ParaMEDMEM::MEDCouplingFieldDouble * bcField
+  MEDCoupling::MEDCouplingFieldDouble * bcField
 ) { // ======================================================================
   // MGSolver -------------------------------------------------------
   MGSolBase * mgsyst=get_eqs(mgsystem_name.c_str());
-  mgsyst->_ExtField = bcField->deepCpy();
+  mgsyst->_ExtField = bcField->deepCopy();
   return;
 }
 
-  ParaMEDMEM::MEDCouplingFieldDouble *  EquationSystemsExtendedM::GetField(const std::string &systemName){
+  MEDCoupling::MEDCouplingFieldDouble *  EquationSystemsExtendedM::GetField(const std::string &systemName){
     MGSolBase * mgsyst=get_eqs(systemName.c_str());
-    ParaMEDMEM::MEDCouplingFieldDouble * ExtField = mgsyst->_ExtField->deepCpy();
+    MEDCoupling::MEDCouplingFieldDouble * ExtField = mgsyst->_ExtField->deepCopy();
     return ExtField;
   }
 
@@ -515,6 +515,7 @@ const MEDCouplingUMesh* EquationSystemsExtendedM::getUMeshCoupling(
   InterfaceFunctionM * fct = get_interface_fun(name);  // interface-function
 //   if(fct == NULL) return;
   const MEDCouplingUMesh *sourceMesh = fct->getSupport();
+  MEDCoupling::WriteUMesh("source.med",sourceMesh,true);
   return sourceMesh;
 }
 //get original support

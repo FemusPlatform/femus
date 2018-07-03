@@ -6,7 +6,7 @@
 #include "Solverlib_conf.h" 
 
 // #ifdef HAVE_MED
-namespace ParaMEDMEM {
+namespace MEDCoupling {
 class MEDCouplingUMesh;
 class MEDCouplingFieldDouble;
 class DataArrayInt;

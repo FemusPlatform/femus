@@ -3,7 +3,15 @@
 #include <ctime>
 #include "InterfaceProjection.h"
 // #include<map>
+
+
 #ifdef HAVE_MED
+namespace MEDCoupling {
+class MEDLoader;
+class MEDCouplingUMesh;
+class MEDCouplingFieldDouble;
+}
+
 #include "InterfaceFunctionM.h"
 #include "MEDCouplingUMesh.hxx"
 #include "MEDCouplingFieldDouble.hxx"
@@ -15,17 +23,16 @@
 #include "InterpKernelGeo2DNode.hxx"
 
 
-using namespace ParaMEDMEM;
+
 
 // ================================================================================================
-BoundInterp::BoundInterp() : MMed() {
-}
+BoundInterp::BoundInterp() : MMed() {}
 
 
 // ================================================================================================
 BoundInterp::BoundInterp (
-    const MEDCouplingUMesh * SourceMesh,
-    const MEDCouplingUMesh * TargetMesh,
+    const MEDCoupling::MEDCouplingUMesh * SourceMesh,
+    const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     int DomainType
 ) : MMed() {
     _AlreadyInitialized=0;
@@ -33,8 +40,8 @@ BoundInterp::BoundInterp (
 }
 // ================================================================================================
 void BoundInterp::FillParameters (
-    const MEDCouplingUMesh * SourceMesh,
-    const MEDCouplingUMesh * TargetMesh,
+    const MEDCoupling::MEDCouplingUMesh * SourceMesh,
+    const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     int DomainType,
     double XiEtaToll
 ) {
@@ -51,13 +58,10 @@ void BoundInterp::FillParameters (
 
 //     double XiEtaToll = 1.e-3
 
-    __InMesh = SourceMesh;
-
-    string name = SourceMesh->getName();
+    __InMesh = SourceMesh->deepCopy();    string name = SourceMesh->getName();
     _SrcCellNodes        = __InMesh->getNumberOfNodesInCell ( 0 );
     _SrcCoordInterpNodes = InterpCoordNodes[_SrcCellNodes];
     _SrcCells = __InMesh -> getNumberOfCells();
-
     INTERP_KERNEL::NormalizedCellType Type = __InMesh->getTypeOfCell ( 0 );
     if ( Type==6 || Type==7 || Type==14 || Type==20 ) _FamilyType=0;
     else _FamilyType=1;
@@ -74,11 +78,11 @@ void BoundInterp::FillParameters (
     /////////////////////////////////////////////////////////////////////
     std::clock_t par_time1 = std::clock();
 
-    DataArrayDouble * XiEta1 = DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble * XiEta1 = MEDCoupling::DataArrayDouble::New();
     XiEta1->alloc ( _TrgNodes,_MeshDim );
     XiEta1->fillWithValue ( 0. );
 
-    DataArrayInt * BoundingNodes1 = DataArrayInt::New();
+    MEDCoupling::DataArrayInt * BoundingNodes1 = MEDCoupling::DataArrayInt::New();
     BoundingNodes1->alloc ( _TrgNodes,_SrcCellNodes );
     BoundingNodes1->fillWithValue ( -1 );
 
@@ -94,10 +98,10 @@ void BoundInterp::FillParameters (
     pointB[0] = Bbox[0] - 1.e4*width;
     pointB[1] = Bbox[3] + 1.e4*height;
 
-    DataArrayDouble *DDA = DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *DDA = MEDCoupling::DataArrayDouble::New();
     DDA -> alloc ( _SrcCells,4 ); //  4 ????????????
 
-//   DataArrayDouble *DDB = DataArrayDouble::New();
+//   MEDCoupling::DataArrayDouble *DDB = MEDCoupling::DataArrayDouble::New();
 //   DDB -> alloc(_SrcCells,2);
 //   std::vector<double> DDAM;   std::vector<double> DDAm; std::vector<double> DDBM;  std::vector<double> DDBm;
 
@@ -557,7 +561,7 @@ void BoundInterp::FillParameters (
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-//   MEDCouplingFieldDouble * position = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
+//   MEDCouplingFieldDouble * position = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
 //   position->setMesh(OutMesh);
 //   position->setArray(XiEtaNew);
 //   position->setName("XiEtaChi");
@@ -567,19 +571,19 @@ void BoundInterp::FillParameters (
 
 #ifdef VERIFY_INTERP
 
-    MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_CELLS );
+    MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New ( MEDCoupling::ON_CELLS );
     f->setMesh ( InMesh );
     f->setArray ( OccupiedCells );
     f->setName ( "OccupiedCells" );
 
-    MEDCouplingFieldDouble * Node = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
+    MEDCouplingFieldDouble * Node = MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     Node->setMesh ( OutMesh );
     Node->setArray ( FindNode );
     Node->setName ( "FindNode" );
     MEDLoader::WriteUMesh ( "FoundNode.med",OutMesh,true );
     MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "FoundNode.med",Node );
 
-    MEDCouplingFieldDouble * Sector = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_CELLS );
+    MEDCouplingFieldDouble * Sector = MEDCouplingFieldDouble::New ( MEDCoupling::ON_CELLS );
     Sector->setMesh ( InMesh );
     Sector->setArray ( POS0 );
     Sector->setName ( "Sector0" );
@@ -645,12 +649,12 @@ void BoundInterp::FillParameters (
 //   position->decrRef();
 //   sector->decrRef();
 
-//   MEDCouplingFieldDouble * dda1 = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS);
+//   MEDCouplingFieldDouble * dda1 = MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
 //   dda1->setMesh(InMesh);
 //   dda1->setArray(DDA);
 //   dda1->setName("DDA");
 //
-//   MEDCouplingFieldDouble * ddb1 = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS);
+//   MEDCouplingFieldDouble * ddb1 = MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
 //   ddb1->setMesh(InMesh);
 //   ddb1->setArray(DDB);
 //   ddb1->setName("DDB");
@@ -670,11 +674,11 @@ void BoundInterp::FillParameters (
     //*************************** end new point location part
 
 #if USEMEDmet==1
-    DataArrayInt *targetArray = DataArrayInt::New();
+    MEDCoupling::DataArrayInt *targetArray = MEDCoupling::DataArrayInt::New();
     targetArray -> alloc ( _TrgNodes,1 );
     targetArray -> fillWithValue ( 1 );
 
-    DataArrayDouble *CellBelonging = DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *CellBelonging = MEDCoupling::DataArrayDouble::New();
     CellBelonging -> alloc ( _TrgNodes,1 );
     CellBelonging -> fillWithValue ( -1 );
 //   DataArrayInt * BoundingNodes1 = DataArrayInt::New();
@@ -739,16 +743,16 @@ void BoundInterp::FillParameters (
 
             /// Method using coordinates array
             // Computing TCbbox
-            DataArrayDouble *coordsArr=DataArrayDouble::New();
+            MEDCoupling::DataArrayDouble *coordsArr=MEDCoupling::DataArrayDouble::New();
             coordsArr->alloc ( _SrcCellNodes,_SpaceDim );
             std::copy ( PointsCoords,PointsCoords + TrgCellNodes*_SpaceDim,coordsArr->getPointer() );
             coordsArr->getMinMaxPerComponent ( TCbbox );
             coordsArr->decrRef();
 
-            DataArrayInt * vettore = DataArrayInt::New();
+            MEDCoupling::DataArrayInt * vettore = MEDCoupling::DataArrayInt::New();
             vettore = __InMesh->getCellsInBoundingBox ( TCbbox,1.e-5 );
             int SrcIntCells = vettore->getNbOfElems();                       // Number of source mesh cells intersecting target mesh cell bounding box
-            MemArray<int> SrcIntCellsIds = vettore->accessToMemArray();      // Array containing source mesh cell ids
+            MEDCoupling::MemArray<int> SrcIntCellsIds = vettore->accessToMemArray();      // Array containing source mesh cell ids
 
 
             double **ExtrCoord=new double*[SrcIntCells];                      // Matrix containing Min and Max coordinates of source mesh cells intersecting target mesh cell bounding box
@@ -762,7 +766,7 @@ void BoundInterp::FillParameters (
 
                 __InMesh ->  getNodeIdsOfCell ( SrcIntCellsIds[IntCellNum],SrcConn );
                 int NNodes = SrcConn.size();
-                DataArrayDouble *XYZ=DataArrayDouble::New();
+                MEDCoupling::DataArrayDouble *XYZ=MEDCoupling::DataArrayDouble::New();
                 XYZ->alloc ( NNodes,_SpaceDim );
                 /// Min and Max coordinates of source mesh cells intersecting target mesh cell bounding box
                 for ( int i_node=0; i_node < NNodes; i_node++ ) {              // Loop over the element nodes
@@ -935,7 +939,7 @@ void BoundInterp::FillParameters (
 //         delete [] ExtrCoord;
         } // end loop
 
-//     MEDCouplingFieldDouble * CellBelonging = MEDCouplingFieldDouble::New(ParaMEDMEM::ON_NODES);
+//     MEDCouplingFieldDouble * CellBelonging = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
 //     CellBelonging->setMesh(__OutMesh);
 //     CellBelonging->setArray(CellBelonging);
 //     CellBelonging->setName("CellID");
@@ -962,8 +966,8 @@ void BoundInterp::FillParameters (
 //                   a group of cells. Cells in contact with the i-th point are described
 //                   by following range of indices: [ eltsIndex[ i ], eltsIndex[ i+1 ] )
 //                   and the cell ids are elts[ eltsIndex[ i ]], elts[ eltsIndex[ i ] + 1 ].
-        MEDCouplingAutoRefCountObjectPtr<DataArrayInt> elts;
-        MEDCouplingAutoRefCountObjectPtr<DataArrayInt> eltsIndex;
+        MEDCoupling::MCAuto<MEDCoupling::DataArrayInt> elts;
+        MEDCoupling::MCAuto<MEDCoupling::DataArrayInt> eltsIndex;
         int dimm = CoordinatesOfNodes.size();
         double Nodi[dimm];
         for ( int dim=0; dim<dimm; dim++ ) {
@@ -1105,21 +1109,21 @@ void BoundInterp::FillParameters (
 //   delete [] TCbbox;
 #endif
 
-    MEDCouplingFieldDouble * CanonicalPosition = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
+    MEDCoupling::MEDCouplingFieldDouble * CanonicalPosition = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     CanonicalPosition->setMesh ( __OutMesh );
     CanonicalPosition->setArray ( XiEta1 );
     CanonicalPosition->setName ( "XiEta" );
 
-    MEDCouplingFieldDouble * CellS = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
+    MEDCoupling::MEDCouplingFieldDouble * CellS = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     CellS->setMesh ( __OutMesh );
     CellS->setArray ( CellBelonging );
     CellS->setName ( "CellID" );
 
     string FileName="S"+__InMesh->getName() +"_T"+__OutMesh->getName() +"_MeshCoupling.med";
 
-    MEDLoader::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,true );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CanonicalPosition );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CellS );
+    MEDCoupling::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,true );
+    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CanonicalPosition );
+    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CellS );
     CanonicalPosition->decrRef();
     CellS->decrRef();
 
@@ -1774,13 +1778,13 @@ void BoundInterp::SecondDerF ( double NodePos[], double XiEtaChi[] ) {
     return;
 }
 
-ParaMEDMEM::MEDCouplingFieldDouble *
-BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* SourceField, const int order ) {
+MEDCoupling::MEDCouplingFieldDouble *
+BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, const int order ) {
 
     const int NComp = SourceField->getNumberOfComponents();
     int order1 = order;
 
-    DataArrayDouble *targetArray = DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *targetArray = MEDCoupling::DataArrayDouble::New();
     targetArray -> alloc ( _TrgNodes,NComp );
     std::string EqName = SourceField->getName();
     switch ( __Domain ) {
@@ -1885,7 +1889,7 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
         break;
 
     } // end switch
-    MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
+    MEDCoupling::MEDCouplingFieldDouble * f = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     f->setMesh ( __OutMesh );
     f->setArray ( targetArray );
     f->setName ( EqName );
@@ -1895,15 +1899,15 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
 
 //Modifica a InterpolatedField
 
-ParaMEDMEM::MEDCouplingFieldDouble *
-BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* SourceField, const ParaMEDMEM::MEDCouplingFieldDouble* TargetField, const int order ) {
+MEDCoupling::MEDCouplingFieldDouble *
+BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, const MEDCoupling::MEDCouplingFieldDouble* TargetField, const int order ) {
 
     const int NComp = SourceField->getNumberOfComponents();
 
 // const DataArrayDouble *TargetFieldArray = TargetField->getArray();
 
     int order1 = order;
-    DataArrayDouble *targetArray = DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *targetArray = MEDCoupling::DataArrayDouble::New();
     targetArray -> alloc ( _TrgNodes,NComp );
     std::string EqName = SourceField->getName();
 
@@ -2020,7 +2024,7 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
             }
         }
     }
-    MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
+    MEDCoupling::MEDCouplingFieldDouble * f = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     f->setMesh ( __OutMesh );
     f->setArray ( targetArray );
     f->setName ( EqName );
@@ -2028,13 +2032,13 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
     return f;
 }
 
-ParaMEDMEM::MEDCouplingFieldDouble *
-BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* SourceField, double DefaultValue, const int order ) {
+MEDCoupling::MEDCouplingFieldDouble *
+BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, double DefaultValue, const int order ) {
 
     const int NComp = SourceField->getNumberOfComponents();
 
     int order1 = order;
-    DataArrayDouble *targetArray = DataArrayDouble::New();
+    MEDCoupling::DataArrayDouble *targetArray = MEDCoupling::DataArrayDouble::New();
     targetArray -> alloc ( _TrgNodes,NComp );
     std::string EqName = SourceField->getName();
 
@@ -2150,7 +2154,7 @@ BoundInterp::InterpolatedField ( const ParaMEDMEM::MEDCouplingFieldDouble* Sourc
             }
         }
     }
-    MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New ( ParaMEDMEM::ON_NODES );
+    MEDCoupling::MEDCouplingFieldDouble * f = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     f->setMesh ( __OutMesh );
     f->setArray ( targetArray );
     f->setName ( EqName );

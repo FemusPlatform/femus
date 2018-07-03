@@ -18,7 +18,7 @@
 
 
 
-// using namespace ParaMEDMEM;
+// using namespace MEDCoupling;
 // using namespace libMesh;
 // ======================================================
 InterfaceFunctionM::~InterfaceFunctionM() {
@@ -34,7 +34,7 @@ InterfaceFunctionM::~InterfaceFunctionM() {
 /// interface-function is set by set_mesh_femus_interface
 void InterfaceFunctionM::set_mesh_BFinterface_nodeID(
   const MeshExtended * mesh,                ///< Femus-mesh        (in)
-  const ParaMEDMEM::MEDCouplingUMesh * support,///< med-mesh          (in)
+  const MEDCoupling::MEDCouplingUMesh * support,///< med-mesh          (in)
   const int interface_id,                      ///< inrface identity  (in)
   const int order_cmp                          ///< order pt (1 or 2) (in)
 ) { // ========================================================================
@@ -55,7 +55,7 @@ void InterfaceFunctionM::set_mesh_BFinterface_nodeID(
   _support_med = support;                 // MED-mesh
   _support_med_orig = support;                 // MED-mesh
   _n= _support_med->getNumberOfNodes();   // n MED-nodes
-  const ParaMEDMEM::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
+  const MEDCoupling::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
   int n_nodes_med = d->getNumberOfTuples(); // n MED-tuple-cords
 
 //   std::vector<std::pair<double, int > > dist_med;
@@ -167,7 +167,7 @@ void InterfaceFunctionM::set_mesh_BFinterface_nodeID(
 /// interface-function is set by set_mesh_femus_interface
 void InterfaceFunctionM::set_mesh_interface_nodeID(
   const MeshExtended * mesh,                ///< Femus-mesh        (in)
-  const ParaMEDMEM::MEDCouplingUMesh * support,///< med-mesh          (in)
+  const MEDCoupling::MEDCouplingUMesh * support,///< med-mesh          (in)
   const int interface_id,                      ///< inrface identity  (in)
   const int order_cmp                          ///< order pt (1 or 2) (in)
 ) { // ========================================================================
@@ -187,7 +187,7 @@ void InterfaceFunctionM::set_mesh_interface_nodeID(
   _support_med = support;                 // MED-mesh
     _support_med_orig = support;                 // MED-mesh
 //   _n= _support_med->getNumberOfNodes();   // n MED-nodes
-  const ParaMEDMEM::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
+  const MEDCoupling::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
   int n_nodes_med = d->getNumberOfTuples(); // n MED-tuple-cords
 
   std::vector<std::pair<double, int > > dist_med;
@@ -297,7 +297,7 @@ void InterfaceFunctionM::set_mesh_interface_nodeID(
 /// interface-function is set by set_mesh_femus_interface
 void InterfaceFunctionM::set_mesh_interface_elemID(
   const MeshExtended * mesh,                ///< Femus-mesh        (in)
-  const ParaMEDMEM::MEDCouplingUMesh * support,///< med-mesh          (in)
+  const MEDCoupling::MEDCouplingUMesh * support,///< med-mesh          (in)
   const int interface_id                      ///< inrface identity  (in)
 ) { // ========================================================================
 
@@ -326,7 +326,7 @@ void InterfaceFunctionM::set_mesh_interface_elemID(
     _support_med_orig = support;                               // MED-mesh
 //   _n= _support_med->getNumberOfNodes();                 // n MED-nodes
   int n_elements_med= _support_med->getNumberOfCells(); // n MED-elements
-  const ParaMEDMEM::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
+  const MEDCoupling::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
   int n_nodes_med = d->getNumberOfTuples();             //  MED-nodes
   int dim_med = d->getNumberOfComponents();             //  MED dimension
 
@@ -445,7 +445,7 @@ void InterfaceFunctionM::set_analytic_field(
 ) { // ========================================================================
   if(_field) _field->decrRef();
   //ON CELLS does not work (due to baryc in quad 9 or hex 27)
-  ParaMEDMEM::TypeOfField type = ParaMEDMEM::ON_NODES;
+  MEDCoupling::TypeOfField type = MEDCoupling::ON_NODES;
   int dim=_support_med->getSpaceDimension();
   std::vector<std::string> vars(dim);
   if(dim > 0)    vars[0] = "x";
@@ -455,9 +455,9 @@ void InterfaceFunctionM::set_analytic_field(
     std::cout<<
              "InterfaceFunctionM::set_analytic_field: NULL function"; abort();
   }
-  _field = _support_med->fillFromAnalytic3(type, nComp, vars, symbolic_eq);
+  _field = _support_med->fillFromAnalyticNamedCompo(type, nComp, vars, symbolic_eq);
   _field->setName(symbolic_eq);
-  _field->checkCoherency();
+  _field->checkConsistencyLight();
 //   std::ostream out("prova.field");
   std::cout << "InterfaceFunctionM::set_analytic_field_interface \n";
 //   printOn(std::cout);
@@ -474,7 +474,7 @@ void InterfaceFunctionM::set_analytic_field_elem(
 ) { // ========================================================================
   if(_field) _field->decrRef();
   //ON CELLS does not work (due to baryc in quad 9 or hex 27)
-  ParaMEDMEM::TypeOfField type = ParaMEDMEM::ON_NODES;
+  MEDCoupling::TypeOfField type = MEDCoupling::ON_NODES;
   int dim=_support_med->getSpaceDimension();
   std::vector<std::string> vars(dim);
   if(dim > 0)    vars[0] = "x";
@@ -487,22 +487,22 @@ void InterfaceFunctionM::set_analytic_field_elem(
 
 
 
-  const ParaMEDMEM::MEDCouplingFieldDouble * field_nodes =
-    _support_med->fillFromAnalytic3(type, nComp, vars, symbolic_eq);
+  const MEDCoupling::MEDCouplingFieldDouble * field_nodes =
+    _support_med->fillFromAnalyticNamedCompo(type, nComp, vars, symbolic_eq);
 
   int n_elements_med= _support_med->getNumberOfCells(); // n MED-elements
-//   const ParaMEDMEM::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
+//   const MEDCoupling::DataArrayDouble * d =_support_med->getCoords();// Med-mesh coordinates
   int n_nodes_med = field_nodes->getNumberOfTuples();             //  MED-nodes
 //   int dim = field_nodes->getNumberOfComponents();             //  MED dimension
 
   int n_nod_el=NDOF_FEM;
   double * sum=new double[nComp];
 
-_field= ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS,ParaMEDMEM::NO_TIME);
+_field= MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS,MEDCoupling::NO_TIME);
  _field->setMesh(_support_med);
 
-  ParaMEDMEM::DataArrayDouble *array;
-  array=ParaMEDMEM::DataArrayDouble::New();
+  MEDCoupling::DataArrayDouble *array;
+  array=MEDCoupling::DataArrayDouble::New();
   array->alloc(n_elements_med,nComp);
 
   double *field_av = new double [n_elements_med*nComp]; // MED el centers
@@ -523,12 +523,12 @@ _field= ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS,ParaMEDMEM:
     nodes1.clear(); // clear element node vector
   }// *************************************************************************
   
-//  array->useArray(field_av,true,ParaMEDMEM::CPP_DEALLOC,n_elements_med,1);
+//  array->useArray(field_av,true,MEDCoupling::CPP_DEALLOC,n_elements_med,1);
   std::copy(field_av,field_av+n_elements_med*nComp,array->getPointer());
 
   _field->setArray(array);
   _field->setName(symbolic_eq);
-  _field->checkCoherency();
+  _field->checkConsistencyLight();
   std::cout << "InterfaceFunctionM::set_analytic_field_elem_interface \n";
 //   printOn(std::cout,1);
   return;
@@ -536,12 +536,12 @@ _field= ParaMEDMEM::MEDCouplingFieldDouble::New(ParaMEDMEM::ON_CELLS,ParaMEDMEM:
 
 // ==========================================================================
 void InterfaceFunctionM::set_field(
-  const ParaMEDMEM::MEDCouplingFieldDouble *f
+  const MEDCoupling::MEDCouplingFieldDouble *f
 ) {// =======================================================================
   if(_field) _field->decrRef();
 //
-  ParaMEDMEM::TypeOfField type = f->getTypeOfField();
-  _field = ParaMEDMEM::MEDCouplingFieldDouble::New(type);
+  MEDCoupling::TypeOfField type = f->getTypeOfField();
+  _field = MEDCoupling::MEDCouplingFieldDouble::New(type);
   *_field=*f;
 
   _field->setName(f->getName());
@@ -550,19 +550,19 @@ void InterfaceFunctionM::set_field(
 
 // ==========================================================================
 void InterfaceFunctionM::set_field_source(
-  const ParaMEDMEM::MEDCouplingFieldDouble *f
+  const MEDCoupling::MEDCouplingFieldDouble *f
 ) {// =======================================================================
   if(_field) _field->decrRef();
 //
-  ParaMEDMEM::TypeOfField type = f->getTypeOfField();
-  _field = ParaMEDMEM::MEDCouplingFieldDouble::New(type);
+  MEDCoupling::TypeOfField type = f->getTypeOfField();
+  _field = MEDCoupling::MEDCouplingFieldDouble::New(type);
   *_field=*f;
 //   _field->setMesh(_support_med);
-//   ParaMEDMEM::DataArrayDouble *array = ParaMEDMEM::DataArrayDouble::New();
+//   MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();
 //   int nTuples;
 //   int nComp;
 //
-//   const ParaMEDMEM::DataArrayDouble * arrayf = f->getArray(), *coord1, *coord2;
+//   const MEDCoupling::DataArrayDouble * arrayf = f->getArray(), *coord1, *coord2;
 // //   if (FDEBUG) fDebug.array(arrayf, "arrayf");
 //
 //   nTuples = _support_med->getNumberOfCells();
@@ -587,12 +587,12 @@ void InterfaceFunctionM::set_field_source(
 //   _field->setArray(array);
   _field->setName(f->getName());
 //   array->decrRef();
-  _field->checkCoherency();
+  _field->checkConsistencyLight();
 //   printOn(std::cout);
 }
 
 // ==========================================================================
-ParaMEDMEM::MEDCouplingFieldDouble * InterfaceFunctionM::getField(
+MEDCoupling::MEDCouplingFieldDouble * InterfaceFunctionM::getField(
   char const* /*name */) {// =====================================================
 //   if (FDEBUG) fDebugPos << "InterfaceFunctionM::getField _field = " << _field << std::endl;
 //   if (!_field) return NULL;
@@ -696,20 +696,20 @@ void InterfaceFunctionM::printOn(
     out << "==================================================" << std::endl;
     return;
   }
-  ParaMEDMEM::TypeOfField type = _field->getTypeOfField();
-  const ParaMEDMEM::DataArrayDouble * d;
+  MEDCoupling::TypeOfField type = _field->getTypeOfField();
+  const MEDCoupling::DataArrayDouble * d;
   int n;
-  const ParaMEDMEM::MEDCouplingUMesh * m
-    = dynamic_cast<const ParaMEDMEM::MEDCouplingUMesh *>(_field->getMesh());
+  const MEDCoupling::MEDCouplingUMesh * m
+    = dynamic_cast<const MEDCoupling::MEDCouplingUMesh *>(_field->getMesh());
 
   out << "name : " << _field->getName() << std::endl;
 
     int ncf=_field->getNumberOfComponents();
     int nc;
-     ParaMEDMEM::DataArrayDouble * v = _field->getArray();
+     MEDCoupling::DataArrayDouble * v = _field->getArray();
   
   switch(type) {
-  case ParaMEDMEM::ON_NODES:
+  case MEDCoupling::ON_NODES:
     out << "type : ON_NODES" << std::endl;
     d = m->getCoords();
     d->incrRef();
@@ -733,7 +733,7 @@ void InterfaceFunctionM::printOn(
     break;
     
     
-  case ParaMEDMEM::ON_CELLS:
+  case MEDCoupling::ON_CELLS:
     out << "type : ON_CELLS" << std::endl;
 //     d = m->getBarycenterAndOwner();
 //     n = d->getNumberOfTuples(); 

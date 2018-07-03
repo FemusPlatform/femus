@@ -101,6 +101,79 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
   return;
 }
 
+// ========================================================
+/// This function  is the MGSolBase constructor :
+MGSolBase::MGSolBase (
+    MGEquationsSystem& mg_equations_in,
+    MGUtils &mgutils_in,
+    MGFEMap &mgfemap_in,
+    MGMesh &mgmesh_in,
+                      const int nvars_in[],            // # variables
+                      std::string eqname_in     // equation name
+                     ) :
+  _mgutils (mgutils_in),
+//     _mgphys(e_map_in._mgphys),
+  _mgfemap (mgfemap_in),
+  _mgmesh (mgmesh_in),
+  _mgeqnmap (NULL),
+  _NoLevels ( (int) (mgutils_in._geometry["nolevels"])), //you can do that
+  _eqname (eqname_in),
+  _n_vars (nvars_in[0]+nvars_in[1]+nvars_in[2]), _var_names (NULL), _refvalue (NULL)
+#ifdef  TWO_PHASE_LIB
+  , _msolcc (NULL)
+#endif
+{
+
+  _nvars[0]= nvars_in[0]; //Lagrange piecewise constant variables
+  _nvars[1]= nvars_in[1]; //Lagrange piecewise linear variables
+  _nvars[2]= nvars_in[2]; //Lagrange piecewise linear variables
+  // processor number ---------------------------
+#ifndef HAVE_LASPACKM
+  _iproc=_mgmesh._iproc;         // > 1CPU
+#else
+  _iproc=0;                      // 1 CPU
+#endif
+
+  //allocation of dynamic system ---------------
+  _Dim =new int[_NoLevels];                          // matrix and vect  dim
+  A.resize (_NoLevels);
+  x.resize (_NoLevels);    // matrix vect sol
+  x_old.resize (_NoLevels);
+  x_oold.resize (_NoLevels); // old solution
+  x_nonl.resize (_NoLevels); // non linear solution
+  disp.resize (_NoLevels); // displacement for mesh
+  disp_old.resize (_NoLevels); // displacement for mesh
+  disp_oold.resize (_NoLevels); // displacement for mesh
+  x_ooold.resize (_NoLevels); // vector for multiple uses
+  b.resize (_NoLevels);
+  res.resize (_NoLevels);  // rhs
+
+  // restr and prol operators -----------------
+  Rst.resize (_NoLevels);
+  Prl.resize (_NoLevels);   // Projector and restrictor
+
+  // dof info ---------------
+  _node_dof= new int*[_NoLevels+1];  // dof (+1)
+//   bc= new int*[_NoLevels];           // bc
+//   _attrib.resize(_NoLevels);         // Attribute vector (cell)
+
+  //solver ---------------------------------------
+  _solver=new LinearSolverM*[_NoLevels];     // one solver for each level
+  // get the communicator from the PETSc object
+//   ParallelM::communicator comm;
+//   PetscObjectGetComm((PetscObject)pc, &comm);
+//   const ParallelM::Communicator communicator(comm);
+
+  for (int l=0; l<_NoLevels; l++) _solver[l]=
+      LinearSolverM::build (_mgmesh._comm.comm(),LSOLVER).release();
+  _control=0.;
+#ifdef   TWO_PHASE
+
+#endif
+
+
+  return;
+}
 
 // ===================================================
 /// This function  is the MGSolBase destructor.
@@ -380,6 +453,7 @@ void  MGSolBase::get_el_sol (
   for (int id=0; id<el_nds; id++)    {
     // quadratic -------------------------------------------------
     for (int ivar=0; ivar<nvars; ivar++) {  //ivar is like idim
+        
       const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
       uold[id + (ivar+kvar0) *NDOF_FEM]= ( (*x_old[_NoLevels-1]) (kdof_top)); // element sol
     } // end quadratic ------------------------------------------------
@@ -624,8 +698,8 @@ void MGSolBase::MGUndo_disp() {
 }
 
 double  MGSolBase::MGFunctional (
-  double parameter,			/// Use of the function: (0) compute functional OR (1) set _eta
-  double &control  /// \param[in] <>  eta multiplier for optimal method
+  double /*parameter*/,			/// Use of the function: (0) compute functional OR (1) set _eta
+  double &/*control*/  /// \param[in] <>  eta multiplier for optimal method
 ) {
   std::cout << "Wrong use of MGFunctional from MGSolBase.C, aborting";
   abort();
@@ -637,7 +711,7 @@ double  MGSolBase::MGFunctional (
   void MGSolBase::set_ctrl_dom(
     const double xMin,const double xMax,
     const double yMin,const double yMax,
-    const double zMin,const double zMax
+    const double /*zMin*/,const double /*zMax*/
   ){
     int    el_conn[NDOF_FEM];
     double x_m[DIMENSION];
@@ -671,7 +745,7 @@ double  MGSolBase::MGFunctional (
 /// This function change current dt
 /// ======================================================
 
-void   MGSolBase::set_dt (double dt) {};
+void   MGSolBase::set_dt (double /*dt*/) {}
 
 double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diffusivity, int Dim, int NbOfNodes) {
 

@@ -34,7 +34,7 @@ MeshExtended::MeshExtended(
   read_bc_id(_NoLevels-1);
   read_mat_id(_NoLevels-1);
 
-  if(stoi(_mgutils._sim_config["DynamicalTurbulence"])!=0) {
+  if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0) {
     _dist=new double [_off_el[0][_NoLevels*_n_subdom]];// distance
     for(int  ilev=0; ilev<_NoLevels; ilev++)  B_dist(ilev);   // distance computing
   } else {
@@ -265,8 +265,8 @@ void MeshExtended::print_med(int Level, std::string filename) {
   const int pt_sides_bd=NDOF_FEMB;
 //
 //   // init  -------------------------------------------
-  std::cout << "n_nodes " << n_nodes << "n_elements "
-            << n_elements << "nodes_el " << nodes_el << std::endl;
+  std::cout << "n_nodes " << n_nodes << " n_elements "
+            << n_elements << " nodes_el " << nodes_el << std::endl;
   int icount =0;  int ielemcount =0;
   int ibccount=0; int bd_n_elements =0;
 
@@ -327,7 +327,7 @@ void MeshExtended::print_med(int Level, std::string filename) {
   // MED mesh *************************************************
 //
   // MEDCouplingUMesh mesh connectivity (volume)
-  ParaMEDMEM::MEDCouplingUMesh *mesh1=ParaMEDMEM::MEDCouplingUMesh::New("Mesh_1",_dim);
+  MEDCoupling::MEDCouplingUMesh *mesh1=MEDCoupling::MEDCouplingUMesh::New("Mesh_1",_dim);
   mesh1->allocateCells(n_elements);
   for(int  i = 0; i < n_elements; i++) {
     mesh1->insertNextCell(MED_EL_TYPE,nodes_el,conn+i*nodes_el);
@@ -335,7 +335,7 @@ void MeshExtended::print_med(int Level, std::string filename) {
   mesh1->finishInsertingCells();
 
 // MEDCouplingUMesh Mesh connectivity (boundary)
-  ParaMEDMEM::MEDCouplingUMesh *mesh2=ParaMEDMEM::MEDCouplingUMesh::New("Mesh_1",DIMENSION-1);
+  MEDCoupling::MEDCouplingUMesh *mesh2=MEDCoupling::MEDCouplingUMesh::New("Mesh_1",DIMENSION-1);
   mesh2->allocateCells(bd_n_elements);
   for(int  i = 0; i < bd_n_elements; i++) {
     mesh2->insertNextCell(MED_EL_BDTYPE,pt_sides_bd,conn_bd+i*pt_sides_bd);
@@ -343,14 +343,14 @@ void MeshExtended::print_med(int Level, std::string filename) {
   mesh2->finishInsertingCells();
 
   // coord (same node set for both meshes)
-  ParaMEDMEM::DataArrayDouble *coordarr=ParaMEDMEM::DataArrayDouble::New();
+  MEDCoupling::DataArrayDouble *coordarr=MEDCoupling::DataArrayDouble::New();
   coordarr->alloc(n_nodes,_dim);
   std::copy(coord,coord+n_nodes*_dim,coordarr->getPointer());
   mesh1->setCoords(coordarr);
   mesh2->setCoords(coordarr);
 // //
   // Setting MEDCouplingUMesh into MEDFileUMesh
-  ParaMEDMEM::MEDFileUMesh *mm=ParaMEDMEM::MEDFileUMesh::New();
+  MEDCoupling::MEDFileUMesh *mm=MEDCoupling::MEDFileUMesh::New();
   mm->setName("Mesh_1");//name needed to be non empty
   mm->setDescription("Description Mesh_1");
   mm->setCoords(mesh1->getCoords());
@@ -373,15 +373,15 @@ void MeshExtended::print_med(int Level, std::string filename) {
 
 
   int n_vol_group=vol_group_elements.size();
-  std::vector<const ParaMEDMEM::DataArrayInt *> gr_vol(n_vol_group);
-  ParaMEDMEM::DataArrayInt **g_vol=new ParaMEDMEM::DataArrayInt *[n_vol_group];
+  std::vector<const MEDCoupling::DataArrayInt *> gr_vol(n_vol_group);
+  MEDCoupling::DataArrayInt **g_vol=new MEDCoupling::DataArrayInt *[n_vol_group];
 
   int js=0;
   // defining the vol group data to store
   std::map<int,std::vector<int> >::iterator it_vol;
   for(it_vol=vol_group_elements.begin(); it_vol!=vol_group_elements.end(); ++it_vol) {
     int igroup=it_vol->first;  int is=it_vol->second.size();
-    g_vol[js]=ParaMEDMEM::DataArrayInt::New();
+    g_vol[js]=MEDCoupling::DataArrayInt::New();
     g_vol[js]->alloc(is,1);
     std::ostringstream name_p; name_p<< igroup;
     g_vol[js]->setName(name_p.str().c_str());
@@ -406,8 +406,8 @@ void MeshExtended::print_med(int Level, std::string filename) {
   }
   int n_bd_group=bd_group_elements.size();
   // group vector
-  std::vector<const ParaMEDMEM::DataArrayInt *> gr_bd(n_bd_group);
-  ParaMEDMEM::DataArrayInt **g_bd=new ParaMEDMEM::DataArrayInt *[n_bd_group];
+  std::vector<const MEDCoupling::DataArrayInt *> gr_bd(n_bd_group);
+  MEDCoupling::DataArrayInt **g_bd=new MEDCoupling::DataArrayInt *[n_bd_group];
 
   js=0;
   // defining the  group data to store
@@ -415,7 +415,7 @@ void MeshExtended::print_med(int Level, std::string filename) {
   for(it=bd_group_elements.begin(); it!=bd_group_elements.end(); ++it) {
     int igroup=it->first;  int is=it->second.size();
 //     std::cout << igroup << "\n";
-    g_bd[js]=ParaMEDMEM::DataArrayInt::New();
+    g_bd[js]=MEDCoupling::DataArrayInt::New();
     g_bd[js]->alloc(is,1);
     std::ostringstream name_p; name_p<< igroup;
     g_bd[js]->setName(name_p.str().c_str());

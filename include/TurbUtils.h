@@ -5,7 +5,7 @@
 #define __TurbUtils__
 
 
-namespace ParaMEDMEM {
+namespace MEDCoupling {
 class MEDCouplingUMesh;
 class MEDCouplingFieldDouble;
 }
@@ -76,18 +76,18 @@ public:
   int    _YapCorr, _Durbin, _Park;
   bool   _IsWallDistSet = false;
   
-  std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _NodeWallDist;
-  std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _NodeMap;
-  std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _MuTurbField;
-  std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _AlphaTurbField;
+  std::vector<MEDCoupling::MEDCouplingFieldDouble *> _NodeWallDist;
+  std::vector<MEDCoupling::MEDCouplingFieldDouble *> _NodeMap;
+  std::vector<MEDCoupling::MEDCouplingFieldDouble *> _MuTurbField;
+  std::vector<MEDCoupling::MEDCouplingFieldDouble *> _AlphaTurbField;
   
 
-  inline void SetNodeWallDist(ParaMEDMEM::MEDCouplingFieldDouble * NodeWallDist) {_NodeWallDist.push_back(NodeWallDist);};
-  inline ParaMEDMEM::MEDCouplingFieldDouble * GetMuTurbField(int Level){return _MuTurbField[Level];};
+  inline void SetNodeWallDist(MEDCoupling::MEDCouplingFieldDouble * NodeWallDist) {_NodeWallDist.push_back(NodeWallDist);};
+  inline MEDCoupling::MEDCouplingFieldDouble * GetMuTurbField(int Level){return _MuTurbField[Level];};
   
-  void SetMuTurbFieldAtLevel(int Level, ParaMEDMEM::MEDCouplingFieldDouble * MuTurb);
-  void SetAlphaTurbFieldAtLevel(int Level, ParaMEDMEM::MEDCouplingFieldDouble * AlphaTurb);
-  void SetWallDistAtLevel(int Level, ParaMEDMEM::MEDCouplingFieldDouble * WallDist);
+  void SetMuTurbFieldAtLevel(int Level, MEDCoupling::MEDCouplingFieldDouble * MuTurb);
+  void SetAlphaTurbFieldAtLevel(int Level, MEDCoupling::MEDCouplingFieldDouble * AlphaTurb);
+  void SetWallDistAtLevel(int Level, MEDCoupling::MEDCouplingFieldDouble * WallDist);
   
   std::map<std::string,std::string> _FileMap;    /// String map containing Tproperties.in parameters
   
@@ -131,12 +131,12 @@ public:
   TurbUtils( double wall_dist, double TurbModel[], double nu, double alpha = 1.e-4);
   TurbUtils(int proc,
             int levels,
-            std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
+            std::vector<MEDCoupling::MEDCouplingFieldDouble *>NodeMap,
             bool DynTurb, 
             bool TherTurb);
   TurbUtils ( int proc,
             int levels,
-            std::vector<ParaMEDMEM::MEDCouplingFieldDouble *>NodeMap,
+            std::vector<MEDCoupling::MEDCouplingFieldDouble *>NodeMap,
             bool DynTurb,
             bool TherTurb,
 	        int MeshID);
@@ -150,8 +150,8 @@ public:
 		    double dist,
 		   double vel_sp = 1.);
   void CalcMuTurb(
-    ParaMEDMEM::MEDCouplingFieldDouble * FirstDynVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * SecDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * FirstDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * SecDynVar,
     int Level
   );
   void CalcDynTurSourceAndDiss(double KappaAndOmega[],
@@ -167,10 +167,10 @@ public:
 		       double dist);
   
   void CalcAlphaTurb(
-    ParaMEDMEM::MEDCouplingFieldDouble * FirstDynVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * SecDynVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * FirstThermVar,
-    ParaMEDMEM::MEDCouplingFieldDouble * SecThermVar,
+    MEDCoupling::MEDCouplingFieldDouble * FirstDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * SecDynVar,
+    MEDCoupling::MEDCouplingFieldDouble * FirstThermVar,
+    MEDCoupling::MEDCouplingFieldDouble * SecThermVar,
     int Level);  
   
   void CalcThermTurSourceAndDiss(double KappaAndOmega[], 
@@ -224,7 +224,7 @@ public:
   void GetLevelElemAlphaTurb(int iel, int level, double AlphaTurb[]);
   void GetLevelElemNodeWallDist(int iel, int level, double NodeWallDist[]);
   
-  ParaMEDMEM::MEDCouplingFieldDouble * BuildInitTurbField(int TurbVar);
+  MEDCoupling::MEDCouplingFieldDouble * BuildInitTurbField(int TurbVar);
 };
 
 

@@ -5,7 +5,7 @@
 #include "Solverlib_conf.h"
 
 #ifdef HAVE_MED
-namespace ParaMEDMEM
+namespace MEDCoupling
 {
   class MEDCouplingUMesh;
   class MEDCouplingFieldDouble;
@@ -54,7 +54,7 @@ protected:
   MeshExtended *_mg_mesh;	// FEMus-mesh
   
 #ifdef HAVE_MED
-  ParaMEDMEM::MEDCouplingUMesh *         _med_mesh;     // Med-mesh
+  MEDCoupling::MEDCouplingUMesh *         _med_mesh;     // Med-mesh
 #endif  
   
   bool _MgMeshInitialized = false;
@@ -62,9 +62,6 @@ protected:
   EquationSystemsExtendedM *_mg_equations_map;	// system
   bool _MgEquationMapInitialized = false;
 
-// #ifdef HAVE_MED
-//     ParaMEDMEM::MEDCouplingUMesh * _med_mesh;	// Med-mesh
-// #endif
 
   // PUBLIC VARIABLES ===================================================================
 public:
@@ -85,9 +82,9 @@ public:
 
 #ifdef HAVE_MED
   //! MED field containing node interpolated wall distance
-    std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _NodeWallDist;
+    std::vector<MEDCoupling::MEDCouplingFieldDouble *> _NodeWallDist;
   //! MED field containing node numbering map between med local parallel mesh and med global mesh
-    std::vector<ParaMEDMEM::MEDCouplingFieldDouble *> _NodeMap;
+    std::vector<MEDCoupling::MEDCouplingFieldDouble *> _NodeMap;
 #endif
  #ifdef  TWO_PHASE_LIB 
 void set_mgcc(MGSolCC & cc);
@@ -254,10 +251,10 @@ void set_mgcc(MGSolCC & cc);
   void setMedMesh ( );
   
   //! This function returns the Med-Mesh
-  const ParaMEDMEM::MEDCouplingUMesh & getMedMesh () {return *_med_mesh;};
+  const MEDCoupling::MEDCouplingUMesh & getMedMesh () {return *_med_mesh;};
   
   //! Function getting node interpolated wall distance
-  inline ParaMEDMEM::MEDCouplingFieldDouble * GetWallDistField (int Level)
+  inline MEDCoupling::MEDCouplingFieldDouble * GetWallDistField (int Level)
   {
     MyAssert (_NodeWallDist.size() != 0,
 	      "FEMUS::GetWallDistField NodeWallDist not calculated yet! ");
@@ -266,8 +263,8 @@ void set_mgcc(MGSolCC & cc);
 
   //! Function for setting a MED field as external source field in <systemName> equation solver
   void setExtField (const std::string & systemName,
-		    ParaMEDMEM::MEDCouplingFieldDouble * bcField);
-  ParaMEDMEM::MEDCouplingFieldDouble * GetExtField (const std::string & systemName);
+		    MEDCoupling::MEDCouplingFieldDouble * bcField);
+  MEDCoupling::MEDCouplingFieldDouble * GetExtField (const std::string & systemName);
 //=============================================================================
 //   FUNCTIONS RELATED TO INTERFACE CREATION AND UPDATE
 //=============================================================================
@@ -294,8 +291,8 @@ void set_mgcc(MGSolCC & cc);
    */
   void init_interface (const int interface_name,                        /**< Interface name */
 		       int order_cmp,                                   /**< Order (piecewise, linear, quadratic) */
-		       ParaMEDMEM::MEDCouplingUMesh * InterfaceMesh,    /**< MED interface mesh */
-		       ParaMEDMEM::DataArrayDouble * MEDToMgMapArray,   /**< Array containing the map between MED and MG numeration */
+		       MEDCoupling::MEDCouplingUMesh * InterfaceMesh,    /**< MED interface mesh */
+		       MEDCoupling::DataArrayDouble * MEDToMgMapArray,   /**< Array containing the map between MED and MG numeration */
 		       int interface_id = 0                             /**< Default interface_id */
 		      );
   
@@ -305,7 +302,7 @@ void set_mgcc(MGSolCC & cc);
     
   void update_interface (const int interface_name,	                                        /**< Interface name */
 			 int n_cmp,	                                                        /**< Number of components of displacement field */
-			 const std::vector < ParaMEDMEM::MEDCouplingFieldDouble * >&srcField	/**< Vector containing displacement MED field */
+			 const std::vector < MEDCoupling::MEDCouplingFieldDouble * >&srcField	/**< Vector containing displacement MED field */
                         );
 
   //! This function sets the value from first_cmp to end_cmp of the field on the old solution x_old of the interface id. From Interface to System solution
@@ -324,28 +321,28 @@ void set_mgcc(MGSolCC & cc);
   //! This function sets the field of interface function (interface_id)
   void setFieldSource (int interface_name,                                    /**< Interface name */
 		       int n_cmp,                                             /**< Number of components of displacement field */
-		       const ParaMEDMEM::MEDCouplingFieldDouble * srcField    /**< MED field to set */
+		       const MEDCoupling::MEDCouplingFieldDouble * srcField    /**< MED field to set */
 		      );  
 
   //! This function gets all the values on boundary with identity id
-  ParaMEDMEM::MEDCouplingFieldDouble * getValuesOnBoundary (int interface_name,	                ///< boundary name (char*) (in)
+  MEDCoupling::MEDCouplingFieldDouble * getValuesOnBoundary (int interface_name,	                ///< boundary name (char*) (in)
 							    const std::string & systemName,	///< system name           (in)
 							    int n_cmp,	                        ///< component             (in)
 							    int first_cmp = 0	                ///< component             (in)
                                                            );
 
-  ParaMEDMEM::MEDCouplingFieldDouble * getProcSolution (const std::string & system_name,	///< system name             (in)
+  MEDCoupling::MEDCouplingFieldDouble * getProcSolution (const std::string & system_name,	///< system name             (in)
 							int n_cmp,	                        ///<  first variable         (in)
 							int first_cmp = 0,	                ///< n variables             (in)
                             int Level = 0);
 
-  void getNodeMapAndProcMeshAtLevel ( int level, ParaMEDMEM::MEDCouplingUMesh *&FemusPar, ParaMEDMEM::MEDCouplingFieldDouble *&NodeMap );
+  void getNodeMapAndProcMeshAtLevel ( int level, MEDCoupling::MEDCouplingUMesh *&FemusPar, MEDCoupling::MEDCouplingFieldDouble *&NodeMap );
   
   //! This function gets actual support of the interface 
-  const ParaMEDMEM::MEDCouplingUMesh * getUMesh (int name);
+  const MEDCoupling::MEDCouplingUMesh * getUMesh (int name);
   
-  //! This routin gets original support of the interface 
-  const ParaMEDMEM::MEDCouplingUMesh * getUMesh_orig (int name);
+  //! This routine gets original support of the interface 
+  const MEDCoupling::MEDCouplingUMesh * getUMesh_orig (int name);
 
   void GetInfo (std::string medfile_name,
 		std::string & mesh_dir,
