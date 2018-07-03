@@ -16,7 +16,8 @@
 #include "parallelM.h"
 #include "petsc_macroM.h"
 
-#include "MGCasts.h"  // TODO #include "utility.h"  
+#include "MGCasts.h"  // TODO 
+#include "utilityM.h"  
 
 //-----------------------------------------------------------------------
 // PetscVector members
@@ -494,7 +495,7 @@ void PetscVectorM::localize(
   int ierr = 0;  const int n = this->size();
   IS is;  VecScatter scatter;
   // Create idx, idx[i] = i;
-  std::vector<int> idx(n); iota(idx.begin(), idx.end(), 0);
+  std::vector<int> idx(n); UtilityM::iota(idx.begin(), idx.end(), 0);
 //   Utility::iota (idx.begin(), idx.end(), 0);
 
   // Create the index set & scatter object
@@ -630,7 +631,7 @@ void PetscVectorM::localize(
     IS is;   VecScatter scatter;
     // Create idx, idx[i] = i+first_local_idx;
     std::vector<int> idx(local_size);
-    iota(idx.begin(), idx.end(), first_local_idx);
+    UtilityM::iota(idx.begin(), idx.end(), first_local_idx);
 //     Utility::iota (idx.begin(), idx.end(), first_local_idx);
 
     // Create the index set & scatter object
@@ -935,7 +936,7 @@ void PetscVectorM::create_subvector(
 
   // Use iota to fill an array with entries [0,1,2,3,4,...rows.size()]
   std::vector<int> idx(rows.size());
-  iota(idx.begin(), idx.end(), 0);
+  UtilityM::iota(idx.begin(), idx.end(), 0);
 //   Utility::iota (idx.begin(), idx.end(), 0);
 
   // Construct index sets

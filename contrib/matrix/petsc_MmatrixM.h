@@ -408,10 +408,10 @@ inline void PetscMMatrixM::swap(PetscMMatrixM &m){
 // ===================================================
 inline void PetscMMatrixM::print_personal(std::ostream& os) const{
   assert (this->initialized());
-#ifndef NDEBUG
-  if (os != std::cout)
-    std::cerr << "Warning! PETSc can only print to std::cout!" << std::endl;
-#endif
+// #ifndef NDEBUG
+//   if (os != std::cout)
+//     std::cerr << "Warning! PETSc can only print to std::cout!" << std::endl;
+// #endif
   int ierr=0;
   ierr = MatView(_mat, PETSC_VIEWER_STDOUT_SELF);
          CHKERRABORT(this->comm().get(),ierr);

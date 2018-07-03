@@ -261,10 +261,10 @@ void PetscMatrixM::print_personal(
 std::ostream& os // pointer stream 
 ) const {// =========================================
   assert(this->initialized()); std::cout << "\n PetscMatrixM::print_personal \n";
-#ifndef NDEBUG
-  if (os != std::cout)
-    std::cerr << "Warning! PETSc can only print to std::cout!" << std::endl;
-#endif
+// #ifndef NDEBUG
+//   if (os != std::cout)
+//     std::cerr << "Warning! PETSc can only print to std::cout!" << std::endl;
+// #endif
   PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_ASCII_MATLAB);
 //   PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_DEFAULT);
   int ierr=0; ierr = MatView(_mat, PETSC_VIEWER_STDOUT_WORLD);
