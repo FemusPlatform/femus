@@ -233,7 +233,7 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
   ActivateScalar("MG_Temperature", T_F, pbName, "T",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Control", CO_F, pbName, "CTRL",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Laplacian", TA_F, pbName, "Lap",n_index, n_equations); // fsi or sm disp
-  ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "T_ad",n_index, n_equations); // fsi or sm disp
+  ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "TA",n_index, n_equations); // fsi or sm disp
   ActivateScalar("MG_DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
   
   
