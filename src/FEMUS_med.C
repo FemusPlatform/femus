@@ -59,8 +59,8 @@ void FEMUS::InitTurbulence() {
 void FEMUS::InitTurbulence(int MeshID) {
     bool DynTurb, TherTurb;
 
-    ( stoi ( _mg_utils->_sim_config["DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
-    ( stoi ( _mg_utils->_sim_config["ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
+    ( stoi ( _mg_utils->_sim_config["MG_DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
+    ( stoi ( _mg_utils->_sim_config["MG_ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
 
 //      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
 
@@ -459,9 +459,9 @@ void FEMUS::setMedMesh ( ) {
         FemusPar->decrRef();
         FemusPart->decrRef();
         NodeArray->decrRef();
-        CellField->decrRef();
-        FinerLevelIDS->decrRef();
-        ProcField->decrRef();
+//         CellField->decrRef();
+//         FinerLevelIDS->decrRef();
+//         ProcField->decrRef();
         CellId  = NULL;
         MgCellId = NULL;
         CellIdProc.clear();
