@@ -97,22 +97,25 @@ public:
   
   
     void set_uooold(
-    const int& flag,               ///< initial time iteration          (in)
+    const int   & flag,                   ///< initial time iteration          (in)
     const double&  toll,                  ///< running time                    (in)
     const double&  time,                  ///< running time                    (in)
-    const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-  const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    const int   & eq_min,                 ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int   & eq_max                  ///< eq max to solve -> enum  FIELDS (equations_conf.h)
   );
  
   
   // ========================================================================================
   /// This function does one step of control solution
   void transient_control_onestep(
-    const int  & t_in,                 ///< initial time iteration      (in)
+    const int  &nmax_step,             ///< number max of steps         (in)
+    const int  & it  ,                 ///< iteration                   (in)
     const int  & t_step,               ///< running time iteration      (in)
     const int  & print_step,           ///< print every                 (in)
     double     &  time,                ///< running time                (in)
-    double     &  dt                   ///< step time                   (in) 
+    double     &  dt,                  ///< step time                   (in) 
+    const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
   );
    // ========================================================================================
   /// This function  prints a file time.****.xmf in RESU

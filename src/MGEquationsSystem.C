@@ -181,7 +181,75 @@ void MGEquationsSystem::set_uooold(
   return;
 }
 
+// =================================================================
+// ==========================================================================================
+/// This function performes all the MGSystem time step routines for control problem
+void MGEquationsSystem::eqnmap_timestep_loop_control(
+   const int     &nmax_step,  ///< number max of steps
+   const double  &it,  ///< tolerance
+   const double  delta_t_step_in,  //   (in)  
+   const int     &eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+   const int     &eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+) {
 
+    // Loop for time steps
+  int NoLevels=0;
+  double norm_new=1.e-20; double norm_old=1.e-20; double diff_norm=1.e-20;
+  double diff_norm_old=10000.; double toll=1.e-5;
+ 
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+    MGSolBase* mgsol = eqn->second;
+   
+    if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
+      NoLevels=mgsol->_NoLevels;
+      if (_num_equations[eqn->first]==0) norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();
+//       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+    }
+  }
+  double time_step =delta_t_step_in;
+  double time=time_step*it;
+
+  for(int istep=1; istep<= nmax_step; istep++) {
+    //;*(istep);
+    std::cout<<"\n  *** Solving steady iteration n ="<<istep<<" ** Time= "<<time<< " ***"<< std::endl;
+
+
+    // equation loop -----------------------------------------------------------------------
+    norm_new=1.e-20;
+    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+      MGSolBase* mgsol = eqn->second;
+        if(_num_equations[eqn->first] >=eq_min && _num_equations[eqn->first] <= eq_max ) {
+         NoLevels=mgsol->_NoLevels;
+        mgsol -> MGTimeStep(time,delta_t_step_in);
+        if (_num_equations[eqn->first]==0) norm_new += mgsol ->x_old[NoLevels-1]->l2_norm();
+      }
+    }
+    diff_norm=fabs(norm_old-norm_new);
+    // ---------------------------------------------------------------------------------------
+    std::cout<<"\n step "<<istep <<": old norm="<< norm_old<< "; new norm="<< norm_new<<
+    "; err  ="<<  diff_norm/(norm_new)    << std::endl;
+    if(diff_norm/norm_old < toll) {  // diff_norm/norm_old < toll
+      std::cout<<"*** Steady state found on  n ="<<istep<<" ** Time step= "<<time<< " ***"<< std::endl;
+      break;
+    } else {            //   diff_norm/norm_old > toll
+      std::cout<<"\n  *** Steady state NOT found: relative norm difference is " << diff_norm/norm_old;
+      if (norm_new>1.e+8){ 
+          std::cout<<"\n  *** Steady state NOT found ABORTING and reducing control "<<endl;
+          break;
+      }
+//       if(diff_norm< diff_norm_old) {  // diff_norm< diff_norm_old -> step ok ----------------------
+//         time_step  *=1.25;   std::cout<<", increasing  step to  "<< time_step<<std::endl;
+//       } // --------------
+//       else {
+//         time_step  *=0.95; std::cout<<", reduce step  to  "<< time_step << std::endl;
+//       }
+      diff_norm_old= diff_norm;  norm_old =norm_new;
+      time += time_step;
+
+    } // end else  diff_norm/norm_old < toll
+  }
+  return;
+}
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::eqnmap_timestep_loop(

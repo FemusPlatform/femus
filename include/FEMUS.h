@@ -201,11 +201,14 @@ void set_mgcc(MGSolCC & cc);
     );
 
   //! This function solves one step  for transient problems
-  void solve_control_onestep (const int &t_in,	        ///< initial time iteration
+  void solve_control_onestep (const int &nmax_step,     ///< number max of steps         (in)
+                              const int &it,	        ///< iteration
 			      const int &t_step,	///< actual time iteration
 			      const int &print_step,	///< print every
-			      double &time,	        ///< actual time
-			      double &dt	        ///< step time
+			      double    &time,	        ///< actual time
+			      double    &dt,	        ///< step time
+                              const int &eq_min,        ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+                              const int &eq_max         ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
     );
 
   //! This function write solution to/from x_ooold vector

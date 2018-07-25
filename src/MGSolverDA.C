@@ -233,6 +233,7 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
     ActivateScalar("MG_Temperature", T_F, pbName, "T",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Control", CO_F, pbName, "CTRL",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Laplacian", TA_F, pbName, "Lap",n_index, n_equations); // fsi or sm disp
+<<<<<<< HEAD
     ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "T_ad",n_index, n_equations); // fsi or sm disp
     ActivateScalar("MG_DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
 
@@ -242,6 +243,17 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
     ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
     ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
 
+=======
+  ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "TA",n_index, n_equations); // fsi or sm disp
+  ActivateScalar("MG_DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
+  
+  
+  ActivateCoupled("MG_ColorFunction", CO_F, pbName, "C", "CK",n_index, n_equations);
+  ActivateCoupled("MG_DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
+  ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
+  ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
+  
+>>>>>>> 63e6f8d7e1a2503ae7863f41b756a70375cb3123
 /// c) Print
 // #ifdef PRINT_INFO // ====================================================
 //   std::cout<< "\n ========================== \n"<<

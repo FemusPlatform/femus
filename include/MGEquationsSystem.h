@@ -99,7 +99,19 @@ void  set_mgcc(MGSolCC  & cc);
       const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
       const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
   );
-  void eqnmap_timestep_loop_control(const double time, const int delta_t_step_in);
+  
+  void eqnmap_timestep_loop_control(  
+   const int    & nmax_step,  ///< number max of steps
+   const double & it,
+   const double delta_t_step_in,  //   (in)  
+   const int    & eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+   const int    &  eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+      );
+  
+void eqnmap_timestep_loop_control(  // old function!!! Here only for compatibility
+  const double time,             // real time
+  const int delta_t_step_in     // integer time
+); 
   
     void eqnmap_timestep_loop_and_update(
       const double time, 

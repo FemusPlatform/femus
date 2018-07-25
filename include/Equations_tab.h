@@ -60,6 +60,7 @@
     MG_ColorFunction=20,
     MG_Laplacian=20,
     CO_F   =20,    // [16]-> Color function for FSI equations
+    MG_ControlTemperature=21,
     CTRL_F  =21,    // [16]-> Color function for FSI equations
     CTRLX_F  =21,    // [16]-> Color function for FSI equations
     CTRLY_F  =22,    // [16]-> Color function for FSI equations
@@ -128,6 +129,7 @@
     _map_str2field["MG_ColorFunction"]=CO_F;
     _map_str2field["MG_Laplacian"]=CO_F;
     _map_str2field["CO_F"]   =CO_F;    // [16]-> Color function for FSI equations
+    _map_str2field["MG_ControlTemperature"]=CTRL_F;
     _map_str2field["CTRL_F"]  =CTRL_F;    // [16]-> Color function for FSI equations
     _map_str2field["CTRLX_F"]  =CTRLX_F;    // [16]-> Color function for FSI equations
     _map_str2field["CTRLY_F"]  =CTRLY_F;    // [16]-> Color function for FSI equations
