@@ -73,8 +73,8 @@ void  MGEquationsSystem::setDofBcOpIc() {
   // Reading operators
   for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
     MGSolBase* mgsol = eqn->second;// get the pointer
-    mgsol -> MGDofBcOp();          // init dof, GenBc, ReadOperators
-    mgsol -> GenIc();              // initial solution
+     mgsol -> MGDofBcOp();          // init dof, GenBc, ReadOperators
+     mgsol -> GenIc();              // initial solution
   }
   return;
 }

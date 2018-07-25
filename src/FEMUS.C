@@ -113,10 +113,13 @@ void FEMUS::init_fem (
 }
 // ============================================================================
 // This function is the destructor
-FEMUS::~FEMUS() {
-    // ==========================================================================
-//   delete _start;
-    delete _mg_time_loop;delete _start;
+FEMUS::~FEMUS() {// ==========================================================================
+
+// DO NOT TOUCH ================
+    delete _mg_time_loop; 
+    delete _start;
+//==============================
+
 //   delete _mg_equations_map;
 //   delete _mg_utils;
 //   delete _mg_mesh;

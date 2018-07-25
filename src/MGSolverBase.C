@@ -639,7 +639,7 @@ double  MGSolBase::MGFunctional (
   void MGSolBase::set_ctrl_dom(
     const double xMin,const double xMax,
     const double yMin,const double yMax,
-    const double /*zMin*/,const double /*zMax*/
+    const double zMin,const double zMax
   ){
     int    el_conn[NDOF_FEM];
     double x_m[DIMENSION];
