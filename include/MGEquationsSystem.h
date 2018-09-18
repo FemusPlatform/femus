@@ -79,6 +79,11 @@ void  set_mgcc(MGSolCC  & cc);
      const double zMin,
      const double zMax
 );
+  ///This function returns a value from the systems
+  double GetValue(const int & ff,int flag);
+  ///This function sets a value in the systems
+  void SetValue(const int & ff,double value);
+  
   void eqnmap_steady_loop( 
    const int & nmax_step,  ///< number max of steps
   const double & toll,  ///< tolerance

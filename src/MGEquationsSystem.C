@@ -306,7 +306,30 @@ void MGEquationsSystem::eqnmap_ctrl_domain(
   return;
 }
 
-
+// ==========================================================================================
+/// This function returns a value from the systems
+double MGEquationsSystem::GetValue(const int & ff,int flag) {
+  // loop for time steps
+  double val;
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+    MGSolBase* mgsol = eqn->second;
+    if(_num_equations[eqn->first] == ff) 
+        val=mgsol->GetValue(flag);
+  }
+  return val;
+}
+// ==========================================================================================
+/// This function returns a value from the systems
+void MGEquationsSystem::SetValue(const int & ff,double value) {
+  // loop for time steps
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+    MGSolBase* mgsol = eqn->second;
+    if(_num_equations[eqn->first] == ff) 
+      mgsol->SetValue(value);
+  }
+  return;
+}
+// ==========================================================================================
 /// This function prints xdmf and hdf5 file
 void MGEquationsSystem::print_soln(const int t_step // time step
                                   ) {

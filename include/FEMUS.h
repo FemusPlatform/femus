@@ -359,7 +359,9 @@ void set_mgcc(MGSolCC & cc);
   void InitTurbulence ();
   void InitTurbulence ( int MeshID );
   void CalcTurbulence ();
-
+  
+  double GetValue(const int & ff,int flag);
+  void   SetValue(const int & ff,double value);
 #endif
 
 };

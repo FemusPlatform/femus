@@ -414,7 +414,10 @@ virtual void set_xooold2x()=0;
     // -----------------------------------------------------------
   virtual  void  set_dt(double dt);                ///< MG time step solver (backward Euler)
   // -----------------------------------------------------------
-  
+  virtual  double  GetValue(int flag);                ///< This function returns a value from the solvers
+  // -----------------------------------------------------------
+  virtual  void  SetValue(double value);                ///< This function sets a value in the solvers
+  // -----------------------------------------------------------
   virtual  double  MGFunctional(  
     double parameter,			/// Use of the function: (0) compute functional OR (1) set _eta           
     double & control /// \param[in] <>  eta multiplier for optimal method 

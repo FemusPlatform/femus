@@ -163,6 +163,16 @@ void FEMUS::setCtrlDomain(
   _mg_equations_map->eqnmap_ctrl_domain(xMin,xMax,yMin,yMax,zMin,zMax);
   return;
 }
+//=============================================================================
+/// This function returns a value from the systems
+double FEMUS::GetValue(const int  & ff,int flag){
+    _mg_equations_map->GetValue(ff,flag);
+}
+//=============================================================================
+/// This function sets a value in the systems
+void FEMUS::SetValue(const int  & ff,double value){
+    _mg_equations_map->SetValue(ff,value);
+}
 // // // =============================================================================
 // // // This function sets the type of problem
 void FEMUS::setSystem (

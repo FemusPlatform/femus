@@ -673,6 +673,10 @@ double  MGSolBase::MGFunctional (
 /// This function change current dt
 /// ======================================================
 
+double MGSolBase::GetValue (int flag) {}
+
+void   MGSolBase::SetValue (double value) {}
+
 void   MGSolBase::set_dt (double /*dt*/) {}
 
 double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diffusivity, int Dim, int NbOfNodes) {
