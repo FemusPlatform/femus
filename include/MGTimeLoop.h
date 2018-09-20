@@ -79,11 +79,24 @@ public:
     const int  & t_step,               ///< running time iteration      (in)
     const int  & print_step,           ///< print every                 (in)
     double     &  time,                ///< running time                (in)
-    double     &  dt,                   ///< step time                   (in)
+    double     &  dt,                  ///< step time                   (in)
     const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
   const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
   );  
    // ========================================================================================
+  /// This function runs an iterative time step (e.g. for implicit B.C.)
+  void transient_onestep_iterative(
+    const int  & t_in,                 ///< initial time iteration      (in)
+    const int  & t_step,               ///< running time iteration      (in)
+    const int  & print_step,           ///< print every                 (in)
+    double     &  time,                ///< running time                (in)
+    double     &  dt,                  ///< step time                   (in) 
+    const int  & eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int  & eq_max,               ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    double     & toll,                 ///< convergence criterion 
+    const int  & iter_rob              ///< max sub-iteration for each timestep
+    );
+  // ========================================================================================
   /// This function runs  a time step
   void steady(
        const int & nmax_step,  ///< number max of steps

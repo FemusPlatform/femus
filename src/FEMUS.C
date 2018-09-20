@@ -308,6 +308,21 @@ void FEMUS::solve_and_update ( const int &t_in,         ///< initial time iterat
     return;
 }
 
+void FEMUS::solve_onestep_iterative (
+    const int   & t_in,                 ///< initial time iteration
+    const int   & t_step,               ///< actual time iteration
+    const int   & print_step,           ///< print every
+    double      & time,                 ///< actual time
+    double      & dt,                   ///< step time
+    const int   & eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int   & eq_max ,              ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    double      & toll,                 ///< convergence criterion 
+    const int   & iter_rob              ///< max sub-iteration for each timestep
+) { // ========================================================================
+    _mg_time_loop->transient_onestep_iterative ( t_in,t_step,print_step,time,dt,eq_min,eq_max,toll,iter_rob ); ///< step time
+    return;
+}
+
 
 // This function solves one step  for transient problems
 void  FEMUS::solve_steady (

@@ -289,6 +289,74 @@ void MGEquationsSystem::eqnmap_timestep_loop_and_update(
   return;
 }
 // ==========================================================================================
+/// This function performes all the MGSystem time step routines until a convergence criterion is satisfied 
+/// for each timestep (e.g. for implicit Robin BC in FSI)
+void MGEquationsSystem::eqnmap_timestep_loop_iterative(
+  const double time,             // real time
+  const int delta_t_step_in,     // integer time
+  const int  & eq_min,           ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+  const int  & eq_max,           ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+  double    toll,                ///< convergence criterion 
+  const int iter_rob             ///< max sub-iteration for each timestep 
+) {                        
+  int NoLevels=0;
+  double norm_u_new=1.e-20; double norm_u_old=1.e-20; double diff_norm_u=1.e-20;
+  double norm_disp_new=1.e-20; double norm_disp_old=1.e-20; double diff_norm_disp=1.e-20;
+  double diff_norm_old=10000.;
+ 
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+    MGSolBase* mgsol = eqn->second;
+   
+    if(_num_equations[eqn->first] >=eq_min && _num_equations[eqn->first] <= 4 ) {
+      NoLevels=mgsol->_NoLevels;
+      norm_u_old += mgsol ->x_old[NoLevels-1]->l2_norm();
+    }
+     if(_num_equations[eqn->first] >=5 && _num_equations[eqn->first] <= eq_max ) {
+      NoLevels=mgsol->_NoLevels;
+      norm_disp_old += mgsol ->x_old[NoLevels-1]->l2_norm();
+    }
+  }
+  double time_step =delta_t_step_in;
+
+  for(int kstep=1; kstep<= iter_rob; kstep++) {
+    norm_u_new=1.e-20;
+    norm_disp_new=1.e-20;
+    // equation loop -----------------------------------------------------------------------
+    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+      MGSolBase* mgsol = eqn->second;
+         if(_num_equations[eqn->first] >=eq_min && _num_equations[eqn->first] <= 4 ) {
+           NoLevels=mgsol->_NoLevels;
+//            mgsol ->set_dt(time_step);
+           mgsol -> MGTimeStep(time,delta_t_step_in);
+           norm_u_new += mgsol ->x_old[NoLevels-1]->l2_norm();
+         } 
+         if(_num_equations[eqn->first] >=5 && _num_equations[eqn->first] <= eq_max ) {
+           NoLevels=mgsol->_NoLevels;
+//            mgsol ->set_dt(time_step);
+           mgsol -> MGTimeStep(time,delta_t_step_in);
+           norm_disp_new += mgsol->x_old[NoLevels-1]->l2_norm();
+         }  
+    }
+    diff_norm_u = fabs(norm_u_old-norm_u_new);
+    diff_norm_disp = fabs(norm_disp_old-norm_disp_new);
+    
+    std::cout<<"\n sub-iteration "<<kstep <<": old norm u="<< norm_u_old<< "; new norm u="<< norm_u_new<<
+    "; err u ="<<  diff_norm_u/(norm_u_new)    << std::endl;
+    std::cout<<"\n sub-iteration "<<kstep <<": old norm disp="<< norm_disp_old<< "; new norm disp="<< norm_disp_new<<
+    "; err disp ="<<  diff_norm_disp/(norm_disp_new)  << std::endl;
+    
+    if(diff_norm_u/norm_u_old < toll && diff_norm_disp/norm_disp_old < toll) {  // edit to set the convergence criterion 
+      std::cout<<"\n ****** Convergence of implicit Robin scheme reached in k ="<<kstep<<" ** Time step= "<<time_step<< " ******"<< std::endl << std::endl;
+      break;
+    } else {           
+      norm_u_old =norm_u_new;
+      norm_disp_old =norm_disp_new;
+      } 
+  }
+  return;
+}
+
+// ==========================================================================================
 /// This function sets the controlled domain
 void MGEquationsSystem::eqnmap_ctrl_domain(
      const double xMin,
