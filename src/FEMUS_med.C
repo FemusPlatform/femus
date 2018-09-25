@@ -349,6 +349,8 @@ void FEMUS::init_interface (
     fun->set_NumberOfNodes ( NODI );
 
     _mg_equations_map->add_interface_fun ( interface_name, fun );
+    delete [] map_med; 
+    delete [] map_mg; 
     MapArray = NULL;
     MedToMg.clear();
     return;

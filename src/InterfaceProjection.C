@@ -1105,6 +1105,9 @@ void BoundInterp::FillParameters (
     }
 
     delete [] PointsCoords;
+    CellBelonging->decrRef(); 
+    targetArray->decrRef(); 
+    DDA->decrRef(); 
 //     delete [] nodalConnPerCell;
 //   delete [] TCbbox;
 #endif

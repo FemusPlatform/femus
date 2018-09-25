@@ -145,6 +145,7 @@ void MGSolBase::clear (
     delete res[Level];             //  old solutions  at Level
     delete x_old[Level];
     delete x_oold[Level];
+    delete x_ooold[Level];
     delete x_nonl[Level];    //  rhs and residual vector
     delete disp[Level];
     delete disp_old[Level];
