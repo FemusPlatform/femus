@@ -79,7 +79,9 @@ void MeshExtended::read_bc_id(int Level) {
 
   // reading
   status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&_bc_id[0]);
-
+  H5Sclose(filespace); 
+  H5Dclose(dtset); 
+  H5Fclose(file_id); 
 
   //   int ielemn=0;
   for(int iproc=0; iproc<_n_subdom; iproc++) {
@@ -127,7 +129,9 @@ void MeshExtended::read_mat_id(int Level) {
 
   // reading
   status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&_mat_id[0]);
-
+  H5Sclose(filespace); 
+  H5Dclose(dtset); 
+  H5Fclose(file_id); 
   return;
 }
 

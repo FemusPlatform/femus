@@ -445,6 +445,8 @@ void MGSolDA::GenIc() {
             assert((int)dims[0]==offset);
             status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&face_id_vect[0]);
         }
+        H5Dclose(dtset); 
+        H5Sclose(filespace); 
         // Reading  mat_id ********************************************************
         // mat id vector
         int *mat_id_vect=new int [ntot_elements]; for(int i=0; i<ntot_elements; i++)  mat_id_vect[i]=1;
@@ -466,7 +468,9 @@ void MGSolDA::GenIc() {
             status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,
                            H5P_DEFAULT,&mat_id_vect[0]);
         }  // end else
-
+        H5Sclose(filespace); 
+        H5Dclose(dtset); 
+        H5Fclose(file_id); 
 //  end Reading  mat_id ******************************************************
 
         for(int pr=0; pr <_mgmesh._iproc; pr++) {
@@ -600,8 +604,8 @@ void MGSolDA::GenBc(
         status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&mat_id_vect[0]);
     }  // end reading ---------------------------------------------------------
     // clean --------------------------------------------------------------------
-    H5Dclose(dtset);
     H5Sclose(filespace);
+    H5Dclose(dtset);
     H5Fclose(file_id);
     // *************************************************************************
     /// C  reading bc from function --> bc_read

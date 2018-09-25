@@ -269,6 +269,7 @@ void SparseMatrixM::read_len_hdf5(const std::string namefile,  // file name
   );
   hid_t status=H5Dread(dataset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,len_row);
   assert(status==0);
+  H5Dclose(dataset);
   // matrix row off entry lengths --------------------------------------------
   name_dst.str("");
   if (mode=="0" || mode=="1" || mode=="2") name_dst <<"OFFLEN0"<< mode;
@@ -281,6 +282,7 @@ void SparseMatrixM::read_len_hdf5(const std::string namefile,  // file name
   );
   status=H5Dread(dataset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,len_off_row);
   assert(status==0);
+  H5Dclose(dataset);
   H5Fclose(file_id);
   return;
 
@@ -302,6 +304,7 @@ void SparseMatrixM::read_pos_hdf5(const std::string namefile,  // file name
     #endif
   );
   H5Dread(dataset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,pos_row);
+  H5Dclose(dataset);
   H5Fclose(file_id);
   return;
 }
@@ -325,6 +328,7 @@ int SparseMatrixM::read_dim_hdf5(const std::string namefile, // file name
   );
   hid_t status=H5Dread(dataset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,ldim);
   assert(status==0);
+  H5Dclose(dataset);
   H5Fclose(file_id);
   return( (int) status);
 }
