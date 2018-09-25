@@ -270,7 +270,7 @@ MGFE::~MGFE (
 /// This function clears the substructures
 void MGFE::clear (
 ) {// ========================
-    for ( int idim=0; idim<_dim; idim++ ) {
+    for ( int idim=0; idim<3; idim++ ) {
         delete []_weight1[idim];       // weight
         delete []_phi_map1[idim];      // shapes at g.p.
         delete []_dphidxez_map1[idim]; // derivatives at g.p.
