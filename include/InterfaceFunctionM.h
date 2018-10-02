@@ -67,6 +67,7 @@ public:
   };
   inline void set_support_med(const MEDCoupling::MEDCouplingUMesh * support){
     _support_med = support;
+    _support_med_orig = support;
   };
   inline void set_NumberOfNodes(const int nodi){
     _n = nodi;

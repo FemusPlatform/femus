@@ -521,6 +521,16 @@ MEDCoupling::MEDCouplingFieldDouble *FEMUS::getValuesOnBoundary (  // field (out
 ) {
     return _mg_equations_map->getValuesOnBoundary_nodes ( interface_name,systemName.c_str(),n_cmp,first_cmp );
 }
+// ============================================================================
+/// This function gets all the values on boundary with identity id
+MEDCoupling::MEDCouplingFieldDouble *FEMUS::getDisplacement (  // field (out)
+    int  interface_name,                     // boundary name (char*) (in)
+    const std::string &systemName,                   // system name           (in)
+    int n_cmp,                                        // component             (in)
+    int first_cmp                                        // component             (in)
+) {
+    return _mg_equations_map->getDisplacement ( interface_name,systemName.c_str(),n_cmp,first_cmp );
+}
 
 
 MEDCoupling::MEDCouplingFieldDouble *FEMUS::getProcSolution (  // field (out)

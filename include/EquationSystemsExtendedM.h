@@ -156,6 +156,12 @@ public:
 								 int n_cmp,	///< [in] Number of components
 								 int first_cmp = 0	///< [in] First component
     );
+  MEDCoupling::MEDCouplingFieldDouble * getDisplacement(
+    int id,
+    const char *system_name,
+    int ncmp,
+    int first_cmp = 0
+  );
 
 
   //! Solution of actual proc

@@ -346,6 +346,12 @@ void set_mgcc(MGSolCC & cc);
 							    int n_cmp,	                        ///< component             (in)
 							    int first_cmp = 0	                ///< component             (in)
                                                            );
+  //! This function gets all the values on boundary with identity id
+  MEDCoupling::MEDCouplingFieldDouble * getDisplacement (int interface_name,	                ///< boundary name (char*) (in)
+							    const std::string & systemName,	///< system name           (in)
+							    int n_cmp,	                        ///< component             (in)
+							    int first_cmp = 0	                ///< component             (in)
+                                                           );  
 
   MEDCoupling::MEDCouplingFieldDouble * getProcSolution (const std::string & system_name,	///< system name             (in)
 							int n_cmp,	                        ///<  first variable         (in)
