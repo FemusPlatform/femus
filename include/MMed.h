@@ -67,6 +67,14 @@ enum method
 enum DomainType
 { Boundary = 0, Volume = 1 };
 
+//! Method for Node to Cell conversion
+/*!
+ * This enumerator defines the criteria for the nodes to cell field conversion
+ * in #GetCellField method.
+ */
+enum ConversionMode
+{ MeanValue = 0, MidPoint = 1 };
+
 /// Class for the interpolation of a solution from a source mesh to a target mesh
 class MMed
 {
@@ -146,7 +154,7 @@ public:
   void IntCoefficients (int rad);
   void FieldNodes (const int NodesPerCell, int &Fcc, int order);
   double GetIntResult (int method);
-  MEDCoupling::MEDCouplingFieldDouble * GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField);
+  MEDCoupling::MEDCouplingFieldDouble * GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int ConversionMode=MeanValue);
   void  InitFe();
   
 // ======================================================================================================================  

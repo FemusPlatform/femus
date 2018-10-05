@@ -652,7 +652,7 @@ MEDCoupling::MEDCouplingFieldDouble *MMed::GetVelocityField(
 
 #endif
 
-MEDCoupling::MEDCouplingFieldDouble* MMed::GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField){
+MEDCoupling::MEDCouplingFieldDouble* MMed::GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int ConversionMode){
   MEDCoupling::MEDCouplingFieldDouble* f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
   const MEDCoupling::MEDCouplingMesh *SourceMesh = SourceField->getMesh();
   f->setMesh(SourceMesh);
@@ -676,7 +676,7 @@ MEDCoupling::MEDCouplingFieldDouble* MMed::GetCellField(const MEDCoupling::MEDCo
  
   MEDCoupling::DataArrayDouble * CellArray = MEDCoupling::DataArrayDouble::New();
   CellArray->alloc(nCells,SourceField->getNumberOfComponents());
-  
+  IntCoefficients(0);
   
   for(int i_cell=0; i_cell<nCells; i_cell++){
     SourceMesh->getNodeIdsOfCell(i_cell,CellConn);
@@ -687,15 +687,22 @@ MEDCoupling::MEDCouplingFieldDouble* MMed::GetCellField(const MEDCoupling::MEDCo
       }
       coord.clear();
     }
-    for(int i_comp=0; i_comp<SourceField->getNumberOfComponents(); i_comp++){
-      for(int i_cnode = 0; i_cnode<nNodesPerCell; i_cnode ++) NodeVar[i_cnode]=SourceField->getIJ(CellConn[i_cnode],i_comp); 
-//       for(int i_cnode = 0; i_cnode<nNodesPerCell; i_cnode ++) NodeVar[i_cnode]=SourceField->getIJ(CellConn[NDOF_FEM-1],i_comp);
-      _INTEGRAL=0.;
-      _AREA=0.;
-      GaussLoop(NodeVar,NodeVel, false, SpaceDim, SpaceDim-MeshDim, 2, 2, 2,nNodesPerCell,PointsCoords,nNodesPerCell);
-      CellArray->setIJ(i_cell,i_comp,_INTEGRAL/_AREA);
-//       CellArray->setIJ(i_cell,i_comp,NodeVar[nNodesPerCell-1]);
+    if (ConversionMode==Mean) {
+      for(int i_comp=0; i_comp<SourceField->getNumberOfComponents(); i_comp++){
+        for(int i_cnode = 0; i_cnode<nNodesPerCell; i_cnode ++) NodeVar[i_cnode]=SourceField->getIJ(CellConn[i_cnode],i_comp); 
+        _INTEGRAL=0.;
+        _AREA=0.;
+        GaussLoop(NodeVar,NodeVel, false, SpaceDim, SpaceDim-MeshDim, 2, 2, 2,nNodesPerCell,PointsCoords,nNodesPerCell);
+        CellArray->setIJ(i_cell,i_comp,_INTEGRAL/_AREA);
+      }
     }
+    else if (ConversionMode==MidPoint) {
+      for(int i_comp=0; i_comp<SourceField->getNumberOfComponents(); i_comp++){
+        double MidPointValue=SourceField->getIJ(CellConn[nNodesPerCell-1],i_comp);
+        CellArray->setIJ(i_cell,i_comp,MidPointValue);
+      }
+    }
+
 //    std::cout<<SourceField->getNumberOfComponents()<<std::endl;
 //     CellArray->setIJ(i_cell,0,0);
     CellConn.clear();
