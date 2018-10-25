@@ -1546,6 +1546,10 @@ void  MGSolDA::set_vector(const int &flag) {
                             value= (*disp_oold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
                             break;
+                        case 11:
+                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            x_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;                            
                             
                         default:
                             cout<<"Incorrect flag number in set_uoold function"<<endl;
