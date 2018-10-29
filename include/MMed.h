@@ -172,7 +172,7 @@ public:
     );
   
   
-  #ifdef USE_FEMUS==1
+  #if USE_FEMUS==1
   void CreateInterfaces (FEMUS * PFemus);
 #endif
 };

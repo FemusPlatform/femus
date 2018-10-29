@@ -139,79 +139,68 @@ void MGUtils::read_par() { // READ PARAMETER FILES AND FILL RELATIVE MAPS ======
 }// END READ_PAR FUNCTION ================================================================
 
 
-void MGUtils::read_temp(const std::string &name_file_in) { // READ PARAMETER FILES AND FILL RELATIVE MAPS ===========================
+// ================================================================================================
+/// This function reads file name parameter  and fill relative maps 
+//  file format:
+//  / ----- start symbol
+//  a      // data to read
+//  #      comment line to skip
+//  b      // data to read
+// / ------ end symbol
+// =================================================================================================
+void MGUtils::read_temp(
+    const std::string &name_file_in    ///< (input) file to read 
+) { // ============================================================================================
 
-
-    std::string string_value; std::string buf=""; // read double, string, dummay
-
-
-    std::ostringstream filename;   
-    filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" << name_file_in;
-    std::ifstream fin;  fin.open(filename.str().c_str()); // stream file
-    buf="";
+    // function setup ***************************************************************************** A
+    std::ostringstream filename;  filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" << name_file_in;
+    std::ifstream           fin;  fin.open(filename.str().c_str()); // stream file
+    std::string          buf="";  
 #ifdef PRINT_INFO
     if(fin.is_open()) {  std::cout << "Init Reading = " << filename.str() <<  std::endl; }
 #endif
+
+    // function body ****************************************************************************** B
     if(fin.is_open()) {  // -------------------------------------------------------------
       while(buf != "/") { fin >> buf; }  // find "/" file start
-      fin >> buf;
-      while(buf != "/") {
-        if(buf == "#") { getline(fin, buf); }  // comment line
-        else {
-          fin >> string_value; set_temp(buf,string_value); 
-        }
-        fin >> buf;// std::cerr <<buf.c_str() << "\n ";
+      fin >> buf;  // fill buf 
+      while(buf != "/") { //  while till to "/ " file end
+          if(buf == "#") { getline(fin, buf); }               // # comment line (skip)
+          else {
+              std::string string_value;  fin >> string_value; // reading parameter
+              set_temp(buf,string_value);               
+        } 
+          fin >> buf;   // fill buf 
       }
     } // --------------------------------------------------------------------------------------
-    else {
+    else {//  no file found
       std::cerr << "MGUtils::read_par: no "<< name_file_in <<" file found" << std::endl;   abort();
     }
+    
+    // function closure *************************************************************************** C
 #ifdef PRINT_INFO
     std::cout << "End Reading file " <<  filename.str() << std::endl;
 #endif   
     fin.close();
   
   return;
-}// END READ_PAR FUNCTION ================================================================
+}// ===============================================================================================
 
 // =================================================
 /// This function reads the file names
 void MGUtils::read(const std::string &name_file_in) {
 
   // read femus dir from shell -----------------------
-  _femus_dir = getenv("FEMUS_DIR");
-  if(_femus_dir == "") {
-    std::cout << " Set FEMUS_DIR in your shell environment" << std::endl;
-    abort();
-  }
-
-  _myapp_name = getenv("FM_MYAPP");
-  if(_myapp_name == "") {
-    std::cout << " Set MYAPP in your shell environment" << std::endl;
-    abort();
-  }
-
+  _femus_dir=getenv("FEMUS_DIR");if(_femus_dir=="") {std::cout <<"$FEMUS_DIR ??"<<std::endl;abort();}
+  _myapp_name=getenv("FM_MYAPP");if(_myapp_name==""){std::cout <<"$MYAPP ??"<<std::endl;abort();}
+ std::ostringstream filename; filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" <<  name_file_in;
 #ifdef PRINT_INFO
   std::cout << " femus_dir is " << _femus_dir << std::endl;
   std::cout << " myapp_name is " << _myapp_name << std::endl;
+  std::cout << "MGUtils::read: " <<  filename.str().c_str() <<" ";
 #endif
 
-  // read param_files -----------------------------
-  std::ostringstream filename;
-//   filename << _femus_dir << "/" << "config/param_files.in";
-
-  filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" <<
-           name_file_in;
-
-//   "/config/param_files.in";
-#ifdef PRINT_INFO
-  std::cout << filename.str().c_str() <<" ";
-#endif
-
-  std::ifstream fin(filename.str().c_str());
-  std::string buf="";
-  std::string value;
-
+  std::ifstream fin(filename.str().c_str());  std::string buf="";  std::string value;
   if(fin.is_open()) {
     while(!fin.eof()) {
       fin >> buf;
@@ -222,7 +211,7 @@ void MGUtils::read(const std::string &name_file_in) {
     std::cerr << " MGFiles::read: "<<name_file_in<<" file not found" << std::endl;
     abort();
   }
-  // cleaning and check
+  // cleaning and check ---------------------------------------------------------------------------
   fin.close();
 //   check_dirs();
 

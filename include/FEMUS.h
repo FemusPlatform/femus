@@ -105,7 +105,7 @@ void set_mgcc(MGSolCC & cc);
 
   inline int IsVelFieldActive(){
     int a=0;
-    if(stoi(_mg_utils->_sim_config["NavierStokes"])!=0 ||  stoi(_mg_utils->_sim_config["FluidStructure"])!=0) a = 1;
+    if(stoi(_mg_utils->_sim_config["MG_NavierStokes"])!=0 ||  stoi(_mg_utils->_sim_config["MG_FluidStructure"])!=0) a = 1;
     return a;
   }
   
