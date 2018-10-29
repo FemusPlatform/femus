@@ -185,11 +185,12 @@ void MGEquationsSystem::set_uooold(
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines for control problem
 void MGEquationsSystem::eqnmap_timestep_loop_control(
-   const int     &nmax_step,  ///< number max of steps
-   const double  &it,  ///< tolerance
+   const int     &nmax_step,       ///< number max of steps
+   const double  &it,              ///< tolerance
    const double  delta_t_step_in,  //   (in)  
-   const int     &eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-   const int     &eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+   const int     &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+   const int     &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+   bool          &converged        ///< check if the solution converged (1->converged)
 ) {
 
     // Loop for time steps
@@ -230,6 +231,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
     "; err  ="<<  diff_norm/(norm_new)    << std::endl;
     if(diff_norm/norm_old < toll) {  // diff_norm/norm_old < toll
       std::cout<<"*** Steady state found on  n ="<<istep<<" ** Time step= "<<time<< " ***"<< std::endl;
+      converged=true;
       break;
     } else {            //   diff_norm/norm_old > toll
       std::cout<<"\n  *** Steady state NOT found: relative norm difference is " << diff_norm/norm_old;

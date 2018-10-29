@@ -221,7 +221,8 @@ void set_mgcc(MGSolCC & cc);
 			      double    &time,	        ///< actual time
 			      double    &dt,	        ///< step time
                               const int &eq_min,        ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-                              const int &eq_max         ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+                              const int &eq_max,        ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+                              bool      &converged      ///< check if the solution converged (1->converged) (out)
     );
 
   //! This function write solution to/from x_ooold vector
