@@ -55,7 +55,7 @@
     TA_F   =17,   // [14]-> Temp adjoint
     MG_AdjointTurbulence =18,
     KA_F   =18,   // [18] + 19 Adjoint turbulence
-    
+    EWA_F  =19,   
     //control
     MG_ColorFunction=20,
     MG_Laplacian=20,
@@ -124,7 +124,7 @@
     _map_str2field["TA_F"]   =TA_F;   // [14]-> Temp adjoint
     _map_str2field["MG_AdjointTurbulence"] =KA_F;
     _map_str2field["KA_F"]   =KA_F;   // [18] + 19 Adjoint turbulence
-
+    _map_str2field["EWA_F"]   =EWA_F;   // [18] + 19 Adjoint turbulence
     //control
     _map_str2field["MG_ColorFunction"]=CO_F;
     _map_str2field["MG_Laplacian"]=CO_F;
