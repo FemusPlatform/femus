@@ -284,24 +284,37 @@ public:
  
     
     void  interp_el_bd_sol (
-        const double uold_b[],     // node values <-
-        const int sur_tpgly[],     //surface nodes topology <-
-        const int el_ndof,     //surface nodes topology <-
+        const double uold_b[],    // node values <-
+        const int sur_tpgly[],    //surface nodes topology <-
+        const int el_ndof,        //surface nodes topology <-
         const int ivar0,          // init variable  <-
         const int nvars,          // # of variables  <-
-        const double phi[],        // shape functions  <-
+        const double phi[],       // shape functions  <-
         const int n_shape,        // # of shape functions  <-
         double uold[]             // interpolated function ->
     )  const;  // =======================================
-
+  
+  
     void  interp_el_gdx (
-        double uold_b[], // node values <-
+        double uold_b[],      // node values <-
         const int ivar0,      // init variable  <-
         const int nvars,      // # of variables  <-
-        const double dphi[],   // derivatives of the shape functions  <-
+        const double dphi[],  // derivatives of the shape functions  <-
         const int n_shape,    // # of shape functions  <-
-        double uold_dx[]       // interpolated derivatives ->
+        double uold_dx[]      // interpolated derivatives ->
     )  const;
+    
+    
+    void  interp_el_bd_gdx(
+        const double uold_b[],     // node values <-
+        const int sur_tpgly[],     //surface nodes topology <-
+        const int el_ndof,         //surface nodes topology <-
+        const int ivar0,           // init variable  <-
+        const int nvars,           // # of variables  <-
+        const double dphi[],       // derivatives of the shape functions  <-
+        const int n_shape,         // # of shape functions  <-
+        double uold_dx[]           // interpolated derivatives ->
+    ) const;  // =======================================
 
 
     void  interp_el_gddx (

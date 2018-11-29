@@ -1290,6 +1290,38 @@ void  MGSolDA::interp_el_bd_sol(
 }
 
 
+
+// =================================================================================
+/// This function interpolates a vector field and its derivative over a boundary
+void  MGSolDA::interp_el_bd_gdx(
+    const double uold_b[],       // node values <-
+    const int sur_tpgly[],     //surface nodes topology <-
+    const int el_ndof,     //surface nodes topology <-
+    const int ivar0,       // init variable  <-
+    const int nvars,       // # of variables  <-
+    const double dphi[],   // derivatives of the shape functions  <-
+    const int n_shape,     // # of shape functions  <-
+    double uold_dx[]       // interpolated derivatives ->
+)  const {  // =================================================================
+    // variable loop
+
+    int dim_b = DIMENSION - 1;
+    for(int ivar=0; ivar<nvars; ivar++) {             // loop over variables (u,v,w,...)
+        for(int jdim=0; jdim< dim_b; jdim++) {
+            uold_dx[ivar*dim_b+jdim]=0.;    // set zero
+        }
+        // interpolation with shape functions
+        for(int eln=0; eln<n_shape; eln++) {
+            for(int jdim=0; jdim<dim_b; jdim++) {     // loop over directions (x,y,z,...)
+                uold_dx[ivar*dim_b+jdim] += dphi[eln+jdim*n_shape]*uold_b[sur_tpgly[eln] + (ivar+ivar0)*el_ndof];
+            }
+        }
+    }
+    return;
+}
+
+
+
 // =============================================
 /// Print xml attrib
 void MGSolDA::print_xml_attrib(
