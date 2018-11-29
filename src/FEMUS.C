@@ -4,7 +4,6 @@
 #include <assert.h>
 
 // configuration files -------------------------
-#include   "Printinfo_conf.h"
 
 // Petsc
 #ifdef HAVE_PETSCM
@@ -15,7 +14,8 @@
 #include <mpi.h>   //For MPI_COMM_WORLD
 #endif
 
-// include local class
+// include local class -----------------------------
+#include "Printinfo_conf.h"
 #include "MGFemusInit.h"
 #include "MGUtils.h"
 #include "MGSystem.h"
@@ -23,78 +23,80 @@
 #include "MGFEMap.h"
 #include "MGFE.h"
 #include "MGEquationsSystem.h"
-// #include "Equations_conf.h"
 #include "Equations_tab.h"
 #include "MGTimeLoop.h"
-// class include
+
+// this class include -------------------------------------
 #include "FEMUS.h"
 #include "MeshExtended.h"
 #include "EquationSystemsExtendedM.h"
 
-// #include "TurbUtils.h"
+
 // ****************************************************************************
 // ****************  Constructor Destructor ***********************************
 
 // ============================================================================
-// Basic constructor
-FEMUS::FEMUS()  :
-_comm ( MPI_COMM_WORLD ) { // communicator
-    // Init MPI flag --------------------------------
-    int flag=0;
-    MPI_Initialized ( &flag );
-    if ( flag ) {
-        _local_MPI_Init = false;
-    } else {
-        _local_MPI_Init = true;
-    }
-    // femus init -----------------------------------
-    int argc = 0;
-    char **argv = NULL;
-    _start=new  MGFemusInit ( argc,argv,_comm );
-
+//  This function is the Basic constructor
+FEMUS::FEMUS() :
+_comm ( MPI_COMM_WORLD )  // MPI_COMM_WORLD communicator
+{// ==========================================================================
+    init_femus();
     return;
 }
 
 // ============================================================================
 // This function is a constructor with  communicator
-FEMUS::FEMUS (
-    MPI_Comm comm
-) :
-_comm ( comm ) // communicator
-//   _num_mgmesh(0)
-{
-    // n of femus_meshes
-    // transient system
-    // Init MPI flag
+FEMUS::FEMUS( MPI_Comm comm ) :
+_comm ( comm ) // use communicator
+{ // ==========================================================================
+    init_femus();// Call init class variables
+    return;
+}
+// ============================================================================
+// This function is a constructor with  fem and mesh classes
+FEMUS::FEMUS( MGUtils & mgutils )  :
+_comm ( MPI_COMM_WORLD )  // MPI_COMM_WORLD communicator  
+{ // ==========================================================================
+    init_femus();        // Init class variables
+    init_param(mgutils); // Init parameters
+    init_fem();          // Init finite element
+    setMesh();           // Set mesh
+    return;
+}
+// ============================================================================
+// ============================================================================
+// This function initializes the class
+void FEMUS::init_femus(
+){ // ====================================================================
     int flag=0;
     MPI_Initialized ( &flag );
-    if ( flag ) {
-        _local_MPI_Init = false;
-    } else {
-        _local_MPI_Init = true;
-    }
-
+    if ( flag ) {_local_MPI_Init = false;} //set _local_MPI_Init
+    else { _local_MPI_Init = true; } //_local_MPI_Init
     // femus init
-    int argc = 0;
-    char **argv = NULL;
+    int argc = 0;   char **argv = NULL;
     _start= new MGFemusInit ( argc,argv );
-
+    
+    _MgEquationMapInitialized = false;
+    _MgMeshInitialized = false;
     return;
 }
 
 // =======================================================================
+// This function
 void FEMUS::init_param (
-    MGUtils    &mgutils,
-    int name
+    MGUtils    &mgutils,  ///< utils class
+    int name              ///< utils class name
 ) { // ====================================================================
-    _mg_utils=&mgutils;
-    _mg_utils->set_name ( name );
+    _mg_utils=&mgutils;    _mg_utils->set_name ( name );  // set ultils class
+    FIELDS_class fclass; _mg_utils->FillFieldsVector ( fclass,_myproblemP );  // set myproblem    
     return;
 }
+
 // ============================================================================
+// This class set _mg_geomel and _mg_femap private variable
 void FEMUS::init_fem (
-    MGGeomEl &mggeomel,
-    MGFEMap &mgfemap
+    MGGeomEl &mggeomel, ///< geom class
+    MGFEMap &mgfemap    ///< fem class
 ) { // ========================================================================
 // A) setting MGGeomEl
     _mg_geomel=&mggeomel;  // ***************************************************
@@ -104,26 +106,44 @@ void FEMUS::init_fem (
     }
     /// B) setting MGFEMap (fem)
     _mg_femap=&mgfemap;  // *****************************************************
-    if ( _mg_femap == NULL ) {
-        std::cout<< "FEMUS::init_fem: no _mg_femap";
-        abort();
-    }
+    if ( _mg_femap == NULL ) {std::cout<< "FEMUS::init_fem: no _mg_femap"; abort(); }
 
+    return;
+}
+
+// ============================================================================
+void FEMUS::init_fem ()
+{ // ========================================================================
+    /// A) setting MGGeomEl
+    _mg_geomel=new  MGGeomEl();
+    if ( _mg_geomel == NULL ) { std::cout<< "FEMUS::init_fem: no _mg_geomel"; abort(); }
+    
+    /// B) setting MGFEMap (fem)
+    _mg_femap=new MGFEMap();
+    MGFE *dfe_q;   dfe_q=new MGFE ( 2,ELTYPE );   dfe_q->init_qua();
+    MGFE *dfe_l;   dfe_l=new MGFE ( 1,ELTYPE );   dfe_l->init_lin();
+    MGFE *dfe_k;   dfe_k=new MGFE ( 0,ELTYPE );   dfe_k->init_pie();
+
+    _mg_femap->set_FE ( dfe_q ); // quadratic fem
+    _mg_femap->set_FE ( dfe_l ); // linear fem
+    _mg_femap->set_FE ( dfe_k ); // piecewise fem
+
+    if ( _mg_femap == NULL ) { std::cout<< "FEMUS::init_fem: no _mg_femap"; abort();}
     return;
 }
 // ============================================================================
 // This function is the destructor
-FEMUS::~FEMUS() {// ==========================================================================
-
+FEMUS::~FEMUS(
+) {// ==========================================================================
 // DO NOT TOUCH ================
-    delete _mg_time_loop; 
-    delete _start;
+    delete _mg_time_loop;     delete _start;
 //==============================
 
 //   delete _mg_equations_map;
 //   delete _mg_utils;
 //   delete _mg_mesh;
-//   delete _mg_femap;
+  delete _mg_geomel;
+  delete _mg_femap;
 #ifdef HAVE_MED
 //   if(_med_mesh) _med_mesh->decrRef();        // med-mesh
 #endif
@@ -143,9 +163,10 @@ void FEMUS::terminate (
 // // // ****************************************************************************
 // // // ****************    Set    *************************************************
 #ifdef   TWO_PHASE
-void FEMUS::set_mgcc ( MGSolCC &cc
+void FEMUS::set_mgcc ( 
+ MGSolCC &cc
 
-                     ) {
+) {
     _mg_equations_map->set_mgcc ( cc );
     return;
 }
@@ -173,18 +194,28 @@ double FEMUS::GetValue(const int  & ff,int flag){
 void FEMUS::SetValue(const int  & ff,double value){
     _mg_equations_map->SetValue(ff,value);
 }
-// // // =============================================================================
-// // // This function sets the type of problem
-void FEMUS::setSystem (
-    const std::vector<FIELDS> &pbName,
+// =============================================================================
+
+/// This function sets the type of problem
+MGEquationsSystem &FEMUS::init_equation_system (
     int n_data_points,
     int n_data_cell
 ) { // ==========================================================================
     _mg_equations_map=new EquationSystemsExtendedM ( *_mg_utils,*_mg_mesh,*_mg_femap,n_data_points,n_data_cell ); // MGEquationsMap class
-//     _mg_equations_map->read_par();
-#ifdef PRINT_INFO  // ---- info ---------------
-//     _mg_equations_map->print_par();       // print parameters
-#endif
+    return *_mg_equations_map;
+}
+
+/// This function sets the type of problem
+void FEMUS::setSystem () 
+{ // ==========================================================================
+    setSystem (_myproblemP) ;
+    return;
+}
+
+/// This function sets the type of problem
+void FEMUS::setSystem (
+    const std::vector<FIELDS> &pbName
+) { // ==========================================================================
     _mg_equations_map->init_data ( 0 );
     _mg_equations_map->init ( pbName );                           // adds the equations to the map
     _mg_equations_map->setDofBcOpIc();                            // set operators
@@ -214,12 +245,12 @@ void FEMUS::setSystem (
 }
 
 
+
 // =============================================================================
 // This function sets the mesh from med-mesh (m) to libmesh
 void FEMUS::setMesh (
 ) { // ==========================================================================
 
-//   const int NoLevels= _mg_utils->get_par("nolevels");  // numb of Level
     const int NoLevels= ( int ) _mg_utils->_geometry["nolevels"];
     _mg_mesh=new MeshExtended ( _start->comm(), *_mg_utils,*_mg_geomel );
     // check insanity
@@ -249,23 +280,23 @@ void FEMUS::setMesh (
     return;
 }
 
-void FEMUS::setMeshTurbCase ( ) { // ==========================================================================
+void FEMUS::setMeshTurbCase ( ) { 
     setMesh();
     setMedMesh ();
     return;
 }
-// // // *******************************************************************
-// // // *******************************************************************
+// *******************************************************************
+// *******************************************************************
 int  FEMUS::get_proc() const {
     return _mg_mesh->_iproc;
 }
-// // // *******************************************************************
+// *******************************************************************
 
 
 
-// // // *******************************************************************
-// // // **************** Solve  *******************************************
-// // // *******************************************************************
+// *******************************************************************
+// **************** Solve  *******************************************
+// *******************************************************************
 /// This function sets up the intial set
 void FEMUS::solve_setup (
     int         &t_in,                 ///< initial time iteration
@@ -273,10 +304,6 @@ void FEMUS::solve_setup (
 ) {
     const int restart      = stoi ( _mg_utils->_sim_config["restart"] ); // restart or not
     _mg_time_loop->transient_setup ( restart,t_in,time );  //  MGTimeLoop: setup
-
-//   if(_mg_utils->_TurbParameters != NULL){
-//     CalcTurbulence();
-//   }
 
     return;
 }
@@ -388,5 +415,8 @@ void FEMUS::dummy_step (
 }
 
 
-// kate: indent-mode cstyle; indent-width 4; replace-tabs on; 
+
+
+
+
 

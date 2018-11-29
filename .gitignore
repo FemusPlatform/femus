@@ -40,6 +40,7 @@
 #FEMuS_applications
 USER_APPL/*
 template_appl/*
+doc/*
 
 #Other 
 .directory

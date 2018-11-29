@@ -1127,4 +1127,14 @@ void MGEquationsSystem::movemesh() {
     }
 }
 
+void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
+
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase* mgsol = eqn->second;// get the pointer
+    mgsol -> set_ext_fields(pbName);          // init ext fields
+  }
+    
+  return;
+}
+
 // kate: indent-mode cstyle; indent-width 2; replace-tabs on; 

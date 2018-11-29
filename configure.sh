@@ -31,6 +31,8 @@ function runFEMuS {
 # ===========================================================================================
 function CreateEnvironment {
  
+  export MYHOME=$PWD
+  
   # set $1= INSTALLATION_DIR=$PWD
   echo "INSTALLAION_PATH=" $1
    # ----------------------------------------------------------------------------------------
@@ -90,7 +92,7 @@ function CreateEnvironment {
   export LD_LIBRARY_PATH=$MED_COUPL_PATH/lib:$LD_LIBRARY_PATH
   # ------- FEMUS ---------------------------------------------------------------------------
   export LD_LIBRARY_PATH=$FEMUS_DIR/contrib/laspack:$LD_LIBRARY_PATH  #only for VOF
-  export LD_LIBRARY_PATH=$FEMUS_DIR/USER_APPL/lib_1:$LD_LIBRARY_PATH  #only for VOF
+  export LD_LIBRARY_PATH=$FEMUS_DIR/lib:$LD_LIBRARY_PATH  #only for VOF
 }
 
  
@@ -126,6 +128,10 @@ function CheckExistence {
 # function CreateApp: create application with name $1 with mode dbg,opt, etc....
 # ===========================================================================================================
 function CreateApp {
+if test "$1" = "makelib"; then
+   cd $FEMUS_DIR/lib/lib_femus
+   return;
+else
   CheckExistence $1
   if test "$2" = "dbg"; then
    export METHOD=dbg
@@ -167,6 +173,7 @@ function CreateApp {
  "
    return;
   fi
+fi  
 }
 
 # ===========================================================================================================

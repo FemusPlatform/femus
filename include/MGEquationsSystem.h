@@ -51,6 +51,15 @@ public:
   ///@}
 //---------------------------------------------------------------------------------------------
   ///@{ \name EQUATIONS GET/SET
+  template<class SolverClass> void AddSolver(
+     std::string SystemName, 
+     FIELDS nSys,
+     int nPieceWise, 
+     int nLinear, 
+     int nQuadratic, 
+     std::string VarName
+);
+  
   inline            void  set_num_eqs(std::string name,int num)          {_num_equations.insert(make_pair(name,num));}
   inline            void  set_eqs(MGSolBase* value)          {_equations.insert(make_pair(value->_eqname,value));}
   inline       MGSolBase* get_eqs(const std::string & name)       {return _equations.find(name)->second;}
@@ -121,10 +130,6 @@ void  set_mgcc(MGSolCC  & cc);
     bool         & converged        ///< check if the solution converged (1->converged)     (out)
       );
   
-void eqnmap_timestep_loop_control(  // old function!!! Here only for compatibility
-  const double time,             // real time
-  const int delta_t_step_in     // integer time
-); 
   
     void eqnmap_timestep_loop_and_update(
       const double time, 
@@ -170,5 +175,7 @@ private:
 // #endif
  
 };
+
+#include "MGEquationsSystem_AddSolver.h"
 
 #endif
