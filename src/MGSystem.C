@@ -81,6 +81,8 @@ void MGSystem::init_data(
   return;
 }
 
+
+
 // ====================================================
 //// This function sets the nondimensional groups
 // void MGSystem::set_nondimgroups(
@@ -568,6 +570,6 @@ void  MGSystem::print_data(const std::string &filename)const {
   return;
 }
 
-
-
 #endif
+
+

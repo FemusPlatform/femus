@@ -206,14 +206,14 @@ MGEquationsSystem &FEMUS::init_equation_system (
 }
 
 /// This function sets the type of problem
-void FEMUS::setSystem () 
+void FEMUS::setSystemNew () 
 { // ==========================================================================
-    setSystem (_myproblemP) ;
+    setSystemNew (_myproblemP) ;
     return;
 }
 
 /// This function sets the type of problem
-void FEMUS::setSystem (
+void FEMUS::setSystemNew (
     const std::vector<FIELDS> &pbName
 ) { // ==========================================================================
     _mg_equations_map->init_data ( 0 );
@@ -246,6 +246,39 @@ void FEMUS::setSystem (
 
 
 
+void FEMUS::setSystem (
+    const std::vector<FIELDS> &pbName,
+    int n_data_points,
+    int n_data_cell
+) { // ==========================================================================
+    _mg_equations_map=new EquationSystemsExtendedM ( *_mg_utils,*_mg_mesh,*_mg_femap,n_data_points,n_data_cell ); // MGEquationsMap class
+    _mg_equations_map->init_data ( 0 );
+    _mg_equations_map->init ( pbName );                           // adds the equations to the map
+    _mg_equations_map->setDofBcOpIc();                            // set operators
+    _mg_equations_map->set_mesh_mg ( *_mg_mesh );
+#ifdef HAVE_MED
+    _mg_equations_map->set_mesh_med ( *_med_mesh );
+#endif
+//   }
+    if ( _mg_geomel == NULL ) {
+        std::cout<< "FEMUS::setSystem: no _mg_equations_map";
+        abort();
+    }
+
+    //time loop
+    _mg_time_loop=new  MGTimeLoop ( *_mg_utils,*_mg_equations_map );
+    if ( _mg_time_loop == NULL ) {
+        std::cout<< "FEMUS::setSystem: no _mg_time_loop";
+        abort();
+    }
+
+    _MgEquationMapInitialized = true;
+
+    std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
+    init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
+    init_par_interface ( 2,true );
+    return;
+}
 // =============================================================================
 // This function sets the mesh from med-mesh (m) to libmesh
 void FEMUS::setMesh (

@@ -45,7 +45,6 @@ public:
   
   ///@{ \name INIT AND CLEAN
   virtual void init(const std::vector<FIELDS> & pbName); ///< Initialize
-  
   /// Clean all substructures
   void clean(); 
   ///@}

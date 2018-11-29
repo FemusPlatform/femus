@@ -4,9 +4,10 @@
 // std libraries ---------------
 #include <map>
 #include <string>
+#include <vector>
 
 // configure files ----------------
-#include "Equations_conf.h"
+#include "Equations_tab.h"
 // #include "MGSclass_conf.h"
 // #include "MGMesh.h"
 // Forward class -------------
@@ -117,6 +118,7 @@ public:
   }
   ///@}
 
+  
 private:
    // set nondimensional groups and ref values
 //   void set_nondimgroups();

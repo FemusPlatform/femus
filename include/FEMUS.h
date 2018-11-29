@@ -105,8 +105,11 @@ public:
     
     
     //! Initialization of equations to solve
-    void setSystem (const std::vector < FIELDS > &pbName);
-    void setSystem ();
+    void setSystem (const std::vector < FIELDS > &pbName,int n_data_points = 0, int n_data_cell = 0);
+   
+    void setSystemNew (const std::vector < FIELDS > &pbName);
+    void setSystemNew ();
+    
 
     inline EquationSystemsExtendedM & get_MGExtSystem ()
     {
