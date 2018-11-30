@@ -41,14 +41,12 @@ public:
   double _factor = 1.;  
   double _press  = 0.;
   ///@{ \name USEFUL DIRECTORY NAMES
-  std::string                       _user_dir;      ///< User directory
   std::string                       _data_dir;      ///< Data directory
   std::string                       _app_dir;       ///< Application directory
   std::string                       _femus_dir;     ///< Femus directory
   std::string                       _myapp_name;    ///< Application name
   std::string                       _inout_dir;     ///< RESU directory
   std::string                       _mesh_dir;      ///< MESH directory
-  std::string                       _fem_dir;       ///< FEM directory
   std::string                       _contrib_dir;   ///< FEM directory
   std::string                       _interface_mesh;
 //------------------------------------------------------------------------

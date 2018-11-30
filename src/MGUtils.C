@@ -16,11 +16,24 @@
 // ===================================================
 /// Constructor
 MGUtils::MGUtils() :_ProbID(-1){
-  read();
+  _app_dir= getenv("APP_PATH");
+  _inout_dir = _app_dir + "/RESU/";
+  _data_dir = _app_dir + "/DATA/";  
+  _contrib_dir=_femus_dir + "/contrib/";
+  
+  std::ostringstream loc_par_file;
+  loc_par_file << "/DATA/param_files_msh.in";
+  const std::string &name=loc_par_file.str();
+  
+  read(name);
   StandardBuild();
 }
 MGUtils::MGUtils(int a) :_ProbID(a){
-
+  _app_dir= getenv("APP_PATH");
+  _inout_dir = _app_dir + "/RESU/";
+  _data_dir = _app_dir + "/DATA/";
+  _contrib_dir=_femus_dir + "/contrib/";
+  
   std::ostringstream loc_par_file;
   loc_par_file << "/DATA/param_files_msh"<< _ProbID <<".in";
   const std::string &name=loc_par_file.str();
@@ -37,16 +50,8 @@ MGUtils::MGUtils(int a) :_ProbID(a){
 
 void MGUtils::StandardBuild(){
   FillSolverMap();
-  
-  _user_dir = _femus_dir +  "/USER_APPL/";
-  _app_dir= _user_dir + _myapp_name;
-  _inout_dir = _app_dir + "/RESU/";
-  _mesh_dir = _user_dir + _mgfiles.find("MESH_DIR")->second ;
-//     _mesh_dir = _user_dir + "/MESH/";
-  _data_dir = _app_dir + "/DATA/";
-  if(NUM_MESH>1) {_data_dir = _app_dir + "/DATA/DATA"+ std::to_string(_ProbID) + "/";}
-  _fem_dir = _femus_dir + "/fem/";
-  _contrib_dir=_femus_dir + "/contrib/";
+  _mesh_dir = _app_dir + "/" + _mgfiles.find("MESH_DIR")->second ;  
+  if(NUM_MESH>1) {_data_dir = _app_dir + "/DATA/DATA"+ std::to_string(_ProbID) + "/"; }
   read_par();       // read parameters
 #ifdef PRINT_INFO
   print();
@@ -54,47 +59,6 @@ void MGUtils::StandardBuild(){
 #endif 
 }
 
-// ==============================================
-// // //  OLD READ_PAR FUNCTION
-/// This function reads all the  parameters
-// void MGUtils::read_par() {
-//
-//     // file names ------------------
-//
-//     std::string    baseparutils = get_file("BASEPARUTILS");
-//
-//     std::ostringstream filename;
-//     filename << _data_dir << baseparutils;
-//  std::cout << "Init Reading" << filename.str() <<  std::endl;
-//     std::ifstream fin;
-//     fin.open(filename.str().c_str());
-//     std::string buf="";
-//     double value;
-// #ifdef PRINT_INFO
-//     std::cout << "Init Reading" << filename.str() <<  std::endl;
-// #endif
-//     if (fin.is_open()) {
-//         while (buf != "/" )  fin >> buf;
-//         fin >> buf;
-//         while (buf != "/" ) {
-//
-//             if (buf == "#") getline(fin, buf); // comment line
-//             else {
-//                 fin >> value;    // set new parameter
-//                 set_par(buf,value);
-//             }
-//             fin >> buf;// std::cerr <<buf.c_str() << "\n ";
-//         }
-//     }
-//     else {
-//         std::cerr << "MGUtils::read_par: no parameter file found" << std::endl;
-//         abort();
-//     }
-// #ifdef PRINT_INFO
-//     std::cout << "End Reading file " <<  filename.str() << std::endl;
-// #endif
-//     return;
-// }
 
 void MGUtils::read_par() { // READ PARAMETER FILES AND FILL RELATIVE MAPS ===========================
 
@@ -153,7 +117,7 @@ void MGUtils::read_temp(
 ) { // ============================================================================================
 
     // function setup ***************************************************************************** A
-    std::ostringstream filename;  filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" << name_file_in;
+    std::ostringstream filename;  filename << _app_dir  <<"/" << name_file_in;
     std::ifstream           fin;  fin.open(filename.str().c_str()); // stream file
     std::string          buf="";  
 #ifdef PRINT_INFO
@@ -193,7 +157,7 @@ void MGUtils::read(const std::string &name_file_in) {
   // read femus dir from shell -----------------------
   _femus_dir=getenv("FEMUS_DIR");if(_femus_dir=="") {std::cout <<"$FEMUS_DIR ??"<<std::endl;abort();}
   _myapp_name=getenv("FM_MYAPP");if(_myapp_name==""){std::cout <<"$MYAPP ??"<<std::endl;abort();}
- std::ostringstream filename; filename << _femus_dir <<  "/USER_APPL/"  <<  _myapp_name  <<"/" <<  name_file_in;
+ std::ostringstream filename; filename << _app_dir <<"/" <<  name_file_in;
 #ifdef PRINT_INFO
   std::cout << " femus_dir is " << _femus_dir << std::endl;
   std::cout << " myapp_name is " << _myapp_name << std::endl;
