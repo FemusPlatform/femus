@@ -21,7 +21,7 @@
 # the function takes as input the number of processors
 # a log file is printed by redirecting the output of std::cerr
 function runFEMuS {
-   make -j$1
+   make -j$1 
    mpiexec -np $1 $FM_MYAPP-opt 2> messages.log
 }
 
