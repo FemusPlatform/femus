@@ -1105,7 +1105,7 @@ void BoundInterp::FillParameters (
     }
 
     delete [] PointsCoords;
-    CellBelonging->decrRef(); 
+   
     targetArray->decrRef(); 
     DDA->decrRef(); 
 //     delete [] nodalConnPerCell;
@@ -1135,7 +1135,8 @@ void BoundInterp::FillParameters (
     __BoundNodesPerCell = _SrcCellNodes;
     __TrgNodes = _TrgNodes;
     __Domain = DomainType;
-
+    
+    CellBelonging->decrRef(); 
     return;
 }
 // ================================================================================================
