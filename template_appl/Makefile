@@ -68,14 +68,14 @@ INCLUDES_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/parallel/*.h)
 # ----------------------------------------------------------
 # specify library paths needed by FEMUS (we need PETSC and 
 # HDF5 libraries to compile FEMUS)
-LFLAGS += -L$(HDF5_PATH)lib/
+LFLAGS += -L$(HDF5_PATH)/lib/
 LFLAGS += -L$(PETSC_DIR)/lib/
 LFLAGS += -L$(MED_ROOT_DIR)/lib/salome/
 LFLAGS += -L$(med_ROOT_DIR)/lib/
 LFLAGS += -L$(MED_COUPL_DIR)/lib/
 
 
-LFLAGSAPP += -L$(HDF5_PATH)lib/
+LFLAGSAPP += -L$(HDF5_PATH)/lib/
 LFLAGSAPP += -L$(PETSC_DIR)/lib/
 LFLAGSAPP += -L$(MED_ROOT_DIR)/lib/salome/
 LFLAGSAPP += -L$(med_ROOT_DIR)/lib/
