@@ -206,25 +206,31 @@ gencase:
 	@if [ \( -e "$(FEMUS_DIR)/bin/gencase" \) ]; then \
 	  rm -f $(FEMUS_DIR)/bin/gencase ;\
 	fi
-	@cd $(FEMUS_DIR)/USER_APPL/gencase; \
+	@cd $(FEMUS_DIR)/applications/gencase; \
 	$(MAKE); \
-	ln -s $(FEMUS_DIR)/USER_APPL/gencase/gencase-opt $(FEMUS_DIR)/bin/gencase; \
+	ln -s $(FEMUS_DIR)/applications/gencase/gencase-opt $(FEMUS_DIR)/bin/gencase; \
 
 gencase_clean:
 	@if [ \( -e "$(FEMUS_DIR)/bin/gencase" \) ]; then \
 	  rm -f $(FEMUS_DIR)/bin/gencase ;\
 	fi
-	@cd $(FEMUS_DIR)/USER_APPL/gencase; \
+	@cd $(FEMUS_DIR)/applications/gencase; \
 	$(MAKE) clean; \
 	
 interpolator:
 	@if [ \( -e "$(FEMUS_DIR)/bin/Interpolator-opt" \) ]; then \
-	  rm -f $(FEMUS_DIR)/bin/Interpolator-opt ;\
+	  rm -f $(FEMUS_DIR)/bin/interpolator-opt ;\
 	fi
-	@cd $(FEMUS_DIR)/USER_APPL/Interpolator; \
+	@cd $(FEMUS_DIR)/applications/interpolator; \
 	$(MAKE); \
-	ln -s $(FEMUS_DIR)/USER_APPL/Interpolator/Interpolator-opt $(FEMUS_DIR)/bin/Interpolator; \
-	
+	ln -s $(FEMUS_DIR)/applications/interpolator/interpolator-opt $(FEMUS_DIR)/bin/interpolator; \
+
+interpolator_clean:
+	@if [ \( -e "$(FEMUS_DIR)/bin/interpolator" \) ]; then \
+	  rm -f $(FEMUS_DIR)/bin/interpolator ;\
+	fi
+	@cd $(FEMUS_DIR)/applications/interpolator; \
+	$(MAKE) clean; \
 	
 resu_clean:
 	@rm -f RESU/sol.*.h5  RESU/sol.*.xmf RESU/mesh.*.*.h5  RESU/mesh.*.xmf RESU/case.*.h5  RESU/case.*.xmf  RESU/time.*.xmf
