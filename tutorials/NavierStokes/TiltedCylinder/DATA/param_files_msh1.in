@@ -1,0 +1,70 @@
+ # mesh**********************************
+ # we recognize the file format from the extension: .neu=gambit, .med=salome
+ GAMBIT_EXT     .neu
+ SALOME_EXT     .med
+ EXT_H5         .h5
+ EXT_XDMF       .xmf
+ EXT_IN         .in
+ #F_MESH_READ  cubetto_30_302.med
+ #F_MESH_READ  cyl_30_30.med
+  F_MESH_READ  cyl_30_30.med
+ # F_MESH_READ    rect_50.med
+ # F_MESH_READ     square2_2el_rot60.med
+ # mesh position  from USER_APPL dir ***********
+  MESH_DIR      /MESH/
+ # gencase**************************************
+ CONNLIN      _conn_lin1
+ INMESH       mesh.msh1.h5
+ F_MATRIX     msh1.Matrix
+ F_PROL       msh1.Prol
+ F_REST       msh1.Rest
+ EL_LIBMESH   el_libmesh
+ ND_LIBMESH   nd_libmesh
+
+ # case*************
+ BASEPARAM     parameters.in
+ BASEPARUTILS  parameters.in
+ 
+ GEOM_PAR      GeometrySettings.in
+ SIM_CONFIG    SimulationConfiguration.in
+ MAT_PROP      MaterialProperties.in
+ 
+ BASEMESH      mesh.msh1
+ MULTIMESH     multimesh.msh1
+ BASESOL       sol.msh1
+ BASECASE      case.msh1
+ BASEBC        bc_case.msh1.h5
+ BASETIME      time.msh1
+ MESHNUMBER    mesh1
+ TYPE          domain
+
+ INPUT_DIR     RESU/
+ OUTPUT_DIR    RESU/
+ MESH_AUX_DIR  RESU_AUX/
+ FEM_DIR       fem/
+ CONFIG_DIR    DATA/
+ CONTRIB_DIR   contrib/
+ FEMUS_DIR     FEMUS_DIR
+ AUX_XDMF      Xdmf.dtd
+ APPL_DIR      USER_APPL/
+
+
+ # external ibc****************************
+ IBC           case
+
+ # **************************
+ # file names for gaussian points and derivatives
+ # now they are composed
+ F_SHAPE       shape
+ #  F_GAUSS1D_1   fem/shape1D_3.2.in
+ #  F_GAUSS1D_2   fem/shape1D_3.3.in
+ #  F_GAUSS2D_1   fem/shape2D_9.4.in
+ #  F_GAUSS2D_2   fem/shape2D_9.9.in
+ #  F_GAUSS3D_1   fem/shape3D_27.8.in
+ #  F_GAUSS3D_2   fem/shape3D_27.27.in
+
+
+ # Petsc*******************************
+ PETSC_FEMUS_LOG  petsc_femus.log
+
+ # //here, also the fields of the hdf5 files should be included

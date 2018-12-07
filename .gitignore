@@ -36,13 +36,17 @@
 #Resu
 *.h5
 *.xmf 
+*.med 
+!*/MESH/*.med
 
 #FEMuS_applications
+bin/*
 USER_APPL/*
 template_appl/*
 doc/*
 
 #Other 
 .directory
+*.depend
 src/.directory
 src/.kdev_include_paths

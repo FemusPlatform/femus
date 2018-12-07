@@ -1,0 +1,63 @@
+ # ===============================================================
+ / #                         SIMULATION SETTINGS
+ # =============================================================== 
+ #
+ # ---------------------------------------------------------------
+ #    TIME DISCRETIZATION
+ # ---------------------------------------------------------------
+ #    Time:
+ # SolveSteady: 1(yes) 0(no)
+ #
+   SolveSteady  0
+   dt           0.01
+   nsteps       70
+ # ---------------------------------------------------------------
+ #    RESTART
+ # ---------------------------------------------------------------
+   restart      0
+   restart_lev  0
+   itime        0
+   restartime   0.
+ # ---------------------------------------------------------------
+ #    PRINT SETTINGS
+ # ---------------------------------------------------------------
+   printstep    1
+   ndigits      4
+ # ---------------------------------------------------------------
+ #    EQUATIONS TO SOLVE
+ # standard
+   MG_DA                      0
+   MG_NavierStokes            1
+   MG_Temperature             1
+   MG_DynamicalTurbulence     0
+   MG_ThermalTurbulence       0
+   MG_FluidStructure          0
+   MG_StructuralMechanics     0
+   MG_Displacement            0
+   MG_ColorFunction           0
+   MG_Laplacian               0
+   MG_ControlTemperature      0
+ # adjoint systems  
+   MG_AdjointNavierStokes     0
+   MG_AdjointTemperature      0
+   MG_AdjointTurbulence       0
+   MG_AdjointFluidStructure   0
+   MG_ImmersedBoundary        0
+ # ---------------------------------------------------------------
+   SolveNavierStokes           yes
+   SolveTemperature            yes
+   SolveDynamicalTurbulence    no
+   SolveThermalTurbulence      no
+ # ---------------------------------------------------------------  
+ #    BOUNDARY AND VOLUME GROUPS
+ #  Groups must be reported as follows
+ #    BoundaryGroups  15,16,17 
+ #    VolumeGroups    1,2,3
+ #    WallGroups      15,16
+ #  WallGroups contains the boundary ids used for wall distance 
+ #  calculation on interior points
+ # ---------------------------------------------------------------
+   BoundaryGroups    13,20,21
+   VolumeGroups      0
+   WallGroups        12,13,15
+ / #--------------------------------------------------------------   

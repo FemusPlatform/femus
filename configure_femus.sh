@@ -78,12 +78,12 @@ function CreateApp {
   fi
   if test "$OPTION" = "gencase"; then
    $PWD
-   cd $FEMUS_DIR/USER_APPL/gencase
+   cd $FEMUS_DIR/applications/gencase
    return;
   fi
   if test "$OPTION" = "interpolator"; then
    $PWD
-   cd $FEMUS_DIR/USER_APPL/Interpolator
+   cd $FEMUS_DIR/applications/interpolator
    printf "\033c"
    echo "
    
