@@ -3,7 +3,7 @@
 
 template<class SolverClass> void MGEquationsSystem::AddSolver(
   std::string SystemName, 
-  FIELDS nSys,
+  int nSys,
   int nPieceWise, 
   int nLinear, 
   int nQuadratic, 

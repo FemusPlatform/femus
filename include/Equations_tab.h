@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
  
- enum  FIELDS{
+ enum  FIELDS:int{
     MG_NavierStokes = 0,
     NS_F  =0,     // [0] -> Navier-Stokes or FSI or SM (quadratic (2),NS_EQUATIONS)
     NSX_F =0,     // [0] -> Navier-Stokes or FSI or SM (quadratic (2),NS_EQUATIONS)

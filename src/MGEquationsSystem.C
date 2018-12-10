@@ -5,20 +5,19 @@
 
 // class
 #include "MGEquationsSystem.h"
+// local inlcudes ----------------------
+#include "MGUtils.h"
+#include "MGMesh.h"
+#include "MGFEMap.h"
 
 // conf files ------------------------------------------
-#include "Equations_conf.h"   //choose the EQNS to solve
 #include "Printinfo_conf.h"
 #include "MGFE_conf.h"
 #include "Domain_conf.h"
 
-// local inlcudes ----------------------
-#include "MGUtils.h"
-#include "MGSystem.h"
-#include "MGMesh.h"
 #include "MGGeomEl.h"
-#include "MGFEMap.h"
 #include "numeric_vectorM.h"
+
 
 // classes included in the map ---------
 

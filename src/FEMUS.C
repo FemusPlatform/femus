@@ -1,9 +1,18 @@
-#include <iostream>
-#include <cstdlib>
-#include <sstream>
-#include <assert.h>
+// class header
+#include "FEMUS.h"
 
-// configuration files -------------------------
+// forwarded classes
+#include "MeshExtended.h"
+#include "MGFemusInit.h"
+#include "EquationSystemsExtendedM.h"
+#include "MGSystem.h"
+#include "MGGeomEl.h"
+#include "MGFEMap.h"
+#include "MGTimeLoop.h"
+
+// additional local includes
+#include "Printinfo_conf.h"
+#include "MGFE.h"
 
 // Petsc
 #ifdef HAVE_PETSCM
@@ -14,22 +23,11 @@
 #include <mpi.h>   //For MPI_COMM_WORLD
 #endif
 
-// include local class -----------------------------
-#include "Printinfo_conf.h"
-#include "MGFemusInit.h"
-#include "MGUtils.h"
-#include "MGSystem.h"
-#include "MGGeomEl.h"
-#include "MGFEMap.h"
-#include "MGFE.h"
-#include "MGEquationsSystem.h"
-#include "Equations_tab.h"
-#include "MGTimeLoop.h"
-
-// this class include -------------------------------------
-#include "FEMUS.h"
-#include "MeshExtended.h"
-#include "EquationSystemsExtendedM.h"
+// c++ libraries
+#include <iostream>
+#include <cstdlib>
+#include <sstream>
+#include <assert.h>
 
 
 // ****************************************************************************
@@ -57,10 +55,11 @@ _comm ( comm ) // use communicator
 FEMUS::FEMUS( MGUtils & mgutils )  :
 _comm ( MPI_COMM_WORLD )  // MPI_COMM_WORLD communicator  
 { // ==========================================================================
-    init_femus();        // Init class variables
-    init_param(mgutils); // Init parameters
-    init_fem();          // Init finite element
-    setMesh();           // Set mesh
+    init_femus();           // Init class variables
+    init_param(mgutils);    // Init parameters
+    init_fem();             // Init finite element
+    setMesh();              // Set mesh
+    init_equation_system(); // Init equation system
     return;
 }
 // ============================================================================
@@ -197,12 +196,13 @@ void FEMUS::SetValue(const int  & ff,double value){
 // =============================================================================
 
 /// This function sets the type of problem
-MGEquationsSystem &FEMUS::init_equation_system (
+/*MGEquationsSystem &*/ void FEMUS::init_equation_system (
     int n_data_points,
     int n_data_cell
 ) { // ==========================================================================
     _mg_equations_map=new EquationSystemsExtendedM ( *_mg_utils,*_mg_mesh,*_mg_femap,n_data_points,n_data_cell ); // MGEquationsMap class
-    return *_mg_equations_map;
+//     return *_mg_equations_map;
+    return;
 }
 
 /// This function sets the type of problem

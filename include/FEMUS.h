@@ -3,6 +3,8 @@
 
 #include <vector>
 #include "Solverlib_conf.h"
+#include "mpi.h"
+#include "MGUtils.h"
 
 #ifdef HAVE_MED
 namespace MEDCoupling
@@ -18,7 +20,6 @@ class MeshExtended;
 class MGFemusInit;
 class EquationSystemsExtendedM;
 class MGSystem;
-class MGUtils;
 class MGGeomEl;
 class MGFEMap;
 class MGTimeLoop;
@@ -80,10 +81,8 @@ public:
     //! This function initialize the finite element and functions
     void init_fem ();
     //! This function initialize the map of equations to solve
-    MGEquationsSystem & init_equation_system(int n_data_points = 0, int n_data_cell = 0);
-    
-    
-    
+    /*MGEquationsSystem &*/ void init_equation_system(int n_data_points = 0, int n_data_cell = 0);
+
     void terminate ();
 
 #ifdef HAVE_MED

@@ -1,22 +1,21 @@
 #ifndef __mgequationsmap_h__
 #define __mgequationsmap_h__
 
-#include <map>
-using namespace std;
-#include <string>
-
-#include "Equations_conf.h"
-#include "MGSolverBase.h"
-#include "MGSystem.h"
 class MGUtils;
-// class MGSystem;
 class MGMesh;
 class MGFEMap;
 
 #ifdef   TWO_PHASE
 class MGSolCC;
 #endif
-///This class contains the system map 
+
+#include "MGSolverBase.h"
+#include "MGSystem.h"
+
+// This class contains the system map 
+using namespace std;
+#include <map>
+#include <string>
 
 class MGEquationsSystem: public MGSystem {  
 
@@ -52,16 +51,16 @@ public:
   ///@{ \name EQUATIONS GET/SET
   template<class SolverClass> void AddSolver(
      std::string SystemName, 
-     FIELDS nSys,
+     int nSys,
      int nPieceWise, 
      int nLinear, 
      int nQuadratic, 
      std::string VarName
 );
   
-  inline            void  set_num_eqs(std::string name,int num)          {_num_equations.insert(make_pair(name,num));}
-  inline            void  set_eqs(MGSolBase* value)          {_equations.insert(make_pair(value->_eqname,value));}
-  inline       MGSolBase* get_eqs(const std::string & name)       {return _equations.find(name)->second;}
+  inline  void  set_num_eqs(std::string name,int num)          {_num_equations.insert(make_pair(name,num));}
+  inline  void  set_eqs(MGSolBase* value)          {_equations.insert(make_pair(value->_eqname,value));}
+  inline  MGSolBase* get_eqs(const std::string & name)       {return _equations.find(name)->second;}
   inline const MGSolBase* get_eqs(const std::string & name) const {return _equations.find(name)->second;}
   void get_eqs_names(std::vector<std::string> &FieldsNames);
   ///@}
