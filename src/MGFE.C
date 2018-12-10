@@ -1992,10 +1992,9 @@ double MGFE::JacSur2D ( // 2D surface jacobean ->
         dxdxi += x[s]*dphidxi;
         dydxi += x[s+NDOF_FEMB]*dphidxi;
     }
-    //It functions only on straight boundary edge!!!!!!!!!!!!!!!!!!!!
-    InvJac[0] = 1./ ( dxdxi+dydxi ); //porcata!!!!!!!!!!!
     //surface weighted jacobean
     double det=sqrt ( dxdxi*dxdxi+dydxi*dydxi );
+    InvJac[0] = 1. / det;
     return ( det );
 }
 
