@@ -270,9 +270,8 @@ void MGSolT::MGTimeStep (
     const int /*iter*/  ///< Number of max inter
 ) {
 // =========================================================================================
-    std::cout<<"TEMPERATURE\n";
+
     if ( _SolveT ) {
-     std::cout<<"TEMPERATURE  2\n";   
 /// A) Set up the time step
         std::cout  << std::endl << "\033[038;5;"<<196<<";1m "
         << "--------------------------------------------------- \n\t"
@@ -398,7 +397,7 @@ void T_param::read_file (
 
     //  getting file name --------------------------------------------------------------------
     std::ostringstream file;
-    file << getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/Tproperties.in";
+    file << getenv ( "APP_PATH" ) <<"/DATA/Tproperties.in";
     std::ifstream fin;
     fin.open ( file.str().c_str() ); // stream file
 #ifdef PRINT_INFO

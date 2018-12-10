@@ -25,15 +25,15 @@ else
 endif
 
 #### ------------   LIBMESH -----------------------------
-LIBMESH_INCLUDE=$(LIBMESH_PATH)include/
-LIBMESH_CONTRIB=$(LIBMESH_PATH)contrib/
-LIBMESH_LIB=$(LIBMESH_PATH)lib64/
+LIBMESH_INCLUDE=$(LIBMESH_PATH)/include/
+LIBMESH_CONTRIB=$(LIBMESH_PATH)/contrib/
+LIBMESH_LIB=$(LIBMESH_PATH)/lib64/
 # ----------------------------------------------------------
 # -------------------- INCLUDE -----------------------------
 # ----------------------------------------------------------
 # define any directories containing header files other than /usr/include
 CONTRIB_HDF5_INCPATH =  $(HDF5_PATH)/include
-FEMUS_CONTRIB        =  $(FEMUS_DIR)contrib
+FEMUS_CONTRIB        =  $(FEMUS_DIR)/contrib
 MED_ROOT_DIR         =  $(MED_PATH)
 med_ROOT_DIR         =  $(med_PATH)
 MED_COUPL_DIR         =  $(MED_COUPL_PATH)
@@ -57,7 +57,7 @@ INCLUDES += -I${MED_COUPL_DIR}/include/
 # If the INCLUDES_SRC are changed than the SRC files will be recompiled,
 # if the INCLUDES_CONTRIB are changed than the SRC_CONTRIB files will be recompiled,
 INCLUDES_SRC  =  $(wildcard ./DATA/*.h)
-INCLUDES_SRC +=  $(wildcard $(FEMUS_DIR)include/*.h)
+INCLUDES_SRC +=  $(wildcard $(FEMUS_DIR)/include/*.h)
 INCLUDES_CONTRIB  =  $(wildcard $(FEMUS_CONTRIB)/matrix/*.h)
 INCLUDES_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/parallel/*.h)
 
@@ -87,7 +87,6 @@ LIBS =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC 
 LIBSAPP =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC -lfemus	
-#      -lmesh_opt
 
 
 
@@ -98,7 +97,7 @@ LIBSAPP =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 # the application and of FEMUS (SRC) and the sources of the
 # contrib (SRC_CONTRIB). They are recompiled in different cases.
 SRC := $(wildcard ./SRC/*.C)
-SRC += $(wildcard $(FEMUS_DIR)src/*.C)
+SRC += $(wildcard $(FEMUS_DIR)/src/*.C)
 
 SRCAPP := $(wildcard ./SRC/*.C)
 
