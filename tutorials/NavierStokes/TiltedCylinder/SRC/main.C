@@ -28,7 +28,8 @@
 #include "FEMUS.h"
 #include "InterfaceProjection.h"
 
-#include "MGSolverNS.h"
+#include "EquationMapFiller.h"
+// #include "MGSolverNS.h"
 
 
 int main ( int argc, char** argv ) {
@@ -57,11 +58,9 @@ int main ( int argc, char** argv ) {
     mgutils[0]->FillFieldsVector ( fclass,myproblemP );
 
     // CONSTRUCTION OF FEMUS PROBLEM ------------------------------------------
-    FEMUS P( *mgutils[0] );                   // init parameter                                
-    MGEquationsSystem& EqMap = P.init_equation_system ( );                     // set system    
-    
-    EqMap.AddSolver<MGSolNS> ("NS0", NS_F, 0,1,3,"u");
-    
+    FEMUS P( *mgutils[0] );                   // init parameter         
+    EquationMapFiller Filler;
+    Filler.FillEquationMap(P, myproblemP);
     P.setSystemNew ( myproblemP ); 
     
     // INITIALIZATION OF EQUATIONS TO SOLVE -----------------------------------
