@@ -36,8 +36,8 @@
 #Resu
 *.h5
 *.xmf 
-*.med 
-!*/MESH/*.med
+# *.med 
+# !*/MESH/*.med
 
 #FEMuS_applications
 bin/*
