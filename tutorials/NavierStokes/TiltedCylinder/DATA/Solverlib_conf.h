@@ -10,6 +10,7 @@
     
 // Med library
 #define    HAVE_MED
+#define    NEW_VERSION    
     
 #define LSOLVER LASPACK_SOLVERSM  
 #ifdef HAVE_PETSCM

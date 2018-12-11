@@ -28,7 +28,7 @@
  # standard
    MG_DA                      0
    MG_NavierStokes            1
-   MG_Temperature             1
+   MG_Temperature             0
    MG_DynamicalTurbulence     0
    MG_ThermalTurbulence       0
    MG_FluidStructure          0
@@ -45,7 +45,7 @@
    MG_ImmersedBoundary        0
  # ---------------------------------------------------------------
    SolveNavierStokes           yes
-   SolveTemperature            yes
+   SolveTemperature            no
    SolveDynamicalTurbulence    no
    SolveThermalTurbulence      no
  # ---------------------------------------------------------------  
