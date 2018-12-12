@@ -77,15 +77,15 @@ LFLAGS += -L$(MED_COUPL_PATH)/lib/
 # FLAGS FOR COMPILATION WITH FEMUS LIBRARY
 LFLAGSAPP += -L$(HDF5_PATH)/lib/
 LFLAGSAPP += -L$(PETSC_DIR)/lib/
-LFLAGSAPP += -L$(MED_ROOT_DIR)/lib/salome/
-LFLAGSAPP += -L$(med_ROOT_DIR)/lib/
-LFLAGSAPP += -L$(MED_COUPL_DIR)/lib/ 
+LFLAGSAPP += -L$(MED_PATH)/lib/salome/
+LFLAGSAPP += -L$(med_PATH)/lib/
+LFLAGSAPP += -L$(MED_COUPL_PATH)/lib/ 
 LFLAGSAPP += -L$(FEMUS_DIR)/lib/
 
 LIBS =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC 
 LIBSAPP =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
-	-linterpkernel -lmedcouplingremapper -lmedC -lfemus	
+	-linterpkernel -lmedcouplingremapper -lmedC 
 # END LIBRARY ==========================================================
 
 
@@ -162,7 +162,7 @@ vpath %.C ./SRC/
 
 
 # COMPILING WITH FEMUS LIBRARY
-withlib: $(SRC_OBJS) $(SRC_FILLER_OBJS)
+withlib_2d: $(OBJS_APP) $(OBJ_FILLER)
 	@echo " with femus library"
 	@echo "Linking "$@"..."
 	@echo 
@@ -172,9 +172,25 @@ withlib: $(SRC_OBJS) $(SRC_FILLER_OBJS)
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) $(LIBSAPP)
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_2d $(LIBSAPP)
 
-
+# COMPILING WITH FEMUS LIBRARY
+withlib_3d: $(OBJS_APP) $(OBJ_FILLER)
+	@echo " with femus library"
+	@echo "Linking "$@"..."
+	@echo 
+	@echo $^          | tr " " "\n"
+	@echo $(LFLAGSAPP)   | tr " " "\n"
+	@echo $(LIBSAPP)     | tr " " "\n"
+	@echo "with compiling flags" $(CFLAGS)
+	@echo "=========" $(MAIN) "==========="
+	@echo 
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_3d $(LIBSAPP)	
+	
+vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
+vpath %.C ./SRC/
+	
+	
 clean:
 	$(RM) ./SRC/obj/*-$(METHOD).o *~ ./SRC/*-$(METHOD).o *~ $(MAIN)
 
