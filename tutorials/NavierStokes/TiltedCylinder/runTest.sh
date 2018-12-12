@@ -15,8 +15,16 @@ cp $FEMUS_DIR/solvers/MGSolverNS/*.h SRC/
 cp $FEMUS_DIR/solvers/MGSolverNS/*.C SRC/
 
 echo "Compiling application "
-make -j2
-
+if [ -f $FEMUS_DIR/lib/libfemus_3d.so ]; then
+  echo "FEMuS 3D library found "
+  echo "Compiling with library "
+  make withlib_3d -j2
+else
+  echo "FEMuS 3D library NOT found "
+  echo "Compiling without library "
+  make -j2
+fi  
+  
 if [ "$?" != 0 ]; then
       echo "${red}${bold}=============================================="
       echo "             APPLICATION COMPILATION ERROR"
@@ -36,4 +44,5 @@ fi
 
 runGencase 1
 
-runFEMuS 1
+mpiexec -np 1 $FM_MYAPP-opt 2> messages.log
+

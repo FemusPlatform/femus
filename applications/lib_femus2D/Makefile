@@ -17,7 +17,7 @@
 CXX = mpicxx
 # define the optimized and the debugging flag for compiling
 ifeq ($(METHOD),opt)
-  CFLAGS = -O2 -w -fPIC -std=c++11 -DNDEBUG
+  CFLAGS = -O3 -w -fPIC -std=c++11 -DNDEBUG
 else
   CFLAGS = -O0 -felide-constructors -g -ansi -pedantic -W -Wall -Wextra \
   -Wno-long-long -Wpointer-arith -Wformat -Wparentheses -fPIC -std=c++11
@@ -55,7 +55,7 @@ INCLUDES += -I${MED_COUPL_DIR}/include/
 # the files below are set in order to know when it is necessary to recompile.
 # If the INCLUDES_SRC are changed than the SRC files will be recompiled,
 # if the INCLUDES_CONTRIB are changed than the SRC_CONTRIB files will be recompiled,
-INCLUDES_SRC  =  $(wildcard $(FEMUS_DIR)/lib/lib_femus/DATA/*.h)
+INCLUDES_SRC  =  $(wildcard ./DATA/*.h)
 INCLUDES_SRC +=  $(wildcard $(FEMUS_DIR)/include/*.h)
 INCLUDES_CONTRIB  =  $(wildcard $(FEMUS_CONTRIB)/matrix/*.h)
 INCLUDES_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/parallel/*.h)
@@ -106,7 +106,7 @@ MAIN = $(FEMUS_DIR)/lib/libfemus_2d.so
 # --------------------------------------------------------
 # set PHONY variables to distinguish between file names 
 # which could be in the directory and make rules
-.PHONY: depend clean gencase
+.PHONY: depend clean 
 # this is the executable file rule, the one executed when you call make
 all:    $(MAIN)
 	@echo  $(MAIN) succesfully compiled!
@@ -159,22 +159,11 @@ $(CONTRIB_OBJS): $(INCLUDES_CONTRIB)
 
 # The other useful rules below are explained in the MAKEFILE uses, see above
 clean:
-	$(RM) ./SRC/*-$(METHOD).o *~ $(MAIN)
-
-gencase:
-	cd ../gencase; $(MAKE); cd -;
-
-resu_clean:
-	@rm -f RESU/sol.*.h5  RESU/sol.*.xmf RESU/mesh.*.*.h5  RESU/mesh.*.xmf RESU/case.*.h5  RESU/case.*.xmf  RESU/time.*.xmf
+	$(RM) $(MAIN)
 
 src_clean:
-	@$(MAKE) clean
 	@rm -f ../../src/*.o ../../contrib/matrix/*.o ../../contrib/parallel/*.o
 
-all_clean:
-	@$(MAKE) resu_clean
-	@$(MAKE) src_clean
-	@rm .depend
 
 
 # -------------   MAKE depend and depend file ------------------------

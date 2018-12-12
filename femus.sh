@@ -8,7 +8,7 @@ function  command_exists () {
     type "$1" &> /dev/null ;
 }
 
-function show_tutorials () {
+function showTutorials () {
   if command_exists tree ; then
     echo "Tutorial folder structure:"
     echo "${red} Tutorial ${NC} - ${green} Class ${NC} - ${blue} Case ${NC}"
@@ -21,7 +21,7 @@ function show_tutorials () {
   return;
 }
 
-function run_tutorial () {
+function runTutorial () {
 while :
 do
     case "$1" in
@@ -64,7 +64,7 @@ return;
 function copy_tutorial () {
    echo "Available tutorials are"
    cd $1
-   show_tutorials
+   showTutorials
    
    export TUTORIAL_PATH=$FEMUS_DIR/tutorials/
          
@@ -82,7 +82,7 @@ function copy_tutorial () {
    echo "-------------------------------------------------------"
    echo "Tutorial has been copied"
    echo "To run tutorial please execute"
-   echo "configure_application"
+   echo "configureApplication <Method> (opt or dbg)"
    echo "and then"
    echo "source runTest.sh"
    echo "-------------------------------------------------------"
@@ -125,7 +125,7 @@ function select_tutorial_case () {
 
 }
 
-function configure_application () {
+function configureApplication () {
    echo
    echo "-------------------------------------------------------"
    echo "Configuring application"
@@ -179,7 +179,7 @@ function configure_application () {
    export path_len=${#app_pre}
    FM_MYAPP=${APP_PATH:$((path_len +1))}
    
-   echo "Appliation path is " $APP_PATH 
+   echo "Application path is " $APP_PATH 
    echo "Application name is "$FM_MYAPP
    echo "Method is "$METHOD
    echo "-------------------------------------------------------"
