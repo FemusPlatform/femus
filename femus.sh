@@ -2,11 +2,226 @@ red=`tput setaf 9`; bold=`tput bold `; green=`tput setaf 10`; reset=`tput sgr0`;
 blue=`tput setaf 14`
 # SET OF FUNCTIONS FOR USING FEMUS CODE
 
-source functions.sh
-
 function  command_exists () {
     type "$1" &> /dev/null ;
 }
+
+
+function configureApplication () {
+   echo
+   echo "-------------------------------------------------------"
+   echo "Configuring application"
+   
+   unset APP_PATH
+   unset METHOD
+   unset FM_MYAPP
+   
+   export APP_PATH
+   export METHOD
+   export FM_MYAPP
+   while :
+   do
+    case "$1" in
+      opt | OPT) # optimized
+          METHOD='opt'
+          break
+          ;;
+      dbg | DBG) # debug
+          METHOD='dbg'
+          break
+          ;;    
+      *)  # unrecognized
+          echo "Not available compilation method "$1
+          echo "Rerun function configure_application with valid method "
+          echo "opt or dbg"
+          break
+          ;; 
+    esac
+   done 
+   
+   while :
+   do
+    case "$2" in
+      "") # Application here
+          APP_PATH=$PWD
+          break
+          ;;
+      *)  # Application ad path $1
+          APP_PATH=$2
+          break
+          ;; 
+    esac
+   done
+   
+   cd $APP_PATH
+   cd ../
+   local app_pre=$PWD
+   cd $APP_PATH
+   
+   export path_len=${#app_pre}
+   FM_MYAPP=${APP_PATH:$((path_len +1))}
+   
+   echo "Application path is " $APP_PATH 
+   echo "Application name is "$FM_MYAPP
+   echo "Method is "$METHOD
+   echo "-------------------------------------------------------"
+   echo "Application configured"
+   echo "-------------------------------------------------------"
+   
+   return;
+}
+
+# ==================================================================================
+#                      COMPILE LIBRARY AND STANDARD APPLICATIONS
+# ==================================================================================
+
+function compileGencase {
+  export ACTUAL_DIR=$PWD
+  
+  export MAIN_GENCASE_DIR=$FEMUS_DIR/applications/gencase/
+  cd $MAIN_GENCASE_DIR
+  
+  # 2D gencase
+  echo "${red}Now compiling standard gencase application for 2D geometries"
+  echo "Standard gencase for quadrilateral elements${NC}"
+  cd gencase_2d
+  configureApplication opt 
+  make clean
+  make -j2
+  if [ -f "$FEMUS_DIR/bin/gencase_2d" ]; then
+    rm $FEMUS_DIR/bin/gencase_2d 
+  fi
+  ln -s $MAIN_GENCASE_DIR/gencase_2d/gencase_2d $FEMUS_DIR/bin/gencase_2d
+  
+  # 3D gencase
+  echo "${red}Now compiling standard gencase application for 3D geometries"
+  echo "Standard gencase for hexahedral elements${NC}"
+  cd ../gencase_3d
+  configureApplication opt 
+  make clean
+  make -j2
+  if [ -f "$FEMUS_DIR/bin/gencase_3d" ]; then
+    rm $FEMUS_DIR/bin/gencase_3d 
+  fi
+  ln -s $MAIN_GENCASE_DIR/gencase_3d/gencase_3d $FEMUS_DIR/bin/gencase_3d
+  
+  cd $ACTUAL_DIR
+
+}
+
+function compileLibrary {
+
+  echo "Compiling femus library for 2D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
+  configure_application opt
+  # removing libfemus_2d.so
+  make clean
+  # removing object files from femus/src
+  make src_clean
+  make 
+  
+  echo "Compiling femus library for 3D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
+  configure_application opt
+  # removing libfemus_2d.so
+  make clean
+  # removing object files from femus/src
+  make src_clean
+  make 
+  
+  # cleaning after lib building
+  make src_clean
+
+}
+
+# ==================================================================================
+#                              RUN APPLICATIONS
+# ==================================================================================
+
+function runFEMuS {
+   make -j$1
+   
+   if [ "$?" != 0 ]; then
+      echo "${red}${bold}=============================================="
+      echo "             COMPILATION ERROR"
+      echo "==============================================${reset}"
+   else     
+     mpiexec -np $1 $FM_MYAPP-opt 2> messages.log
+   fi
+}
+
+function runGencase {
+   if [ -d  $FEMUS_DIR/bin ]; then
+     echo "found bin directory "
+     mpiexec -np $1 gencase 2> messages_gencase.log
+     
+   else
+     echo "${red} ======================================================= "
+     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
+     echo " CREATE bin DIRECTORY, THEN TYPE "
+     echo "      make gencase   "
+     echo "      runGencase <n proc> "
+     echo " ======================================================= ${reset}"
+   fi   
+}
+
+function runGencase2D {
+   if [ -d  $FEMUS_DIR/bin ]; then
+     echo "found bin directory "
+     
+     if [ ! -f "$FEMUS_DIR/bin/gencase_2d" ]; then
+       compileGencase
+     fi
+     
+     mpiexec -np $1 gencase_2d 2> messages_gencase.log
+     
+   else
+     echo "${red} ======================================================= "
+     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
+     echo " CREATE bin DIRECTORY, THEN TYPE "
+     echo "      make gencase   "
+     echo "      runGencase <n proc> "
+     echo " ======================================================= ${reset}"
+   fi   
+}
+
+function runGencase3D {
+   if [ -d  $FEMUS_DIR/bin ]; then
+     echo "found bin directory "
+     
+     if [ ! -f "$FEMUS_DIR/bin/gencase_3d" ]; then
+       compileGencase
+     fi
+     
+     mpiexec -np $1 gencase_3d 2> messages_gencase.log
+     
+   else
+     echo "${red} ======================================================= "
+     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
+     echo " CREATE bin DIRECTORY, THEN TYPE "
+     echo "      make gencase   "
+     echo "      runGencase <n proc> "
+     echo " ======================================================= ${reset}"
+   fi   
+}
+
+function runInterpolator {
+   if [ -d  $FEMUS_DIR/bin ]; then
+     echo "found bin directory "
+     mpiexec -np $1 Interpolator 2> messages_interpolator.log
+   else
+     echo "${red} ======================================================= "
+     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
+     echo " CREATE bin DIRECTORY, THEN TYPE "
+     echo "      make interpolator   "
+     echo "      runInterpolator <n proc> "
+     echo " ======================================================= ${reset}"
+   fi   
+}
+
+# ==================================================================================
+#                                  TUTORIALS
+# ==================================================================================
 
 function showTutorials () {
   if command_exists tree ; then
@@ -123,129 +338,5 @@ function select_tutorial_case () {
     break ;;
    esac
   done
-
-}
-
-function configureApplication () {
-   echo
-   echo "-------------------------------------------------------"
-   echo "Configuring application"
-   
-   unset APP_PATH
-   unset METHOD
-   unset FM_MYAPP
-   
-   export APP_PATH
-   export METHOD
-   export FM_MYAPP
-   while :
-   do
-    case "$1" in
-      opt | OPT) # optimized
-          METHOD='opt'
-          break
-          ;;
-      dbg | DBG) # debug
-          METHOD='dbg'
-          break
-          ;;    
-      *)  # unrecognized
-          echo "Not available compilation method "$1
-          echo "Rerun function configure_application with valid method "
-          echo "opt or dbg"
-          break
-          ;; 
-    esac
-   done 
-   
-   while :
-   do
-    case "$2" in
-      "") # Application here
-          APP_PATH=$PWD
-          break
-          ;;
-      *)  # Application ad path $1
-          APP_PATH=$2
-          break
-          ;; 
-    esac
-   done
-   
-   cd $APP_PATH
-   cd ../
-   local app_pre=$PWD
-   cd $APP_PATH
-   
-   export path_len=${#app_pre}
-   FM_MYAPP=${APP_PATH:$((path_len +1))}
-   
-   echo "Application path is " $APP_PATH 
-   echo "Application name is "$FM_MYAPP
-   echo "Method is "$METHOD
-   echo "-------------------------------------------------------"
-   echo "Application configured"
-   echo "-------------------------------------------------------"
-   
-   return;
-}
-
-
-function compileGencase {
-  export ACTUAL_DIR=$PWD
-  
-  export MAIN_GENCASE_DIR=$FEMUS_DIR/applications/gencase/
-  cd $MAIN_GENCASE_DIR
-  
-  # 2D gencase
-  echo "${red}Now compiling standard gencase application for 2D geometries"
-  echo "Standard gencase for quadrilateral elements${NC}"
-  cd gencase_2d
-  configureApplication opt 
-  make clean
-  make -j2
-  if [ -f "$FEMUS_DIR/bin/gencase_2d" ]; then
-    rm $FEMUS_DIR/bin/gencase_2d 
-  fi
-  ln -s $MAIN_GENCASE_DIR/gencase_2d/gencase_2d $FEMUS_DIR/bin/gencase_2d
-  
-  # 3D gencase
-  echo "${red}Now compiling standard gencase application for 3D geometries"
-  echo "Standard gencase for hexahedral elements${NC}"
-  cd ../gencase_3d
-  configureApplication opt 
-  make clean
-  make -j2
-  if [ -f "$FEMUS_DIR/bin/gencase_3d" ]; then
-    rm $FEMUS_DIR/bin/gencase_3d 
-  fi
-  ln -s $MAIN_GENCASE_DIR/gencase_3d/gencase_3d $FEMUS_DIR/bin/gencase_3d
-  
-  cd $ACTUAL_DIR
-
-}
-
-function compileLibrary {
-
-  echo "Compiling femus library for 2D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
-  configure_application opt
-  # removing libfemus_2d.so
-  make clean
-  # removing object files from femus/src
-  make src_clean
-  make 
-  
-  echo "Compiling femus library for 3D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
-  configure_application opt
-  # removing libfemus_2d.so
-  make clean
-  # removing object files from femus/src
-  make src_clean
-  make 
-  
-  # cleaning after lib building
-  make src_clean
 
 }
