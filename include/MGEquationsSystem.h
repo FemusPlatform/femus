@@ -90,6 +90,7 @@ void  set_mgcc(MGSolCC  & cc);
   double GetValue(const int & ff,int flag);
   ///This function sets a value in the systems
   void SetValue(const int & ff,double value);
+  void SetValueVector(const int & ff,std::vector<double> value);
   
   void eqnmap_steady_loop( 
     const int & nmax_step,  ///< number max of steps

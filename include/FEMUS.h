@@ -395,6 +395,7 @@ public:
 
     double GetValue(const int & ff,int flag);
     void   SetValue(const int & ff,double value);
+    void   SetValueVector(const int & ff,std::vector<double> value);
 #endif
 
 };

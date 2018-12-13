@@ -193,6 +193,11 @@ double FEMUS::GetValue(const int  & ff,int flag){
 void FEMUS::SetValue(const int  & ff,double value){
     _mg_equations_map->SetValue(ff,value);
 }
+//=============================================================================
+/// This function sets a set of values in the systems
+void FEMUS::SetValueVector(const int  & ff,std::vector<double> value){
+    _mg_equations_map->SetValueVector(ff,value);
+}
 // =============================================================================
 
 /// This function sets the type of problem

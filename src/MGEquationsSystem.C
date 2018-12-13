@@ -399,6 +399,17 @@ void MGEquationsSystem::SetValue(const int & ff,double value) {
   return;
 }
 // ==========================================================================================
+/// This function returns a set of values from the systems
+void MGEquationsSystem::SetValueVector(const int & ff,std::vector<double> value) {
+  // loop for time steps
+  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
+    MGSolBase* mgsol = eqn->second;
+    if(_num_equations[eqn->first] == ff) 
+      mgsol->SetValueVector(value);
+  }
+  return;
+}
+// ==========================================================================================
 /// This function prints xdmf and hdf5 file
 void MGEquationsSystem::print_soln(const int t_step // time step
                                   ) {

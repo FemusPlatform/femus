@@ -702,6 +702,8 @@ double MGSolBase::GetValue (int flag) {}
 
 void   MGSolBase::SetValue (double value) {}
 
+void   MGSolBase::SetValueVector (std::vector<double> value) {}
+
 void   MGSolBase::set_dt (double /*dt*/) {}
 
 double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diffusivity, int Dim, int NbOfNodes) {
