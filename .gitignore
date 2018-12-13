@@ -44,6 +44,7 @@ bin/*
 USER_APPL/*
 template_appl/*
 doc/*
+*/obj/*
 
 #Other 
 .directory

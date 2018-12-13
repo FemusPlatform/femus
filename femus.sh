@@ -71,7 +71,7 @@ function copy_tutorial () {
    export TUTORIAL_CLASS
    export TUTORIAL_CASE
    select_tutorial_class
-   select_tutorial_case $TUTORIAL_CLASS
+#    select_tutorial_case $TUTORIAL_CLASS
       
    echo "Selected test is $TUTORIAL_CASE of class $TUTORIAL_CLASS"
    
@@ -105,6 +105,7 @@ function select_tutorial_class () {
    esac
   done
 
+  select_tutorial_case $TUTORIAL_CLASS
 }
 
 function select_tutorial_case () {
@@ -189,3 +190,62 @@ function configureApplication () {
    return;
 }
 
+
+function compileGencase {
+  export ACTUAL_DIR=$PWD
+  
+  export MAIN_GENCASE_DIR=$FEMUS_DIR/applications/gencase/
+  cd $MAIN_GENCASE_DIR
+  
+  # 2D gencase
+  echo "${red}Now compiling standard gencase application for 2D geometries"
+  echo "Standard gencase for quadrilateral elements${NC}"
+  cd gencase_2d
+  configureApplication opt 
+  make clean
+  make -j2
+  if [ -f "$FEMUS_DIR/bin/gencase_2d" ]; then
+    rm $FEMUS_DIR/bin/gencase_2d 
+  fi
+  ln -s $MAIN_GENCASE_DIR/gencase_2d/gencase_2d $FEMUS_DIR/bin/gencase_2d
+  
+  # 3D gencase
+  echo "${red}Now compiling standard gencase application for 3D geometries"
+  echo "Standard gencase for hexahedral elements${NC}"
+  cd ../gencase_3d
+  configureApplication opt 
+  make clean
+  make -j2
+  if [ -f "$FEMUS_DIR/bin/gencase_3d" ]; then
+    rm $FEMUS_DIR/bin/gencase_3d 
+  fi
+  ln -s $MAIN_GENCASE_DIR/gencase_3d/gencase_3d $FEMUS_DIR/bin/gencase_3d
+  
+  cd $ACTUAL_DIR
+
+}
+
+function compileLibrary {
+
+  echo "Compiling femus library for 2D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
+  configure_application opt
+  # removing libfemus_2d.so
+  make clean
+  # removing object files from femus/src
+  make src_clean
+  make 
+  
+  echo "Compiling femus library for 3D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
+  configure_application opt
+  # removing libfemus_2d.so
+  make clean
+  # removing object files from femus/src
+  make src_clean
+  make 
+  
+  # cleaning after lib building
+  make src_clean
+
+}
