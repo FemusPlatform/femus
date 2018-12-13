@@ -1,11 +1,24 @@
 red=`tput setaf 9`; bold=`tput bold `; green=`tput setaf 10`; reset=`tput sgr0`; NC=`tput sgr0`
-blue=`tput setaf 14`
+blue=`tput setaf 14`; 
 # SET OF FUNCTIONS FOR USING FEMUS CODE
 
 function  command_exists () {
     type "$1" &> /dev/null ;
 }
 
+function femusGuide {
+   show_application_functions
+   show_configure_functions
+   show_compiling_functions
+   show_tutorial_functions
+}
+
+function show_configure_functions {
+  echo "------------------------------------------------------------"
+  echo "${green}List of functions for configuring femus applications${NC}"
+  echo "  ${red}configureApplication <method>${NC}: function to be called within application folder."
+  echo "     Application name, path and method (opt or dbg for compiling in optimized or debug mode) are set"
+}
 
 function configureApplication () {
    echo
@@ -74,6 +87,15 @@ function configureApplication () {
 # ==================================================================================
 #                      COMPILE LIBRARY AND STANDARD APPLICATIONS
 # ==================================================================================
+function show_compiling_functions {
+  echo "------------------------------------------------------------"
+  echo "${green}List of functions for compiling femus and  standard applications${NC}"
+  echo "  ${red}compileLibrary${NC}: compile femus source files as separate libraries for 2D and 3D geometries"
+  echo "  ${red}compileGencase${NC}: compile standard gencase_2d and gencase_3d applications for QUAD 4/9 and HEX 8/27"
+  echo "     2D and 3D meshes"
+}
+
+
 
 function compileGencase {
   export ACTUAL_DIR=$PWD
@@ -138,6 +160,16 @@ function compileLibrary {
 #                              RUN APPLICATIONS
 # ==================================================================================
 
+function show_application_functions {
+  echo "------------------------------------------------------------"
+  echo "${green}List of functions for running applications${NC}"
+  echo "  ${red}runFEMuS <np>${NC}: compile actual application using np procs, and then run, using np procs"
+  echo "  ${red}runGencase <np>${NC}: compile gencase using np procs, and then run, using np procs"
+  echo "  ${red}runGencase2D <np>${NC}: compile standard 2D gencase using np procs, and then run, using np procs"
+  echo "  ${red}runGencase3D <np>${NC}: compile standard 3D gencase using np procs, and then run, using np procs"
+  echo "  ${red}runInterpolator <np>${NC}: compile with np procs and then run, using np procs"
+}
+
 function runFEMuS {
    make -j$1
    
@@ -153,6 +185,9 @@ function runFEMuS {
 function runGencase {
    if [ -d  $FEMUS_DIR/bin ]; then
      echo "found bin directory "
+     if [ ! -f "$FEMUS_DIR/bin/gencase" ]; then
+       make gencase
+     fi
      mpiexec -np $1 gencase 2> messages_gencase.log
      
    else
@@ -222,6 +257,15 @@ function runInterpolator {
 # ==================================================================================
 #                                  TUTORIALS
 # ==================================================================================
+
+function show_tutorial_functions {
+  echo "------------------------------------------------------------"
+  echo "${green}List of functions for tutorial applications${NC}"
+  echo "  ${red}showTutorials${NC}: show all available tutorials"
+  echo "  ${red}runTutorial <path>${NC}: guided choice of tutorial for execution in <path> directory."
+  echo "     If <path> is not given then tutorial is run in actual position"
+}
+
 
 function showTutorials () {
   if command_exists tree ; then
