@@ -32,17 +32,9 @@ if [ "$?" != 0 ]; then
       return
 fi     
 
-echo "Compiling gencase "
-make gencase
 
-if [ "$?" != 0 ]; then
-      echo "${red}${bold}=============================================="
-      echo "             GENCASE COMPILATION ERROR"
-      echo "==============================================${reset}"
-      return
-fi    
 
-runGencase 1
+runGencase3D 1
 
 mpiexec -np 1 $FM_MYAPP-opt 2> messages.log
 
