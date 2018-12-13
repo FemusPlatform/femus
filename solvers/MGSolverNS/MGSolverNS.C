@@ -144,12 +144,8 @@ _muf ( _mgutils._mat_prop["mu0"] ) {      // parameter viscosity
 //                << " Logarithmic turbulence model set \n ";
 //     }
 // #endif
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    std::map<std::string, bool> YesNo;
-    YesNo["yes"] = true;
-    YesNo["no"]  = false;
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    _SolveNS  = YesNo[_mgutils._sim_config["SolveNavierStokes"]];
+    
+    _SolveNS=(_mgutils._sim_config["SolveNavierStokes"].compare("yes") == 0) ? true: false;
     _Wall_dist =_mgutils._geometry["Wall_dist"];
     _AxiSym  = ( int ) ( _mgutils._geometry["Axisym"] );
 

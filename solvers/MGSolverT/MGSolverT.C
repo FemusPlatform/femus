@@ -98,11 +98,8 @@ _kappa0 ( _mgutils._mat_prop["kappa0"] ) { // parameter  conductivity reference
     _qs=_mgutils._mat_prop["qs"]/ ( _rhof*_cp0*_Tref*_uref );
     _Wall_dist =_mgutils._geometry["Wall_dist"];
 
+    _SolveT=(_mgutils._sim_config["SolveTemperature"].compare("yes") == 0) ? true: false;
 
-    std::map<std::string, bool> YesNo;
-    YesNo["yes"] = true;
-    YesNo["no"]  = false;
-    _SolveT = YesNo[_mgutils._sim_config["SolveTemperature"]];
     return;
 }
 
