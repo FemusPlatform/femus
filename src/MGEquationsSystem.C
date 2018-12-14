@@ -461,7 +461,9 @@ void MGEquationsSystem::print_soln_h5(const int t_flag // time flag
     dir_name << "DATA" << idata;
     print_data_view(filename.str(),idata,dir_name.str());
   }
-   if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) _mgmesh.print_VolFrac_hf5(filename.str(),"Piece_VolFrac");
+  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
+   if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) 
+     _mgmesh.print_VolFrac_hf5(filename.str(),"Piece_VolFrac");
   
   return;
 }
@@ -541,8 +543,8 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,int /*n
 //   // print of CC
 //   print_xmfCC(out,t_step,n_lines,n_cells);
 // #endif
-  
-  if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0){
+  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
+    if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0){
   // ----------------------------------------------------------
   out << "<Attribute Name=\"Piece_VolFrac\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
   out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
@@ -686,8 +688,9 @@ void MGEquationsSystem::print_case_h5(const int t_init) {
 
   hid_t   file = H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT);
   mgmesh.print_subdom_hf5(filename.str())  ; // PID (n processor)
-
- if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0)  mgmesh.print_dist_hf5(filename.str(),mgmesh._dist,"DIST")  ; // PID (n processor)
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
+    if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0)  
+      mgmesh.print_dist_hf5(filename.str(),mgmesh._dist,"DIST")  ; // PID (n processor)
  
   H5Fclose(file);
 
@@ -802,16 +805,18 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
   out << basecase << "."
       << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":PID\n";
   out << "</DataItem>\n" << "</Attribute>\n";
- if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
-  // ----------------------------------------------------------
-  out << "<Attribute Name=\"DIST\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-  out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-      << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
-      << 1 << "\" Format=\"HDF\">  \n";
-  out << basecase << "."
-      << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":DIST\n";
-  out << "</DataItem>\n" << "</Attribute>\n";
- }
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!=""){
+    if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
+    // ----------------------------------------------------------
+    out << "<Attribute Name=\"DIST\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
+    out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+        << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
+        << 1 << "\" Format=\"HDF\">  \n";
+    out << basecase << "."
+        << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":DIST\n";
+    out << "</DataItem>\n" << "</Attribute>\n";
+   }
+  }
 // #ifdef TWO_PHASE
 //   // print of CC
 //   print_xmfCC(out, t_init,n_lines,n_cells);

@@ -34,20 +34,21 @@ MeshExtended::MeshExtended(
   read_bc_id(_NoLevels-1);
   read_mat_id(_NoLevels-1);
 
-  
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!=""){
     if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0) {
     _dist=new double [_off_el[0][_NoLevels*_n_subdom]];// distance
     if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0) {
        for(int  ilev=0; ilev<_NoLevels; ilev++)  B_dist(ilev);   // distance computing
     }
+  }
   }else {
     _dist=new double [1];_dist[0]=0.;
   }  
-  
-  if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) 
-    _VolFrac=new double [_off_el[0][_NoLevels*_n_subdom]];
-  
-  return;
+  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
+    if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) 
+      _VolFrac=new double [_off_el[0][_NoLevels*_n_subdom]];
+
+    return;
 }
 // =======================================================
 MeshExtended::~MeshExtended() {
