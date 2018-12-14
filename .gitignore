@@ -45,8 +45,13 @@ USER_APPL/*
 template_appl/*
 doc/*
 */obj/*
+applications/gencase/gencase_2d/gencase_2d
+applications/gencase/gencase_3d/gencase_3d
+applications/gencase/gencase_2d/src
+applications/gencase/gencase_3d/src
 
-#Other 
+#Other
+*.log
 .directory
 *.depend
 src/.directory
