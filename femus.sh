@@ -45,7 +45,7 @@ function configureApplication () {
           ;;    
       *)  # unrecognized
           echo "Not available compilation method "$1
-          echo "Rerun function configure_application with valid method "
+          echo "Rerun function configureApplication with valid method "
           echo "opt or dbg"
           break
           ;; 
@@ -135,7 +135,7 @@ function compileLibrary {
 
   echo "Compiling femus library for 2D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
-  configure_application opt
+  configureApplication opt
   # removing libfemus_2d.so
   make clean
   # removing object files from femus/src
@@ -144,7 +144,7 @@ function compileLibrary {
   
   echo "Compiling femus library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
-  configure_application opt
+  configureApplication opt
   # removing libfemus_2d.so
   make clean
   # removing object files from femus/src
