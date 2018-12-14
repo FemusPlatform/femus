@@ -56,13 +56,16 @@ class MEDCouplingFieldDouble;
 #endif
 
 #ifdef HAVE_MED
-MMed::MMed() {}
+MMed::MMed() {
+  _proc=0;
+}
 
 MMed::MMed(
   const MEDCoupling::MEDCouplingUMesh * SourceMesh,
   const MEDCoupling::MEDCouplingUMesh * TargetMesh,
   int DomainType
 ) {
+  _proc=0;
 }
 
 MMed::~MMed() {

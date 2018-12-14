@@ -24,7 +24,7 @@ public:
     void setFluidStructure(EquationSystemsExtendedM & EqMap);
     void setColor(EquationSystemsExtendedM & EqMap);
     void setDisplacements(EquationSystemsExtendedM & EqMap);
-    
+    void setImmersedBoundary(EquationSystemsExtendedM & EqMap);
 };
 
 #endif

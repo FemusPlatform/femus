@@ -65,6 +65,10 @@
     CTRLX_F  =21,    // [16]-> Color function for FSI equations
     CTRLY_F  =22,    // [16]-> Color function for FSI equations
     CTRLZ_F  =23,    // [16]-> Color function for FSI equations
+    // IMMERSED BOUNDARY     
+    IB_F = 24,
+    IB_COL = 24,
+    IB_VOL = 25
   };
   
   class FIELDS_class{
@@ -133,7 +137,8 @@
     _map_str2field["CTRL_F"]  =CTRL_F;    // [16]-> Color function for FSI equations
     _map_str2field["CTRLX_F"]  =CTRLX_F;    // [16]-> Color function for FSI equations
     _map_str2field["CTRLY_F"]  =CTRLY_F;    // [16]-> Color function for FSI equations
-    _map_str2field["CTRLZ_F"]  =CTRLZ_F;    // [16]-> Color function for FSI equations
+    _map_str2field["CTRLZ_F"]  =CTRLZ_F;    // [16]-> Color function for FSI 
+    _map_str2field["MG_ImmersedBoundary"]  = IB_F;    // [16]-> Color function for FSI 
 }
       
       

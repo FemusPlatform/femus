@@ -35,9 +35,9 @@ protected:
 public:
   // Constructors- Destructors --------------------------------------
   InterfaceFunctionM() :   ///< Constructor ============================
-     _mesh_mg(NULL),       // Femus-mesh
+    _mesh_mg(NULL),       // Femus-mesh
     _support_med(NULL),     // med-sub/mesh 
-      _support_med_orig(NULL),     // med-sub/mesh 
+    _support_med_orig(NULL),     // med-sub/mesh 
     _field(NULL),          // function
     _map_med(NULL),
     _map_mg(NULL) 
