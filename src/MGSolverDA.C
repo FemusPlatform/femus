@@ -242,6 +242,7 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
   ActivateCoupled("MG_DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
   ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
   ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
+  ActivateCoupled("MG_ImmersedBoundary", IB_F, pbName, "IB1", "IB2",n_index, n_equations );
 
 /// c) Print
 // #ifdef PRINT_INFO // ====================================================

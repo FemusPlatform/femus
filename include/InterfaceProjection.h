@@ -39,11 +39,16 @@ public:
    
    //! Constructor of the BoundInterp Class
    BoundInterp  (
-               const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
+           const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
 	       int DomainType = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
-   
+   BoundInterp  (
+           const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
+	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
+           int procId,
+	       int DomainType = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
+	      );
    //! Destructor of the BoundInterp Class
   ~BoundInterp();
    void terminate();
@@ -113,7 +118,7 @@ public:
     * that are used for the interpolation of the solution on a given target mesh node.
     * This object contains #_TrgNodes tuples, each one with dimension #_SrcCellNodes
     */
-   MEDCoupling::DataArrayInt * BoundingNodes;
+   MEDCoupling::DataArrayInt * _BoundingNodes=NULL;
    // ====================================================================================================================
    //! Coordinates in reference element
    /*!
@@ -121,7 +126,7 @@ public:
     * element of a given point of the target mesh.that are used for the interpolation of the solution on a given target mesh node.
     * This object contains #_TrgNodes tuples, each one with dimension #_MeshDim
     */
-   MEDCoupling::DataArrayDouble * XiEta;
+   MEDCoupling::DataArrayDouble * _XiEta=NULL;
    // ====================================================================================================================
    //! \f$ (\xi,\eta) \f$ coordinates for boundary mesh groups
    /*!
@@ -362,7 +367,7 @@ int  npt_el=2
  double _pos[3];
 //   MEDCoupling::DataArrayDouble* _secArray;
  
-  bool IsFilled(){return __Filled;}
+  int IsFilled(){return __Filled;}
  
 private:
   // Private parameters are characterised by double underscore
@@ -371,7 +376,7 @@ private:
   int  __BoundNodesPerCell;
   int  __TrgNodes;
   int  __Domain;
-  bool __Filled = false;
+  int __Filled;
   
 //   MEDCoupling::DataArrayInt * BoundingNodes;
 //   MEDCoupling::DataArrayDouble * XiEta; 

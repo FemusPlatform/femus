@@ -83,6 +83,7 @@ public:
     ///@}
     
     double *_dist; ///< Distance from a wall defined in B_dist
+    double *_VolFrac; ///< Piecewise volume fraction field
     double * _ctrl_dom; // control domain
           
     double  _mesh2_data[10];   //< Only for coupled mesh
@@ -145,6 +146,7 @@ public:
   void print_subdom_hf5(std::string filename) const ;///< Print a subdomain
 //   void print_med(std::string filename);           ///< Print mesh in med format	
   void print_dist_hf5(std::string filename,double dist[],std::string dir_name) const;
+  void print_VolFrac_hf5(std::string filename,std::string dir_name) const;
   ///< Print distance function from the walls
   void print_ctrl_dom_hf5(std::string filename,double ctrl_dom[],std::string dir_name) const;
   

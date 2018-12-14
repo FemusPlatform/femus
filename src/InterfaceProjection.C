@@ -26,7 +26,9 @@ class MEDCouplingFieldDouble;
 
 
 // ================================================================================================
-BoundInterp::BoundInterp() : MMed() {}
+BoundInterp::BoundInterp() : MMed() {
+  __Filled=0;
+}
 
 
 // ================================================================================================
@@ -35,9 +37,23 @@ BoundInterp::BoundInterp (
     const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     int DomainType
 ) : MMed() {
+    __Filled=0;
     _AlreadyInitialized=0;
     FillParameters ( SourceMesh,TargetMesh,DomainType );
 }
+
+BoundInterp::BoundInterp (
+    const MEDCoupling::MEDCouplingUMesh * SourceMesh,
+    const MEDCoupling::MEDCouplingUMesh * TargetMesh,
+    int procId,
+    int DomainType    
+) : MMed() {
+   __Filled=0;
+    _AlreadyInitialized=0;
+    setProcId(procId);
+    FillParameters ( SourceMesh,TargetMesh,DomainType );
+}
+
 // ================================================================================================
 void BoundInterp::FillParameters (
     const MEDCoupling::MEDCouplingUMesh * SourceMesh,
@@ -45,7 +61,7 @@ void BoundInterp::FillParameters (
     int DomainType,
     double XiEtaToll
 ) {
-    __Filled = true;
+
     // Important!
     // Update the map when interpolation between different element types is available  //
     std::map<int,int> InterpCoordNodes;
@@ -56,17 +72,28 @@ void BoundInterp::FillParameters (
     InterpCoordNodes[6]=3;
     InterpCoordNodes[7]=3;
 
-//     double XiEtaToll = 1.e-3
 
-    __InMesh = SourceMesh->deepCopy();    string name = SourceMesh->getName();
+    if(__Filled==1){
+       __InMesh->decrRef();
+       __OutMesh->decrRef();
+    }
+    __InMesh = SourceMesh->deepCopy();
+    __OutMesh = TargetMesh->deepCopy();
+
+    
+    __Filled = 1;
+    
+    string name = SourceMesh->getName();
     _SrcCellNodes        = __InMesh->getNumberOfNodesInCell ( 0 );
     _SrcCoordInterpNodes = InterpCoordNodes[_SrcCellNodes];
     _SrcCells = __InMesh -> getNumberOfCells();
+    
+    
+    
     INTERP_KERNEL::NormalizedCellType Type = __InMesh->getTypeOfCell ( 0 );
     if ( Type==6 || Type==7 || Type==14 || Type==20 ) _FamilyType=0;
     else _FamilyType=1;
-
-    __OutMesh = TargetMesh;
+    
     int TrgCellNodes = __OutMesh->getNumberOfNodesInCell ( 0 );
     _SpaceDim            = __OutMesh->getSpaceDimension();
     _MeshDim             = __OutMesh->getMeshDimension();
@@ -121,559 +148,7 @@ void BoundInterp::FillParameters (
 
     int SecMatrix[_SrcCells][4];
 
-#define RICERCA (0)
-// #define VERIFY_INTERP
-#define  USEMEDmet (1)
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-#if RICERCA==1
-    std::clock_t oldsearchbegin = std::clock();
-    double *PointsCoords=new double[_SrcCellNodes*_SpaceDim];                         // Node coordinates {xyz xyz xyz}
-    double *dda=new double[_SrcCoordInterpNodes];
-    double *ddb=new double[_SrcCoordInterpNodes];
-    double pos[DIMENSION];
-    std::vector< int > TrgConn;
-    std::vector< double > coord;
-    double tollerance=1.e-10;
 
-    // cell loop ---------------------------------------------------------------------------
-    for ( int iCell=0; iCell < _SrcCells; iCell++ ) {
-
-        InMesh -> getNodeIdsOfCell ( iCell,TrgConn );
-        DataArrayDouble *Dda = DataArrayDouble::New();
-        Dda -> alloc ( _SrcCoordInterpNodes,1 );
-        DataArrayDouble *Ddb = DataArrayDouble::New();
-        Ddb -> alloc ( _SrcCoordInterpNodes,1 );
-
-        for ( int i_node=0; i_node < _SrcCoordInterpNodes; i_node++ ) {             // Loop over the element nodes
-            InMesh -> getCoordinatesOfNode ( TrgConn[i_node],coord );
-            for ( int j =0; j<_SpaceDim; j++ ) {
-                pos[j]= coord[j];
-            }
-            dda[i_node] = ( coord[1] - pointA[1] ) / ( coord[0] - pointA[0] );
-            ddb[i_node] = ( coord[1] - pointB[1] ) / ( coord[0] - pointB[0] );
-            Dda->setIJ ( i_node,0, ( coord[1] - pointA[1] ) / ( coord[0] - pointA[0] ) );
-            Ddb->setIJ ( i_node,0, ( coord[1] - pointB[1] ) / ( coord[0] - pointB[0] ) );
-            if ( iCell==4 ) {
-                std::cout<<"inode "<< i_node <<" dda "<<dda[i_node] <<" ddb "<<ddb[i_node]<<std::endl;
-            }
-            coord.clear();
-        }
-        DDA->setIJ ( iCell,0,Dda->getMinValueInArray() );
-        DDA->setIJ ( iCell,1,Dda->getMaxValueInArray() );
-        DDB->setIJ ( iCell,0,Ddb->getMinValueInArray() );
-        DDB->setIJ ( iCell,1,Ddb->getMaxValueInArray() );
-
-        // clean
-        if ( iCell==4 ) {
-            std::cout<<"DDA min "<< DDA->getIJ ( iCell,0 ) <<"DDA max "<< DDA->getIJ ( iCell,1 )
-            <<"DDB min "<< DDB->getIJ ( iCell,0 ) <<"DDB max "<< DDB->getIJ ( iCell,1 ) <<std::endl;
-        }
-        Dda->decrRef();
-        Ddb->decrRef();
-        TrgConn.clear();
-    }
-
-
-    // node loop -------------------------------------------------------------------------------------------
-    int count=0;
-    int celleeee=0;
-    std::map<int,int> MedLibmesh;
-    BuildCanonicalElementNodesMap ( _SrcCellNodes, MedLibmesh );
-    std::vector< double > coord;
-    std::vector<int> celle;
-    std::vector<int> valore;
-
-    for ( int i_node=0; i_node < _TrgNodes; i_node++ ) {             // Loop over the element node
-
-        OutMesh -> getCoordinatesOfNode ( i_node,coord );
-        double dda = ( coord[1] - pointA[1] ) / ( coord[0] - pointA[0] );
-        double ddb = ( coord[1] - pointB[1] ) / ( coord[0] - pointB[0] );
-        double pos[_SpaceDim];
-        pos[0] = coord[0];
-        pos[1] = coord[1];
-
-// 	std::clock_t oldsearchbegin = std::clock();
-        for ( int iCell=0; iCell < _SrcCells; iCell++ ) {
-            if ( ( DDA->getIJ ( iCell,0 ) -tollerance ) < dda && ( DDA->getIJ ( iCell,1 ) +tollerance ) > dda &&
-                    ( DDB->getIJ ( iCell,0 ) -tollerance ) < ddb && ( DDB->getIJ ( iCell,1 ) +tollerance ) > ddb
-               ) {
-                celle.push_back ( iCell );
-            }
-            valore.push_back ( -1 );
-        }
-
-        int numero = celle.size();
-        if ( i_node == 4 ) for ( int dim=0; dim<numero; dim++ ) {
-                std::cout<< "dim " <<dim <<" cella " << celle[dim] <<std::endl;
-            }
-        if ( numero>1.5 ) {
-            celleeee += numero;
-            count++;
-
-            bool found = false;
-            int i =0;
-            while ( !found ) {
-                std::vector<int> SourceConn;
-                InMesh->getNodeIdsOfCell ( celle[i],SourceConn );
-
-                for ( int SNode1 = 0; SNode1<_SrcCoordInterpNodes; SNode1 ++ ) {
-                    std::vector< double > ElCoord1;
-                    InMesh -> getCoordinatesOfNode ( SourceConn[MedLibmesh[SNode1]],ElCoord1 );
-                    for ( int direction = 0; direction<_SpaceDim; direction++ ) {
-                        _CoordMatrix.push_back ( ElCoord1[direction] );
-                    }
-                    ElCoord1.clear();
-                }
-                XiEtaChiCalc ( pos );
-                if ( fabs ( _XiEtaChi[0] ) <1.000001&&fabs ( _XiEtaChi[1] ) <1.000001 ) {
-                    found = true;
-                    for ( int dim=0; dim<_MeshDim; dim++ ) {
-                        XiEta1->setIJ ( i_node,dim,_XiEtaChi[dim] );
-                    }
-                    for ( int SNode = 0; SNode<_SrcCellNodes; SNode++ ) {
-                        BoundingNodes1->setIJ ( i_node, SNode, SourceConn[SNode] );
-                    }
-                    _CoordMatrix.clear();
-                    _XiEtaChi.clear();
-                } else {
-                    _CoordMatrix.clear();
-                    _XiEtaChi.clear();
-                }
-                SourceConn.clear();
-                i++;
-            }
-        } else if ( numero>0.5 && numero<1.5 ) {
-            std::vector<int> SourceConn;
-            InMesh->getNodeIdsOfCell ( celle[0],SourceConn );
-            for ( int SNode1 = 0; SNode1<_SrcCoordInterpNodes; SNode1 ++ ) {
-                std::vector< double > ElCoord1;
-                InMesh -> getCoordinatesOfNode ( SourceConn[MedLibmesh[SNode1]],ElCoord1 );
-                for ( int direction = 0; direction<_SpaceDim; direction++ ) {
-                    _CoordMatrix.push_back ( ElCoord1[direction] );
-                }
-                ElCoord1.clear();
-            }
-            XiEtaChiCalc ( pos );
-            for ( int dim=0; dim<_MeshDim; dim++ ) {
-                XiEta1->setIJ ( i_node,dim,_XiEtaChi[dim] );
-            }
-            for ( int SNode = 0; SNode<_SrcCellNodes; SNode++ ) {
-                BoundingNodes1->setIJ ( i_node, SNode, SourceConn[SNode] );
-            }
-            _CoordMatrix.clear();
-            _XiEtaChi.clear();
-            SourceConn.clear();
-        } else {
-            std::cout<<"nodo "<< i_node;
-            std::cout<<"\033[1;31m Warning! zero cell found, tollerance = " << tollerance << "\033[0m\n";
-            tollerance *=10.;
-            i_node += -1;
-        }
-        coord.clear();
-        celle.clear();
-        valore.clear();
-    }
-    std::clock_t oldsearchstop = std::clock();
-    std::cout<<std::endl<<"----------------------- without sectorizing " << double ( oldsearchstop-oldsearchbegin ) /CLOCKS_PER_SEC <<std::endl;
-#endif
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-#if RICERCA==2
-    std::clock_t prelimbegin = std::clock();
-
-    short int subSec0[_SrcCells][9];
-    short int Scount0[9];
-    short int subSec1[_SrcCells][9];
-    short int Scount1[9];
-    short int subSec2[_SrcCells][9];
-    short int Scount2[9];
-    short int subSec3[_SrcCells][9];
-    short int Scount3[9];
-
-    for ( int c=0; c<9; c++ ) {
-        Scount0[c]=-1;
-        Scount1[c]=-1;
-        Scount2[c]=-1;
-        Scount3[c]=-1;
-    }
-
-    short int* Scount[4];
-    Scount[0] = & Scount0[0];
-    Scount[1] = & Scount1[0];
-    Scount[2] = & Scount2[0];
-    Scount[3] = & Scount3[0];
-
-    short int* SubSec[4];
-    SubSec[0] = & subSec0[0][0];
-    SubSec[1] = & subSec1[0][0];
-    SubSec[2] = & subSec2[0][0];
-    SubSec[3] = & subSec3[0][0];
-    _Scount[0] = & Scount0[0];
-    _Scount[1] = & Scount1[0];
-    _Scount[2] = & Scount2[0];
-    _Scount[3] = & Scount3[0];
-    _SubSec[0] = & subSec0[0][0];
-    _SubSec[1] = & subSec1[0][0];
-    _SubSec[2] = & subSec2[0][0];
-    _SubSec[3] = & subSec3[0][0];
-
-#ifdef VERIFY_INTERP
-    DataArrayDouble *OccupiedCells = DataArrayDouble::New();
-    OccupiedCells -> alloc ( _SrcCells,1 );
-    OccupiedCells -> fillWithValue ( 0. );
-
-    DataArrayDouble* FindNode = DataArrayDouble::New();
-    FindNode->alloc ( _TrgNodes,1 );
-    FindNode->fillWithZero();
-    DataArrayDouble* POS0 = DataArrayDouble::New();
-    POS0->alloc ( _SrcCells,1 );
-    POS0->fillWithValue ( -1 );
-    DataArrayDouble* POS1 = DataArrayDouble::New();
-    POS1->alloc ( _SrcCells,1 );
-    POS1->fillWithValue ( -1 );
-    DataArrayDouble* POS2 = DataArrayDouble::New();
-    POS2->alloc ( _SrcCells,1 );
-    POS2->fillWithValue ( -1 );
-    DataArrayDouble* POS3 = DataArrayDouble::New();
-    POS3->alloc ( _SrcCells,1 );
-    POS3->fillWithValue ( -1 );
-
-    _sec0 = DataArrayDouble::New();
-    _sec0->alloc ( _SrcCells,9 );
-    _sec0->fillWithValue ( -1 );
-    _sec2 = DataArrayDouble::New();
-    _sec2->alloc ( _SrcCells,9 );
-    _sec2->fillWithValue ( -1 );
-    _sec1 = DataArrayDouble::New();
-    _sec1->alloc ( _SrcCells,9 );
-    _sec1->fillWithValue ( -1 );
-    _sec3 = DataArrayDouble::New();
-    _sec3->alloc ( _SrcCells,9 );
-    _sec3->fillWithValue ( -1 );
-
-#endif
-
-    std::vector< int > TrgConn;
-    int Counts[4];
-    Counts[0] = -1;
-    Counts[1] = -1;
-    Counts[2] = -1;
-    Counts[3] = -1;
-    double tollerance=1.e-4;
-    double toll=1.e-20;
-
-    for ( int iCell=0; iCell < _SrcCells; iCell++ ) {
-        InMesh -> getNodeIdsOfCell ( iCell,TrgConn );
-        double ddamin =1.e+200;
-        double ddamax = -1.e+200;
-        double ddbmin=1.e+200;
-        double ddbmax = -1.e+200;
-
-        for ( int i_node=0; i_node < _SrcCoordInterpNodes; i_node++ ) {             // Loop over the element nodes
-            InMesh -> getCoordinatesOfNode ( TrgConn[i_node],_coord );
-            double  dda = ( _coord[1] - pointA[1] ) / ( _coord[0] - pointA[0] );
-            double  ddb = ( _coord[1] - pointB[1] ) / ( _coord[0] - pointB[0] );
-            ddamin = ( dda<ddamin? dda:ddamin );
-            ddamax = ( dda>ddamax? dda:ddamax );
-            ddbmin = ( ddb<ddbmin? ddb:ddbmin );
-            ddbmax = ( ddb>ddbmax? ddb:ddbmax );
-            _coord.clear();
-        }
-        DDA->setIJ ( iCell,0,ddamin );  /*DDAm.push_back(ddamin);*/
-        DDA->setIJ ( iCell,2,ddbmin );  /*DDAM.push_back(ddamax);*/
-        DDA->setIJ ( iCell,1,ddamax );  /*DDBm.push_back(ddbmin);*/
-        DDA->setIJ ( iCell,3,ddbmax );  /*DDBM.push_back(ddbmax);*/
-
-        if ( ( ddamax ) >coeffA && ( ddbmin ) <coeffB ) {
-
-            Counts[1]++;
-            SecMatrix[Counts[1]][1] = iCell;
-
-            _subsecAm = ( int ) ( ( coeffAM-ddamin+toll ) /deltaAM );
-            _subsecAM = ( int ) ( ( coeffAM-ddamax+toll ) /deltaAM );
-            _subsecBm = ( int ) ( ( coeffB -ddbmin+toll ) /deltaBm );
-            _subsecBM = ( int ) ( ( coeffB -ddbmax+toll ) /deltaBm );
-            _subsecBm = ( _subsecBm==3?2:_subsecBm );
-            _subsecBM = ( _subsecBM==3?2:_subsecBM );
-            _subsecBm*=3;
-            _subsecBM*=3;
-
-            SetSubSector ( 1,  iCell );
-#ifdef VERIFY_INTERP
-            POS1->setIJ ( iCell,0,1 );
-#endif
-            /// End subsector for sector 1
-        }
-        if ( ( ddamax ) >coeffA && ( ddbmax ) >coeffB ) {
-#ifdef VERIFY_INTERP
-            POS3->setIJ ( iCell,0,3 );
-#endif
-            Counts[3]++;
-            SecMatrix[Counts[3]][3] = iCell;
-            _subsecAm = ( int ) ( ( coeffAM-ddamin+toll ) /deltaAM );
-            _subsecAM = ( int ) ( ( coeffAM-ddamax+toll ) /deltaAM );
-            _subsecBm = ( int ) ( ( coeffBM-ddbmin+toll ) /deltaBM );
-            _subsecBM = ( int ) ( ( coeffBM-ddbmax+toll ) /deltaBM ) ;
-            _subsecBm = ( _subsecBm==3?2:_subsecBm );
-            _subsecBM = ( _subsecBM==3?2:_subsecBM );
-            _subsecBm*=3;
-            _subsecBM*=3;
-            SetSubSector ( 3,  iCell );
-
-            /// End subsector for sector 1
-
-        }
-        if ( ( ddamin ) <coeffA && ( ddbmin ) <coeffB ) {
-#ifdef VERIFY_INTERP
-            POS0->setIJ ( iCell,0,0 );
-#endif
-            Counts[0]++;
-            SecMatrix[Counts[0]][0] = iCell;
-
-            _subsecAm = ( int ) ( ( coeffA-ddamin+toll ) /deltaAm );
-            _subsecAM = ( int ) ( ( coeffA-ddamax+toll ) /deltaAm );
-            _subsecBm = ( int ) ( ( coeffB-ddbmin+toll ) /deltaBm );
-            _subsecBM = ( int ) ( ( coeffB-ddbmax+toll ) /deltaBm );
-            _subsecBm = ( _subsecBm==3?2:_subsecBm );
-            _subsecBM = ( _subsecBM==3?2:_subsecBM );
-            _subsecBm*=3;
-            _subsecBM*=3;
-            SetSubSector ( 0,  iCell );
-
-        }
-        if ( ( ddamin ) <coeffA && ( ddbmax ) >coeffB ) {
-#ifdef VERIFY_INTERP
-            POS2->setIJ ( iCell,0,2 );
-#endif
-            Counts[2]++;
-            SecMatrix[Counts[2]][2] = iCell;
-            _subsecAm = ( int ) ( ( coeffA- ddamin+toll ) /deltaAm );
-            _subsecAM = ( int ) ( ( coeffA- ddamax+toll ) /deltaAm );
-            _subsecBm = ( int ) ( ( coeffBM-ddbmin+toll ) /deltaBM );
-            _subsecBM = ( int ) ( ( coeffBM-ddbmax+toll ) /deltaBM );
-            _subsecBm = ( _subsecBm==3?2:_subsecBm );
-            _subsecBM = ( _subsecBM==3?2:_subsecBM );
-            _subsecBm*=3;
-            _subsecBM*=3;
-            SetSubSector ( 2,  iCell );
-        }
-
-        TrgConn.clear();
-    }
-
-    std::clock_t prelimend = std::clock();
-    std::cout<<std::endl<<"----------------------- mapping sectors " << double ( prelimend-prelimbegin ) /CLOCKS_PER_SEC <<std::endl;
-
-    std::clock_t newsearchbegin = std::clock();
-
-    std::vector<int>    valore;
-    std::vector<int>    SourceConn;
-    int secA;
-    int secB;
-    int sector;
-    int Nsub;
-    int NsubsecB;
-    int NsubsecA;
-//   int count;
-//   for(int sec=0;sec<4;sec++){
-//     std::cout<<"elementi nel settore "<<sec<<" pari a "<<Counts[sec]<<std::endl;
-//     count=0;
-//     for(int sub=0;sub<9;sub++){
-//       std::cout<<" sector "<<sec<<" sub sector "<<sub<<" nel " << *(Scount[sec]+sub)<<std::endl;
-//
-//       count += *(Scount[sec]+sub);
-//     }
-//     std::cout<<"elementi nel settore "<<sec<<" con nuova partizione "<<count<<std::endl;
-//   }
-//
-    int posi;
-    for ( int i_node=0; i_node < _TrgNodes; i_node++ ) {             // Loop over the element nodes
-        OutMesh -> getCoordinatesOfNode ( i_node,_coord );
-        _pos[0] = _coord[0];
-        _pos[1] = _coord[1];
-        double dda = ( _pos[1] - pointA[1] ) / ( _pos[0] - pointA[0] );
-        double ddb = ( _pos[1] - pointB[1] ) / ( _pos[0] - pointB[0] );
-
-        // Determination of sector where we locate node i_node ------------------------------
-        secA = ( fabs ( dda ) >fabs ( coeffA ) ? 1:0 );
-        secB = ( fabs ( ddb ) >fabs ( coeffB ) ? 0:1 );
-        sector = secA + 2*secB; // 0 1 2 3
-
-        if ( sector==0 ) {
-            NsubsecA = ( coeffA-dda ) /deltaAm;
-            NsubsecB = ( coeffB-ddb ) /deltaBm;
-            NsubsecB*=3;
-        }
-        if ( sector==1 ) {
-            NsubsecA= ( coeffAM-dda ) /deltaAM;
-            NsubsecB= ( coeffB -ddb ) /deltaBm;
-            NsubsecB*=3;
-        }
-        if ( sector==2 ) {
-            NsubsecA = ( coeffA-dda ) /deltaAm;
-            NsubsecB = ( coeffBM-ddb ) /deltaBM;
-            NsubsecB*=3;
-        }
-        if ( sector==3 ) {
-            NsubsecA = ( coeffAM-dda ) /deltaAM;
-            NsubsecB = ( coeffBM-ddb ) /deltaBM;
-            NsubsecB*=3;
-        }
-
-        Nsub=NsubsecA+NsubsecB;
-        bool found = false;
-        int num=-1;
-        while ( !found ) {
-            num++;
-            posi = * ( SubSec[sector]+num*9+Nsub ); // 9 ????????????????????????????
-            if ( ( DDA->getIJ ( posi,0 ) -tollerance ) < dda && ( DDA->getIJ ( posi,1 ) +tollerance ) > dda &&
-                    ( DDA->getIJ ( posi,2 ) -tollerance ) < ddb && ( DDA->getIJ ( posi,3 ) +tollerance ) > ddb ) {
-
-                SourceConn.clear();
-                InMesh->getNodeIdsOfCell ( posi,SourceConn );
-                for ( int SNode1 = 0; SNode1<_SrcCoordInterpNodes; SNode1 ++ ) {
-                    InMesh -> getCoordinatesOfNode ( SourceConn[SNode1],_CoordMatrix );
-                }
-                CheckBelonging ( found );
-                _CoordMatrix.clear();
-            }
-        }
-        XiEtaChiCalc ( _pos );
-// 	for(int dim=0; dim<_MeshDim; dim++) XiEta1->setIJ(i_node,dim,_XiEtaChi[dim]);
-// 	for(int SNode = 0; SNode<_SrcCellNodes; SNode++) BoundingNodes1->setIJ(i_node, SNode, SourceConn[SNode]);
-        // clean
-        _XiEtaChi.clear();
-        SourceConn.clear();
-        _coord.clear();
-        valore.clear();
-
-    }//end loop over target mesh nodes
-    DDA->decrRef();
-
-    std::clock_t newsearchstop = std::clock();
-    std::cout<<std::endl<<"----------------------- sectorizing " << double ( newsearchstop-newsearchbegin ) /CLOCKS_PER_SEC <<std::endl;
-#endif
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-//   MEDCouplingFieldDouble * position = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-//   position->setMesh(OutMesh);
-//   position->setArray(XiEtaNew);
-//   position->setName("XiEtaChi");
-//   MEDLoader::WriteUMesh("new_method.med",OutMesh,true);
-//   MEDLoader::WriteFieldUsingAlreadyWrittenMesh("new_method.med",position);
-
-
-#ifdef VERIFY_INTERP
-
-    MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New ( MEDCoupling::ON_CELLS );
-    f->setMesh ( InMesh );
-    f->setArray ( OccupiedCells );
-    f->setName ( "OccupiedCells" );
-
-    MEDCouplingFieldDouble * Node = MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
-    Node->setMesh ( OutMesh );
-    Node->setArray ( FindNode );
-    Node->setName ( "FindNode" );
-    MEDLoader::WriteUMesh ( "FoundNode.med",OutMesh,true );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "FoundNode.med",Node );
-
-    MEDCouplingFieldDouble * Sector = MEDCouplingFieldDouble::New ( MEDCoupling::ON_CELLS );
-    Sector->setMesh ( InMesh );
-    Sector->setArray ( POS0 );
-    Sector->setName ( "Sector0" );
-    MEDLoader::WriteUMesh ( "MeshSectors.med",InMesh,true );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-
-    Sector->setArray ( POS1 );
-    Sector->setName ( "Sector1" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-    Sector->setArray ( POS2 );
-    Sector->setName ( "Sector2" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-    Sector->setArray ( POS3 );
-    Sector->setName ( "Sector3" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",f );
-
-    std::string subsectors[9];
-    subsectors[0]= "sub0";
-    subsectors[1]= "sub1";
-    subsectors[2]= "sub2";
-    subsectors[3]= "sub3";
-    subsectors[4]= "sub4";
-    subsectors[5]= "sub5";
-    subsectors[6]= "sub6";
-    subsectors[7]= "sub7";
-    subsectors[8]= "sub8";
-
-    for ( int i=0; i<9; i++ ) {
-        _sec0->setInfoOnComponent ( i,subsectors[i] );
-        _sec1->setInfoOnComponent ( i,subsectors[i] );
-        _sec2->setInfoOnComponent ( i,subsectors[i] );
-        _sec3->setInfoOnComponent ( i,subsectors[i] );
-    }
-
-    Sector->setArray ( _sec0 );
-    Sector->setName ( "SubSector0" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-    Sector->setArray ( _sec1 );
-    Sector->setName ( "SubSector1" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-    Sector->setArray ( _sec2 );
-    Sector->setName ( "SubSector2" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-    Sector->setArray ( _sec3 );
-    Sector->setName ( "SubSector3" );
-    MEDLoader::WriteFieldUsingAlreadyWrittenMesh ( "MeshSectors.med",Sector );
-
-    //clean
-    POS0->decrRef();
-    POS1->decrRef();
-    POS2->decrRef();
-    POS3->decrRef();
-    FindNode->decrRef();
-    Node->decrRef();
-    Sector->decrRef();
-
-#endif
-
-
-//   f->decrRef();
-//   position->decrRef();
-//   sector->decrRef();
-
-//   MEDCouplingFieldDouble * dda1 = MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
-//   dda1->setMesh(InMesh);
-//   dda1->setArray(DDA);
-//   dda1->setName("DDA");
-//
-//   MEDCouplingFieldDouble * ddb1 = MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
-//   ddb1->setMesh(InMesh);
-//   ddb1->setArray(DDB);
-//   ddb1->setName("DDB");
-//
-//   MEDLoader::WriteUMesh("distribution.med",InMesh,true);
-//   MEDLoader::WriteFieldUsingAlreadyWrittenMesh("distribution.med",dda1);
-//   MEDLoader::WriteFieldUsingAlreadyWrittenMesh("distribution.med",ddb1);
-//
-//   std::cout<<" count "<<count<<" totale "<<_TrgNodes<<" mediamente "<<celleeee/count<<std::endl;
-
-
-
-//    std::clock_t par_time2 = std::clock();
-//   std::cout<<std::endl<<"----------------------- ricerca nuova " << double(par_time2-par_time1)/CLOCKS_PER_SEC <<std::endl;
-
-    /////////////////////////////////////////////////////////////////////
-    //*************************** end new point location part
-
-#if USEMEDmet==1
     MEDCoupling::DataArrayInt *targetArray = MEDCoupling::DataArrayInt::New();
     targetArray -> alloc ( _TrgNodes,1 );
     targetArray -> fillWithValue ( 1 );
@@ -1065,42 +540,6 @@ void BoundInterp::FillParameters (
         }
         CoordinatesOfNodes.clear();
 
-        std::clock_t par_time22 = std::clock();
-//         std::cout<<std::endl<<"----------------------- ricerca con med " << double(par_time22-par_time12)/CLOCKS_PER_SEC <<std::endl;
-        //******* end new med search
-//   std::clock_t oldmedbegin = std::clock();
-//       for(int TNode = 0; TNode < _TrgNodes; TNode++){
-// 	std::vector<double> NodeCoord;
-// 	double pos[_SpaceDim];
-// 	OutMesh->getCoordinatesOfNode(TNode, NodeCoord);
-// 	for(int dir=0; dir<_SpaceDim; dir++) pos[dir] = NodeCoord[dir];
-//
-//
-// 	int Cell = InMesh->getCellContainingPoint(pos, 1.e-6);
-//
-// 	std::vector<int> SourceConn;
-// 	InMesh->getNodeIdsOfCell(Cell,SourceConn);
-// 	for(int SNode = 0; SNode<_SrcCellNodes; SNode++) BoundingNodes1->setIJ(TNode, SNode, SourceConn[SNode]);
-//
-// 	for (int SNode1 = 0; SNode1<_SrcCoordInterpNodes; SNode1 ++) {
-// 	      std::vector< double > ElCoord1;
-// 	      InMesh -> getCoordinatesOfNode(SourceConn[SNode1],ElCoord1);
-// 	      for (int direction = 0; direction<_SpaceDim; direction++)  {
-// 		            _CoordMatrix.push_back(ElCoord1[direction]);
-// 	      }
-// 	      ElCoord1.clear();
-// 	}
-//
-// 	XiEtaChiCalc(pos);
-// 	for(int Mcomp=0; Mcomp<_MeshDim; Mcomp++) XiEta1->setIJ(TNode,Mcomp,_XiEtaChi[Mcomp]);
-//
-// 	_CoordMatrix.clear();
-// 	_XiEtaChi.clear();
-// 	NodeCoord.clear();
-// 	SourceConn.clear();
-//       }
-//         std::clock_t oldmedend= std::clock();
-//   std::cout<<std::endl<<"----------------------- ricerca con old med " << double(oldmedend-oldmedbegin)/CLOCKS_PER_SEC <<std::endl;
         break;
     }
 
@@ -1108,9 +547,6 @@ void BoundInterp::FillParameters (
    
     targetArray->decrRef(); 
     DDA->decrRef(); 
-//     delete [] nodalConnPerCell;
-//   delete [] TCbbox;
-#endif
 
     MEDCoupling::MEDCouplingFieldDouble * CanonicalPosition = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     CanonicalPosition->setMesh ( __OutMesh );
@@ -1124,14 +560,19 @@ void BoundInterp::FillParameters (
 
     string FileName="S"+__InMesh->getName() +"_T"+__OutMesh->getName() +"_MeshCoupling.med";
 
-    MEDCoupling::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,true );
-    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CanonicalPosition );
-    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CellS );
+    if(_proc==0){
+      MEDCoupling::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,true );
+      MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CanonicalPosition );
+      MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CellS );
+    }
     CanonicalPosition->decrRef();
     CellS->decrRef();
 
-    BoundingNodes = BoundingNodes1;
-    XiEta = XiEta1;
+    if(_BoundingNodes != NULL) _BoundingNodes->decrRef();
+    _BoundingNodes = BoundingNodes1;
+    if(_XiEta != NULL) _XiEta->decrRef();
+    _XiEta = XiEta1;
+
     __BoundNodesPerCell = _SrcCellNodes;
     __TrgNodes = _TrgNodes;
     __Domain = DomainType;
@@ -1143,8 +584,8 @@ void BoundInterp::FillParameters (
 BoundInterp::~BoundInterp() {
     __InMesh->decrRef();
     __OutMesh->decrRef();
-    XiEta->decrRef();
-    BoundingNodes->decrRef();
+    _XiEta->decrRef();
+    _BoundingNodes->decrRef();
 }
 
 
@@ -1329,14 +770,14 @@ void BoundInterp::SetSubSector ( int sector, int iCell ) {
 // ===================================================================================
 void BoundInterp::GetXiEta ( int node, std::vector<double> &XiEtabound ) {
     for ( int dim=0; dim<_MeshDim; dim++ ) {
-        XiEtabound.push_back ( XiEta->getIJ ( node,dim ) );
+        XiEtabound.push_back ( _XiEta->getIJ ( node,dim ) );
     }
     return;
 }
 // ===================================================================================
 void BoundInterp::GetXiEtaChi ( int node, std::vector<double> &XiEtaChi ) {
     for ( int dim=0; dim<_MeshDim; dim++ ) {
-        XiEtaChi.push_back ( XiEta->getIJ ( node,dim ) );
+        XiEtaChi.push_back ( _XiEta->getIJ ( node,dim ) );
     }
     return;
 }
@@ -1344,9 +785,9 @@ void BoundInterp::GetXiEtaChi ( int node, std::vector<double> &XiEtaChi ) {
 
 // ===================================================================================
 void BoundInterp::GetInterNodes ( int node, std::vector<int> &VectorContainingNodes ) {
-    const int SourceNodes = BoundingNodes->getNumberOfComponents();
+    const int SourceNodes = _BoundingNodes->getNumberOfComponents();
     for ( int i = 0; i<SourceNodes; i++ ) {
-        VectorContainingNodes.push_back ( BoundingNodes->getIJ ( node,i ) );
+        VectorContainingNodes.push_back ( _BoundingNodes->getIJ ( node,i ) );
     }
     return;
 }

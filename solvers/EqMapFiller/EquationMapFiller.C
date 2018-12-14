@@ -58,6 +58,9 @@
 #ifdef COLOR_EQUATIONS
 #include "MGSolverCOL.h"
 #endif
+#ifdef IMMERSED_BOUNDARY
+#include "MGSolverIB.h"
+#endif
 
 #include "MGSolverDA.h"
 #ifdef   TWO_PHASE
@@ -88,6 +91,10 @@ void EquationMapFiller::FillEquationMap(FEMUS& FemusProblem, const std::vector<F
         setFluidStructure(EqMap);
      if(pbName[iname]== SDS_F) 
         setDisplacements(EqMap);
+     if(pbName[iname]== IB_F) 
+        setImmersedBoundary(EqMap);
+     
+     
   }
 
     return;
@@ -221,3 +228,13 @@ void EquationMapFiller::setDisplacements(EquationSystemsExtendedM& EqMap)
   return;    
 }
 
+
+void EquationMapFiller::setImmersedBoundary(EquationSystemsExtendedM& EqMap)
+{
+#ifdef IMMERSED_BOUNDARY
+      _nvars[0]=0;  _nvars[1]=0;  _nvars[2]=1;
+      EqMap.AddSolver<MGSolIB> ("IB1", IB_COL , _nvars[0],_nvars[1],_nvars[2],"Col");    
+      EqMap.AddSolver<MGSolIB> ("IB2", IB_VOL , _nvars[0],_nvars[1],_nvars[2],"VolFrac");  
+#endif
+    return;
+}

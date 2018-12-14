@@ -461,6 +461,8 @@ void MGEquationsSystem::print_soln_h5(const int t_flag // time flag
     dir_name << "DATA" << idata;
     print_data_view(filename.str(),idata,dir_name.str());
   }
+   if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) _mgmesh.print_VolFrac_hf5(filename.str(),"Piece_VolFrac");
+  
   return;
 }
 
@@ -539,6 +541,20 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,int /*n
 //   // print of CC
 //   print_xmfCC(out,t_step,n_lines,n_cells);
 // #endif
+  
+  if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0){
+  // ----------------------------------------------------------
+  out << "<Attribute Name=\"Piece_VolFrac\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
+  out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+  out << attr_file.str()
+//       femus_dir << "/" << output_dir << basesol << "."
+//       << setw(ndigits) << setfill('0') << t_step << ".h5"
+      << ":Piece_VolFrac\n";
+  out << "</DataItem>\n" << "</Attribute>";
+ }
+  
+  
   out << "</Grid>\n" << "</Domain> \n" << "</Xdmf> \n";
   out.close();
   return;
