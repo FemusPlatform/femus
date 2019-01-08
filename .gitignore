@@ -54,5 +54,7 @@ applications/gencase/gencase_3d/src
 *.log
 .directory
 *.depend
+*.kde4
+*/.kde4/*
 src/.directory
 src/.kdev_include_paths

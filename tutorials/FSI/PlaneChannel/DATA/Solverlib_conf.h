@@ -7,7 +7,7 @@
     #define HAVE_PETSCM 
     #define HAVE_MPI   //what if I want to use Petsc without MPI?
 
-    
+#define NEW_VERSION    
 // Med library
 #define    HAVE_MED
     

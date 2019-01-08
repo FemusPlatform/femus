@@ -138,7 +138,7 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                 _data_eq[0].n_eqs++;  // number of quadratic system
                 n_index++; // update counter
             }
-
+  if (_mgutils._sim_config["MG_NavierStokes"]!=""){
     if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
         if(NDOF_K==1)
             for(int iname=0; iname<n_equations; iname++)
@@ -151,12 +151,14 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                         n_index++; // update counter
                     }
                 }
+  }
 
 //=================================================================================
 //   LINEAR FIELDS -> _data_eq[1]
 //=================================================================================
     n_index=0;//  linear index for _ub
     // NS
+  if (_mgutils._sim_config["MG_NavierStokes"]!=""){
     if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
         for(int iname=0; iname<n_equations; iname++)
             if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F) {
@@ -168,6 +170,8 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                     n_index++; // update counter
                 }
             }
+  }
+  if (_mgutils._sim_config["MG_AdjointNavierStokes"]!=""){
     if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])!=0)
         for(int iname=0; iname<n_equations; iname++)
             if(pbName[iname]== NSA_F) {
@@ -179,7 +183,9 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                     n_index++; // update counter
                 }
             }
+  }
     // FSI
+  if (_mgutils._sim_config["MG_FluidStructure"]!=""){  
     if(stoi(_mgutils._sim_config["MG_FluidStructure"])!=0)
         for(int iname=0; iname<n_equations; iname++)
             if(pbName[iname]== FS_F) {
@@ -191,7 +197,8 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                     n_index++; // update counter
                 }
             }
-
+  }
+  if (_mgutils._sim_config["MG_AdjointFluidStructure"]!=""){
     if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])!=0)
         for(int iname=0; iname<n_equations; iname++)
             if(pbName[iname]== FSA_F) {
@@ -203,6 +210,8 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                     n_index++; // update counter
                 }
             }
+  }
+if (_mgutils._sim_config["MG_DA"]!=""){
     if(stoi(_mgutils._sim_config["MG_DA"])!=0)
         for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
                 if(stoi(_mgutils._sim_config["MG_DA"])==2) {
@@ -213,6 +222,7 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                     n_index++; // update counter
                 }
             }
+}
 
 //=================================================================================
 //   QUADRATIC FIELDS -> _data_eq[2]
@@ -242,6 +252,7 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
   ActivateCoupled("MG_DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
   ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
   ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
+  ActivateCoupled("MG_ImmersedBoundary", IB_F, pbName, "IB1", "IB2",n_index, n_equations );
 
 /// c) Print
 // #ifdef PRINT_INFO // ====================================================
@@ -3461,7 +3472,7 @@ void MGSolDA::ActivateVectField(std::string FieldName, FIELDS Field, std::vector
     std::string FieldX =  SystemFieldName + "X";
     std::string FieldY =  SystemFieldName + "Y";
     std::string FieldZ =  SystemFieldName + "Z";
-
+  if (_mgutils._sim_config[FieldName]!=""){
     if(stoi(_mgutils._sim_config[FieldName])!=0) {
         for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) { // flag 2 in SimulationConfiguration.in ->  split
                 if(stoi(_mgutils._sim_config[FieldName])==2) {
@@ -3492,6 +3503,7 @@ void MGSolDA::ActivateVectField(std::string FieldName, FIELDS Field, std::vector
                 }
             }
     }
+  }
     return;
 }
 
@@ -3510,7 +3522,7 @@ void MGSolDA::ActivateControl(
     std::string FieldX=SystemFieldName+"X";
     std::string FieldY=SystemFieldName+"Y";
     std::string FieldZ=SystemFieldName+"Z";
-
+  if (_mgutils._sim_config[FieldName]!=""){
     if(stoi(_mgutils._sim_config[FieldName])!=0) {
         for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) {
                 if(stoi(_mgutils._sim_config[FieldName])==2) { // flag 2 in SimulationConfiguration.in ->  split
@@ -3536,10 +3548,12 @@ void MGSolDA::ActivateControl(
                 }
             }
     }
+  }
     return;
 }
 
 void MGSolDA::ActivateScalar(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName, int &n_index, int n_equations) {
+  if (_mgutils._sim_config[FieldName]!=""){
     if(stoi(_mgutils._sim_config[FieldName])!=0) {
         for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) {
                 _data_eq[2].tab_eqs[Field]=n_index;                                    // table
@@ -3549,11 +3563,12 @@ void MGSolDA::ActivateScalar(std::string FieldName, FIELDS Field, std::vector<FI
                 n_index++;
             }
     }
+  }
     return;
 }
 
 void MGSolDA::ActivateCoupled(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName,std::string SystemFieldName2, int &n_index, int n_equations) {
-
+  if (_mgutils._sim_config[FieldName]!=""){
     if(stoi(_mgutils._sim_config[FieldName])!=0)
         for(int iname=0; iname<n_equations; iname++)
             if(pbName[iname]== Field) {
@@ -3569,5 +3584,6 @@ void MGSolDA::ActivateCoupled(std::string FieldName, FIELDS Field, std::vector<F
                 _data_eq[2].n_eqs++;                                               // number of quadratic system
                 n_index++;  // update counter
             }
+  }
     return;
 }

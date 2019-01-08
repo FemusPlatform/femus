@@ -148,7 +148,8 @@ void FEMUS::init_interface (
     support = MEDCoupling::ReadUMeshFromGroups ( localFile.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), id_level,vG );
     std::cout<<" NUMBER OF NODES "<<support->getNumberOfNodes() <<std::endl;
 
-    MEDCoupling::WriteUMesh ( "RESU_MED/Interface_mesh.med",support,true );
+    if(get_proc()==0)
+        MEDCoupling::WriteUMesh ( "RESU_MED/Interface_mesh.med",support,true );
 
     init_interface ( interface_name, order_cmp, support, MedToMgMapArray );
     FieldContainingMap->decrRef();
@@ -501,7 +502,7 @@ void FEMUS::setFieldSource (
     int n_cmp,
     const MEDCoupling::MEDCouplingFieldDouble *srcField ) {
 
-    if ( srcField ==NULL ) {
+    if ( srcField==NULL ) {
         return;
     }
     _mg_equations_map->setBC ( interface_name,n_cmp, srcField );
@@ -636,6 +637,22 @@ void FEMUS::GetInfo (
 
     return;
 };
+
+
+void FEMUS::SetPieceFieldOnYdist(
+    MEDCoupling::MEDCouplingFieldDouble * Field, 
+    MEDCoupling::MEDCouplingFieldDouble * CellMap
+){
+    double *FieldVal = const_cast<double *> ( Field->getArray()->getPointer() );
+    double *CellArray = const_cast<double *> ( CellMap->getArray()->getPointer() );
+    
+    int Cells = Field->getMesh()->getNumberOfCells();
+    for(int i=0; i<Cells; i++){
+        _mg_mesh->_VolFrac[i] = FieldVal[(int) CellArray[i]];
+    }
+    
+    return;
+}
 
 #endif
 

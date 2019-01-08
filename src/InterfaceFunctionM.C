@@ -538,12 +538,8 @@ _field= MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS,MEDCoupli
 void InterfaceFunctionM::set_field(
   const MEDCoupling::MEDCouplingFieldDouble *f
 ) {// =======================================================================
-  if(_field) _field->decrRef();
-//
-  MEDCoupling::TypeOfField type = f->getTypeOfField();
-  _field = MEDCoupling::MEDCouplingFieldDouble::New(type);
-  *_field=*f;
-
+  if(_field!=NULL) _field->decrRef();
+  _field = f->deepCopy();
   _field->setName(f->getName());
   return;
 }
@@ -552,43 +548,11 @@ void InterfaceFunctionM::set_field(
 void InterfaceFunctionM::set_field_source(
   const MEDCoupling::MEDCouplingFieldDouble *f
 ) {// =======================================================================
-  if(_field) _field->decrRef();
-//
-  MEDCoupling::TypeOfField type = f->getTypeOfField();
-  _field = MEDCoupling::MEDCouplingFieldDouble::New(type);
-  *_field=*f;
-//   _field->setMesh(_support_med);
-//   MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();
-//   int nTuples;
-//   int nComp;
-//
-//   const MEDCoupling::DataArrayDouble * arrayf = f->getArray(), *coord1, *coord2;
-// //   if (FDEBUG) fDebug.array(arrayf, "arrayf");
-//
-//   nTuples = _support_med->getNumberOfCells();
-//   nComp = f->getNumberOfComponents();
-//   array->alloc(nTuples, nComp);
-//
-//   coord1 = _support_med->getBarycenterAndOwner();
-//   coord2 = f->getMesh()->getBarycenterAndOwner();
-//
-//   array->fillWithValue(std::numeric_limits<double>::max());
-//   std::map<int, int> corresp;
-//   commonPoints(corresp, coord1, coord2);
-//
-//   for (std::map<int, int>::iterator it = corresp.begin();
-//        it != corresp.end(); it++) {
-//     for (int j=0; j<nComp; j++) {
-// //       if (FDEBUG) fDebugPos << " " << it->first << " -> " << it->second
-// //              << " val = " << arrayf->getIJ(it->first, j) << std::endl;
-//       array->setIJ(it->second, j, arrayf->getIJ(it->first, j));
-//     }
-//   }
-//   _field->setArray(array);
+  if(_field!=NULL) _field->decrRef();
+  _field = f->deepCopy();
   _field->setName(f->getName());
-//   array->decrRef();
   _field->checkConsistencyLight();
-//   printOn(std::cout);
+
 }
 
 // ==========================================================================

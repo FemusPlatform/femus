@@ -55,12 +55,15 @@ protected:
 
 #ifdef HAVE_MED
     MEDCoupling::MEDCouplingUMesh *         _med_mesh;     // Med-mesh
-    const int _GlobInterfaceId = 1234; // default interface id for interface covering entire domain
-    int _ParallelInterfaceId;
 #endif
     // PUBLIC VARIABLES ===================================================================
 public:
 
+#ifdef HAVE_MED
+    const int _GlobInterfaceId = 1234; // default interface id for interface covering entire domain
+    int _ParallelInterfaceId;
+#endif    
+    
     std::vector<FIELDS> _myproblemP;
     
     // Constructor-Destructor
@@ -396,6 +399,8 @@ public:
     double GetValue(const int & ff,int flag);
     void   SetValue(const int & ff,double value);
     void   SetValueVector(const int & ff,std::vector<double> value);
+    
+    void SetPieceFieldOnYdist(MEDCoupling::MEDCouplingFieldDouble * Field, MEDCoupling::MEDCouplingFieldDouble * CellMap);
 #endif
 
 };

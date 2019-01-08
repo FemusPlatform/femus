@@ -79,10 +79,11 @@ MGMesh::~MGMesh(
 //   delete[] _off_nd;
 //   delete[] _off_nd1;
   delete [] _ord_FEM;
-  delete []_dist;
-  delete []_ctrl_dom;
+  delete [] _dist;
+  delete [] _VolFrac;
+  delete [] _ctrl_dom;
   delete [] _el_neighbor; 
-  delete []_node_map;
+  delete [] _node_map;
 }
 
 
@@ -1731,6 +1732,48 @@ void MGMesh::print_dist_hf5(
     for(int iel = 0; iel<_off_el[0][_NoLevels-1 + iproc*_NoLevels+1]-nel_b; iel++) {
       for(int is=0; is<n_subdivision; is++)
         ucoord[cel*n_subdivision+is]=dist[iel+nel_b];
+      cel++;
+    }
+  }
+  // print to hdf5 format -----------------------------------------
+  hid_t file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
+  hsize_t dimsf[2]; dimsf[0] = n_elements*n_subdivision;   dimsf[1] = 1;
+
+  hid_t dataspace = H5Screate_simple(2,dimsf, NULL);
+  hid_t dataset = H5Dcreate(file_id,dir_name.c_str(),H5T_NATIVE_DOUBLE,
+                            dataspace, H5P_DEFAULT
+#if HDF5_VERSIONM != 1808			    
+			    ,H5P_DEFAULT, H5P_DEFAULT
+#endif
+			   );
+  hid_t  status = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,H5P_DEFAULT,ucoord);
+  assert(status==0);
+  H5Sclose(dataspace);   H5Dclose(dataset);
+  H5Fclose(file_id);
+  
+  // clean --------------------------------------------------------
+  delete []ucoord;
+
+  return;
+}
+
+
+void MGMesh::print_VolFrac_hf5(
+  std::string filename, // filename
+  std::string dir_name
+) const { // ==========================================
+
+  // setup ucoord ---------------------------------------
+  int    n_elements = _NoElements[0][_NoLevels-1];
+    int n_subdivision = (DIMENSION>1) ? 4*(DIMENSION-1):2;
+  double *ucoord; ucoord=new double[n_elements*n_subdivision];
+  // storage DIST -> ucoord -----------------------------
+  int cel=0;
+  for(int  iproc=0; iproc<_n_subdom; iproc++) {
+    const int  nel_b = _off_el[0][_NoLevels-1 + iproc*_NoLevels];
+    for(int iel = 0; iel<_off_el[0][_NoLevels-1 + iproc*_NoLevels+1]-nel_b; iel++) {
+      for(int is=0; is<n_subdivision; is++)
+        ucoord[cel*n_subdivision+is]=_VolFrac[iel+nel_b];
       cel++;
     }
   }

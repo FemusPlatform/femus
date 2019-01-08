@@ -81,7 +81,7 @@ class MMed
 
 public:
 
-
+ int _proc;
 
 
   MMed ();
@@ -157,13 +157,17 @@ public:
   MEDCoupling::MEDCouplingFieldDouble * GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int ConversionMode=MeanValue);
   void  InitFe();
   
+  inline void setProcId(int procId){
+      _proc = procId;
+  }
+  
 // ======================================================================================================================  
   virtual MEDCoupling::MEDCouplingFieldDouble * InterpolatedField (
       const MEDCoupling::MEDCouplingFieldDouble * SourceField, /**< Source mesh field that have the solution used for the interpolation */
     int order = 2
 );
 // ======================================================================================================================
-  virtual inline bool IsFilled (){  return false; };
+  virtual inline int IsFilled (){  return 0; };
  // ===================================================================================================================== 
   virtual void FillParameters (
       const MEDCoupling::MEDCouplingUMesh * SourceMesh, //< Mesh support of the source geometry 

@@ -20,8 +20,9 @@ function femus_show_configure_functions {
   echo "     Application name, path and method (opt or dbg for compiling in optimized or debug mode) are set"
 }
 
+
 function femus_application_configure () {
-   echo
+
    echo "-------------------------------------------------------"
    echo "Configuring application"
    
@@ -332,7 +333,100 @@ done
 return;
 }
 
+<<<<<<< HEAD
 function femus_tutorial_copy () {
+=======
+
+function runAllTutorials () {
+
+export TUTORIAL_RUN
+export TUTORIAL_HOME=$FEMUS_DIR/tutorials/
+
+while :
+do
+    case "$1" in
+      -h | --help)
+          display_help  # Call your function
+          exit 0
+          ;;
+      "")  # No more options
+          TUTORIAL_RUN=$PWD
+          echo "Tutorial will be run here"
+          echo "Confirm your choice"
+          select confirm in yes no ;
+          
+          do
+           case "$confirm" in
+            yes)
+             break
+             ;;
+            no)
+             return
+             ;;
+           esac
+          done
+          break
+          ;;
+      *)  # No more options
+          echo "Tutorials will be run in the following path"
+          echo "path: "$1
+          TUTORIAL_RUN=$1
+          break
+          ;; 
+    esac
+done
+
+TUTORIAL_RUN=$TUTORIAL_RUN/allTutorials
+export TUTORIAL_LOG=$TUTORIAL_RUN/tutorialsLog.log
+
+if [ -f "$TUTORIAL_LOG" ]; then
+  rm $TUTORIAL_LOG
+fi  
+touch $TUTORIAL_LOG
+
+export CLASSES=$(ls -l $TUTORIAL_HOME | grep ^d | awk '{print $9}')
+
+if [ -d $TUTORIAL_RUN ];  then
+  rm -r $TUTORIAL_RUN
+fi  
+
+mkdir $TUTORIAL_RUN
+for class in $CLASSES; do
+
+    echo "==========================================================================================">> $TUTORIAL_LOG
+    echo "  NOW RUNNING $class CLASS TUTORIALS">> $TUTORIAL_LOG
+    echo "==========================================================================================">> $TUTORIAL_LOG
+
+    cd $TUTORIAL_RUN
+    mkdir $TUTORIAL_RUN/$class
+    unset CASES
+    export CASES=$(ls -l $TUTORIAL_HOME/$class | grep ^d | awk '{print $9}')
+    for tutorial in $CASES; do
+        echo "******************************************************************************************">> $TUTORIAL_LOG
+        echo "  NOW RUNNING $tutorial CASE ">> $TUTORIAL_LOG
+        echo "******************************************************************************************">> $TUTORIAL_LOG
+       unset tutorial_path
+       export tutorial_path=$TUTORIAL_RUN/$class/$tutorial
+       cp -r $TUTORIAL_HOME/$class/$tutorial $tutorial_path
+       cd $tutorial_path
+       configureApplication opt  >> $TUTORIAL_LOG
+       source runTest.sh 
+       cd $TUTORIAL_RUN/$class
+       echo >> $TUTORIAL_LOG
+    done    
+    echo >> $TUTORIAL_LOG
+    echo >> $TUTORIAL_LOG
+done
+
+cd $TUTORIAL_RUN
+
+echo "ALL TUTORIALS: COMPLETED RUN"
+
+}
+
+
+function copy_tutorial () {
+>>>>>>> 848ea7bdd0b2d5dd744cfd0cdede6fb8dd6482f8
    echo "Available tutorials are"
    cd $1
    femus_show_tutorials
