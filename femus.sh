@@ -333,9 +333,8 @@ done
 return;
 }
 
-<<<<<<< HEAD
-function femus_tutorial_copy () {
-=======
+
+
 
 function runAllTutorials () {
 
@@ -425,8 +424,7 @@ echo "ALL TUTORIALS: COMPLETED RUN"
 }
 
 
-function copy_tutorial () {
->>>>>>> 848ea7bdd0b2d5dd744cfd0cdede6fb8dd6482f8
+function femus_tutorial_copy () {
    echo "Available tutorials are"
    cd $1
    femus_show_tutorials

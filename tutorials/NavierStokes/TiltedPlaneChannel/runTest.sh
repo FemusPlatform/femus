@@ -42,6 +42,6 @@ if [ "$?" != 0 ]; then
 fi
 
 
-runGencase2D 1
+femus_gencase_run_lib2D 1
 
 mpiexec -np 1 $FM_MYAPP-opt 2> messages.log
