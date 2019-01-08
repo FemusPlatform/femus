@@ -28,7 +28,7 @@
 #include "FEMUS.h"
 #include "InterfaceProjection.h"
 
-#include "EquationMapFiller.h"
+#include "EquationsMap.h"
 // #include "MGSolverNS.h"
 
 
@@ -53,15 +53,12 @@ int main ( int argc, char** argv ) {
     double time    = 0.;
 
     // system problem =========================================================
-    std::vector<FIELDS> myproblemP;
-    FIELDS_class fclass;
-    mgutils[0]->FillFieldsVector ( fclass,myproblemP );
-
+    EquationsMap FIELDclass(*mgutils[0]); 
+   
     // CONSTRUCTION OF FEMUS PROBLEM ------------------------------------------
-    FEMUS P( *mgutils[0] );                   // init parameter         
-    EquationMapFiller Filler;
-    Filler.FillEquationMap(P, myproblemP);
-    P.setSystemNew ( myproblemP ); 
+    FEMUS P(*mgutils[0]);  //  parameter list <- mgutils[0]
+    FIELDclass.FillEquationMap(P);
+    P.setSystemNew();
     
     // INITIALIZATION OF EQUATIONS TO SOLVE -----------------------------------
     P.solve_setup ( itime_0,time );                 // initial time loop (t=0)
