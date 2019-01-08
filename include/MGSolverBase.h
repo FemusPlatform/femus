@@ -2,7 +2,7 @@
 #define __mgsolbase__
 
 #include "Printinfo_conf.h"   //
-#include "Equations_tab.h"
+#include "EquationsMap.h"
 #include "Solverlib_conf.h"
 #include <vector>
 #include <string>

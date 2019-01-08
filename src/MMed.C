@@ -117,7 +117,7 @@ void MMed::PrintMed(FEMUS *PFem,int nDom) {
     if(FieldsNames[i] != "NSP" && FieldsNames[i] != "NS2P") {
       if(FieldsNames[i]=="NS0" || FieldsNames[i]=="FSI0" || FieldsNames[i]=="FSIA0"||FieldsNames[i]=="NSA0") {NumOfComp = Dim + 1;}
 
-      const MEDCoupling::MEDCouplingFieldDouble *TrgField=PFem->getValuesOnBoundary(22,FieldsNames[i],NumOfComp,FirstComp);
+      const MEDCoupling::MEDCouplingFieldDouble *TrgField=PFem->getValuesOnInterface(22,FieldsNames[i],NumOfComp,FirstComp);
       TrgField->checkConsistencyLight();
 
       if(PFem->get_proc() ==0) { MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(QuadFieldsFileName,TrgField); }
@@ -128,7 +128,7 @@ void MMed::PrintMed(FEMUS *PFem,int nDom) {
       NumOfComp =1;
     }
     if(FieldsNames[i] == "NSP" || FieldsNames[i] == "NS2P") {
-      const MEDCoupling::MEDCouplingFieldDouble *TrgField= PFem->getValuesOnBoundary(11,FieldsNames[i],NumOfComp ,FirstComp);
+      const MEDCoupling::MEDCouplingFieldDouble *TrgField= PFem->getValuesOnInterface(11,FieldsNames[i],NumOfComp ,FirstComp);
       TrgField->checkConsistencyLight();
       if(PFem->get_proc() ==0) { MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(QuadFieldsFileName,TrgField); }
       std::cout<<"\033[1;36m Field: "<<FieldsNames[i]<<" copied in ";
@@ -634,7 +634,7 @@ MEDCoupling::MEDCouplingFieldDouble *MMed::GetVelocityField(
 
     std::vector<const MEDCoupling::DataArrayDouble *> ArrayVec;
     for(int i=0; i<Dim; i++) {
-      MEDCoupling::MEDCouplingFieldDouble *TempField = PFem->getValuesOnBoundary(InterfaceId,VelNames[i],1,0);
+      MEDCoupling::MEDCouplingFieldDouble *TempField = PFem->getValuesOnInterface(InterfaceId,VelNames[i],1,0);
       MEDCoupling::DataArrayDouble *TempArray = TempField->getArray();
       ArrayVec.push_back(TempArray);
     }
@@ -642,7 +642,7 @@ MEDCoupling::MEDCouplingFieldDouble *MMed::GetVelocityField(
     VelNames.clear();
   }
   if(IsVelCoupled) { //Coupled System
-    MEDCoupling::MEDCouplingFieldDouble *TempField = PFem->getValuesOnBoundary(InterfaceId,"NS0",Dim,0);
+    MEDCoupling::MEDCouplingFieldDouble *TempField = PFem->getValuesOnInterface(InterfaceId,"NS0",Dim,0);
     newv = TempField->getArray();
   }
 

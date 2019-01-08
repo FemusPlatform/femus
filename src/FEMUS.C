@@ -9,7 +9,7 @@
 #include "MGGeomEl.h"
 #include "MGFEMap.h"
 #include "MGTimeLoop.h"
-
+#include "EquationsMap.h"
 // additional local includes
 #include "Printinfo_conf.h"
 #include "MGFE.h"
@@ -56,7 +56,7 @@ FEMUS::FEMUS( MGUtils & mgutils )  :
 _comm ( MPI_COMM_WORLD )  // MPI_COMM_WORLD communicator  
 { // ==========================================================================
     init_femus();           // Init class variables
-    init_param(mgutils);    // Init parameters
+   init_param(mgutils);    // Init parameters
     init_fem();             // Init finite element
     setMesh();              // Set mesh
     init_equation_system(); // Init equation system
@@ -87,7 +87,7 @@ void FEMUS::init_param (
     int name              ///< utils class name
 ) { // ====================================================================
     _mg_utils=&mgutils;    _mg_utils->set_name ( name );  // set ultils class
-    FIELDS_class fclass; _mg_utils->FillFieldsVector ( fclass,_myproblemP );  // set myproblem    
+    EquationsMap fclass; _mg_utils->FillFieldsVector ( fclass,_myproblemP );  // set myproblem    
     return;
 }
 
@@ -153,7 +153,6 @@ FEMUS::~FEMUS(
 // This function is the problem destructor
 void FEMUS::terminate (
 ) { // =========================================================================
-
 }
 
 // // // ****************************************************************************
@@ -164,7 +163,6 @@ void FEMUS::terminate (
 #ifdef   TWO_PHASE
 void FEMUS::set_mgcc ( 
  MGSolCC &cc
-
 ) {
     _mg_equations_map->set_mgcc ( cc );
     return;
@@ -209,7 +207,7 @@ void FEMUS::SetValueVector(const int  & ff,std::vector<double> value){
 //     return *_mg_equations_map;
     return;
 }
-
+// ==========================================================================
 /// This function sets the type of problem
 void FEMUS::setSystemNew () 
 { // ==========================================================================
@@ -217,6 +215,8 @@ void FEMUS::setSystemNew ()
     return;
 }
 
+
+// ==========================================================================
 /// This function sets the type of problem
 void FEMUS::setSystemNew (
     const std::vector<FIELDS> &pbName
@@ -228,29 +228,20 @@ void FEMUS::setSystemNew (
 #ifdef HAVE_MED
     _mg_equations_map->set_mesh_med ( *_med_mesh );
 #endif
-//   }
-    if ( _mg_geomel == NULL ) {
-        std::cout<< "FEMUS::setSystem: no _mg_equations_map";
-        abort();
-    }
-
+    if (_mg_geomel == NULL ){std::cout<< "FEMUS::setSystem: no _mg_equations_map";abort();}
     //time loop
     _mg_time_loop=new  MGTimeLoop ( *_mg_utils,*_mg_equations_map );
-    if ( _mg_time_loop == NULL ) {
-        std::cout<< "FEMUS::setSystem: no _mg_time_loop";
-        abort();
-    }
-
+    if(_mg_time_loop == NULL ){std::cout<< "FEMUS::setSystem: no _mg_time_loop"; abort();}
     _MgEquationMapInitialized = true;
 
-    std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
-    init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
-    init_par_interface ( 2,true );
+//     std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
+//     init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
+//     init_par_interface ( 2,true );
     return;
 }
 
 
-
+ // =============================================================================
 void FEMUS::setSystem (
     const std::vector<FIELDS> &pbName,
     int n_data_points,
@@ -258,30 +249,21 @@ void FEMUS::setSystem (
 ) { // ==========================================================================
     _mg_equations_map=new EquationSystemsExtendedM ( *_mg_utils,*_mg_mesh,*_mg_femap,n_data_points,n_data_cell ); // MGEquationsMap class
     _mg_equations_map->init_data ( 0 );
-    _mg_equations_map->init ( pbName );                           // adds the equations to the map
-    _mg_equations_map->setDofBcOpIc();                            // set operators
-    _mg_equations_map->set_mesh_mg ( *_mg_mesh );
+    _mg_equations_map->init ( pbName );             // adds the equations to the map
+    _mg_equations_map->setDofBcOpIc();              // set operators
+    _mg_equations_map->set_mesh_mg ( *_mg_mesh );   // set mesh mg
 #ifdef HAVE_MED
-    _mg_equations_map->set_mesh_med ( *_med_mesh );
+    _mg_equations_map->set_mesh_med ( *_med_mesh ); // set mesh med
 #endif
-//   }
-    if ( _mg_geomel == NULL ) {
-        std::cout<< "FEMUS::setSystem: no _mg_equations_map";
-        abort();
-    }
-
+    if(_mg_geomel == NULL){std::cout<< "FEMUS::setSystem: no _mg_equations_map";abort();}
     //time loop
     _mg_time_loop=new  MGTimeLoop ( *_mg_utils,*_mg_equations_map );
-    if ( _mg_time_loop == NULL ) {
-        std::cout<< "FEMUS::setSystem: no _mg_time_loop";
-        abort();
-    }
-
+    if(_mg_time_loop == NULL ) {std::cout<< "FEMUS::setSystem: no _mg_time_loop";abort();}
     _MgEquationMapInitialized = true;
 
-    std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
-    init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
-    init_par_interface ( 2,true );
+//     std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
+//     init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
+//     init_par_interface ( 2,true );
     return;
 }
 // =============================================================================
@@ -360,7 +342,7 @@ void FEMUS::solve_onestep (
     _mg_time_loop->transient_onestep ( t_in,t_step,print_step,time,dt,eq_min,eq_max ); ///< step time
     return;
 }
-
+ // ========================================================================
 void FEMUS::solve_and_update ( const int &t_in,         ///< initial time iteration
                                const int &t_step,        ///< actual time iteration
                                const int &print_step,    ///< print every
@@ -372,7 +354,7 @@ void FEMUS::solve_and_update ( const int &t_in,         ///< initial time iterat
     _mg_time_loop->transient_solve_and_update ( t_in,t_step,print_step,time,dt,eq_min,eq_max ); ///< step time
     return;
 }
-
+ // ========================================================================
 void FEMUS::solve_onestep_iterative (
     const int   & t_in,                 ///< initial time iteration
     const int   & t_step,               ///< actual time iteration
@@ -388,7 +370,7 @@ void FEMUS::solve_onestep_iterative (
     return;
 }
 
-
+ // ========================================================================
 // This function solves one step  for transient problems
 void  FEMUS::solve_steady (
     const int &nmax_step,   ///< number max of steps
@@ -430,7 +412,7 @@ void FEMUS::solve_control_onestep (
     _mg_time_loop->transient_control_onestep (nmax_step, it,t_step,print_step,time,dt,eq_min,eq_max,converged ); ///< step time
     return;
 }
-
+ // ========================================================================
 double  FEMUS::System_functional (
     const int   &ff,                 ///< initial time iteration
     double      parameter,             ///< functional parameter

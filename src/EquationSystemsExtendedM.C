@@ -570,7 +570,7 @@ const MEDCouplingUMesh* EquationSystemsExtendedM::getUMeshCoupling(
 ) {// =======================================================================
 
   InterfaceFunctionM * fct = get_interface_fun(name);  // interface-function
-//   if(fct == NULL) return;
+  if(fct == NULL) {std::cout << "getUMeshCoupling: fct empty \n"; abort();}
   const MEDCouplingUMesh *sourceMesh = fct->getSupport();
   MEDCoupling::WriteUMesh("source.med",sourceMesh,true);
   return sourceMesh;

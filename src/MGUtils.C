@@ -240,11 +240,10 @@ void MGUtils::print_par() const {
 }
 
 // This function fills the problem vector
-void MGUtils::FillFieldsVector( FIELDS_class &map_str2fieldclass,  std::vector<FIELDS> &myproblemP) {
+void MGUtils::FillFieldsVector( EquationsMap &map_str2fieldclass,  std::vector<FIELDS> &myproblemP) {
     
     myproblemP.clear();
-    for (std::map<std::string,std::string>::iterator it=_sim_config.begin(); 
-         it!=_sim_config.end(); ++it){
+    for (std::map<std::string,std::string>::iterator it=_sim_config.begin(); it!=_sim_config.end(); ++it){
     std::cout << it->first << " => " << it->second << '\n';
       if((it->first).compare(0,3,"MG_") == 0) { 
          if(stoi(it->second) !=0) {
@@ -256,32 +255,14 @@ void MGUtils::FillFieldsVector( FIELDS_class &map_str2fieldclass,  std::vector<F
     }
     }
     
-//   if(stoi(_sim_config["NavierStokes"           ])>0) { myproblemP.push_back(NS_F) ; }
-//   if(stoi(_sim_config["FluidStructure"         ])>0) { myproblemP.push_back(FS_F) ; }
-//   if(stoi(_sim_config["StructuralMechanics"    ])>0) { myproblemP.push_back(SM_F) ; }
-//   if(stoi(_sim_config["Pressure"               ])>0) { myproblemP.push_back(P_F) ; }
-//   if(stoi(_sim_config["Temperature"            ])>0) { myproblemP.push_back(T_F) ; }
-//   if(stoi(_sim_config["DynamicalTurbulence"    ])>0) { myproblemP.push_back(K_F) ; }
-//   if(stoi(_sim_config["ThermalTurbulence"      ])>0) { myproblemP.push_back(KTT_F) ; }
-//   if(stoi(_sim_config["Displacement"           ])>0) {
-//       myproblemP.push_back(SDS_F) ; }
-//   if(stoi(_sim_config["DA"    ])!=0) { myproblemP.push_back(DA_F) ; }
-//   
-//   if(stoi(_sim_config["AdjointNavierStokes"   ])!=0) { myproblemP.push_back(NSA_F) ; }
-//   if(stoi(_sim_config["AdjointFluidStructure" ])!=0) { myproblemP.push_back(FSA_F) ;}  
-//   if(stoi(_sim_config["AdjointDA"       ])!=0) { myproblemP.push_back(DA_F) ; }
-//   if(stoi(_sim_config["AdjointTemperature"    ])!=0) { myproblemP.push_back(TA_F) ; }
-//   if(stoi(_sim_config["AdjointTurbulence"     ])!=0) { myproblemP.push_back(KA_F) ; } 
-// 
-//   if(stoi(_sim_config["ControlTemperature"          ])!=0) { myproblemP.push_back(CO_F) ; }
-//   if(stoi(_sim_config["ColorFunction"          ])!=0) { myproblemP.push_back(CO_F) ; }
-//   if(stoi(_sim_config["Laplacian"              ])!=0) { myproblemP.push_back(CO_F) ; }
+
   
-  
-  
-  
-  
-  
+   std::cout << "\n ========= myproblemP vector ======================= \n\n";
+ int sizep= myproblemP.size();
+  for(int ii=0;ii< sizep;ii++){
+    std::cout << "myproblemP["<< ii << "]="<< myproblemP[ii]<<"\n";
+  }
+  std::cout << "\n =============================== \n";
   
   
   

@@ -7,7 +7,7 @@
 #include <vector>
 
 // configure files ----------------
-#include "Equations_tab.h"
+// #include "Equations_tab.h"
 // #include "MGSclass_conf.h"
 // #include "MGMesh.h"
 // Forward class -------------

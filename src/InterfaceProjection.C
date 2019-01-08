@@ -35,23 +35,24 @@ BoundInterp::BoundInterp() : MMed() {
 BoundInterp::BoundInterp (
     const MEDCoupling::MEDCouplingUMesh * SourceMesh,
     const MEDCoupling::MEDCouplingUMesh * TargetMesh,
-    int DomainType
+    DomainType vol_sur
 ) : MMed() {
     __Filled=0;
     _AlreadyInitialized=0;
-    FillParameters ( SourceMesh,TargetMesh,DomainType );
+    FillParameters ( SourceMesh,TargetMesh,vol_sur);
 }
 
 BoundInterp::BoundInterp (
     const MEDCoupling::MEDCouplingUMesh * SourceMesh,
     const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     int procId,
-    int DomainType    
+    DomainType   vol_sur 
 ) : MMed() {
+
    __Filled=0;
     _AlreadyInitialized=0;
     setProcId(procId);
-    FillParameters ( SourceMesh,TargetMesh,DomainType );
+    FillParameters ( SourceMesh,TargetMesh,vol_sur );
 }
 
 // ================================================================================================

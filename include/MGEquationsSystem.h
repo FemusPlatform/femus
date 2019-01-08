@@ -32,13 +32,15 @@ public:
     
   // Constructor / Destructor -----------------------------------
   ///@{ \name CONSTRUCTOR-DESTRUCTOR
-    MGEquationsSystem( MGUtils& mgutils_in,
+    MGEquationsSystem( 
+       MGUtils& mgutils_in,
 // 				   MGSystem& mgphys_in,
-				   MGMesh& mgmesh_in,
-				   MGFEMap& mgfemap_in, 
-                                   int np_data,
-                                   int ncell_data
+       MGMesh& mgmesh_in,
+       MGFEMap& mgfemap_in, 
+       int np_data,
+       int ncell_data
                      );
+
   ~MGEquationsSystem();
   ///@}
   

@@ -24,7 +24,7 @@
 #include "MGFE.h"
 #include "MGEquationsSystem.h"
 // #include "Equations_conf.h"
-#include "Equations_tab.h"
+// #include "Equations_tab.h"
 #include "MGTimeLoop.h"
 // class include
 #include "FEMUS.h"
@@ -43,153 +43,112 @@
 #include "MEDCouplingRemapper.hxx"
 
 
-void FEMUS::InitTurbulence() {
-    bool DynTurb, TherTurb;
-
-    ( stoi ( _mg_utils->_sim_config["MG_DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
-    ( stoi ( _mg_utils->_sim_config["MG_ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
-
-//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
-
-    TurbUtils *Parameters = new TurbUtils ( get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb );
-    _mg_utils->set_turbulence_info ( Parameters );
-    return;
-}
-
-void FEMUS::InitTurbulence(int MeshID) {
-    bool DynTurb, TherTurb;
-
-    ( stoi ( _mg_utils->_sim_config["MG_DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
-    ( stoi ( _mg_utils->_sim_config["MG_ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
-
-//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
-
-    TurbUtils *Parameters = new TurbUtils ( get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb, MeshID );
-    _mg_utils->set_turbulence_info ( Parameters );
-    
-    
-    return;
-}
-// MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>
-void FEMUS::CalcTurbulence() {
-    int FinerLevel = _mg_mesh->_NoLevels;
-    if ( _mg_utils->_TurbParameters->_IsWallDistSet == false ) {
-        MEDCoupling::MEDCouplingFieldDouble *Dist = getProcSolution ( "C",1,0,FinerLevel-1 );
-        MEDCoupling::WriteField ( "RESU_MED/wd"+to_string ( get_proc() ) +".med",Dist,1 );
-        _mg_utils->_TurbParameters->SetWallDistAtLevel ( FinerLevel-1, Dist );
-        _mg_utils->_TurbParameters->_IsWallDistSet = true;
-        Dist->decrRef();
-    }
-    MEDCoupling::MEDCouplingFieldDouble *K1W = getProcSolution ( "K1W",1,0,FinerLevel-1 ); // CONTROLLARE CHE LA SOLUZIONE VENGA PRESA DA OGNI SINGOLO LIVELLO
-    MEDCoupling::MEDCouplingFieldDouble *K2K = getProcSolution ( "K2K",1,0,FinerLevel-1 ); //
-    _mg_utils->_TurbParameters->CalcMuTurb ( K2K,K1W,FinerLevel -1 );
-    if ( stoi ( _mg_utils->_sim_config["ThermalTurbulence"] )   > 0 ) {
-        MEDCoupling::MEDCouplingFieldDouble *TK = getProcSolution ( "TK",1,0,FinerLevel-1 ); // CONTROLLARE CHE LA SOLUZIONE VENGA PRESA DA OGNI SINGOLO LIVELLO
-        MEDCoupling::MEDCouplingFieldDouble *TW = getProcSolution ( "TK2",1,0,FinerLevel-1 ); //
-        _mg_utils->_TurbParameters->CalcAlphaTurb ( K2K,K1W,TK,TW,FinerLevel -1 );
-        TW->decrRef();
-        TK->decrRef();
-    }
-    K1W->decrRef();
-    K2K->decrRef();
-
-    return;
-}
-
-
-
 // ========================================================================
-// This function gets the Group mesh from the med file (medfile_name)
-// and sets the id and the mesh to the interfaces
-// vector (_interface_mesh_vect[i])
-// through the index of the interface-functions
-// (from EquationSystemsExtendedM)
+/// This function gets the Group mesh from the med file (medfile_name)
+/// and sets the id and the mesh to the interfaces vector (_interface_mesh_vect[i])
+/// through the index of the interface-functions (from EquationSystemsExtendedM)
+// ========================================================================
 void FEMUS::init_interface (
-    const int interface_name,
-    std::vector<int> IDSvec,
-    int order_cmp,
-    const std::string &medfile_name,  // medfile name    (in)
-    bool on_nodes,
-    const int index_medmesh                       // med-mesh index  (in)
+    const int interface_name,         ///< Interface name   
+    std::vector<int> IDSvec,          ///< Vector containing group IDS (union)
+    int order_cmp,                    ///< Order of the numerical field 
+    const std::string &medfile_name,  ///< Name of the MED file containing the mesh   (in)
+    bool on_nodes,                    ///< Flag to indicate if the field is ON_NODES or ON_CELLS
+    const int index_medmesh           ///< med-mesh index     (in)
 ) { // =========================================================================
-
-    std::vector<std::string> vG ( IDSvec.size() );
+    
+    //  interface   names (vG[j]) ----------------------------------------------------------
+    std::cout<< "Interface printed on file:RESU_MED/Interface_mesh.med";
+    std::vector<std::string> vG (IDSvec.size());
     std::cout<<" Creating an interface with id "<<interface_name<< " containing groups ";
     for ( int j=0; j<IDSvec.size(); j++ ) {
-        vG[j] = to_string ( IDSvec[j] );
-        std::cout<<IDSvec[j]<<" ";
+        vG[j] = to_string ( IDSvec[j] );  std::cout<<IDSvec[j]<<" ";
     }
     std::cout<<std::endl;
-
+    // med mesh file  info  -----------------------------------------------------------------
     std::string mesh_dir, localFile, filename;
     std::vector<std::string> meshNames, MeshNames, FieldNames;
+    GetInfo (medfile_name, mesh_dir, localFile, filename, meshNames, MeshNames, FieldNames );
 
-    GetInfo ( medfile_name, mesh_dir, localFile, filename, meshNames, MeshNames, FieldNames );
-
+    // interface mesh file (FieldContainingMap) + map MedToMg (MedToMgMapArray)
     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> FieldContainingMap;
     MEDCoupling::DataArrayDouble *MedToMgMapArray;
 
     int FinerLevel = _mg_utils->_geometry["nolevels"] -1;
-
     if ( on_nodes ) {
-        FieldContainingMap = MEDCoupling::ReadField ( MEDCoupling::ON_NODES, filename.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), 0, "FinerLevelNodeIDS_Lev_"+to_string ( FinerLevel ), -1,-1 );
+        FieldContainingMap = MEDCoupling::ReadField(
+            MEDCoupling::ON_NODES,filename.c_str(),"Mesh_Lev_"+to_string(FinerLevel),
+            0,"FinerLevelNodeIDS_Lev_"+to_string ( FinerLevel ), -1,-1 
+        );
     } else {
-        FieldContainingMap = MEDCoupling::ReadField ( MEDCoupling::ON_CELLS, filename.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), 0, "MG_cell_id_Lev_"+to_string ( FinerLevel ), -1,-1 );
+        FieldContainingMap = MEDCoupling::ReadField( 
+        MEDCoupling::ON_CELLS, filename.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ),
+        0, "MG_cell_id_Lev_"+to_string ( FinerLevel ), -1,-1 
+        );
     }
-
+    // map MedToMg
     MedToMgMapArray = FieldContainingMap->getArray();
-
+    // support (mesh interface)
     MEDCoupling::MEDCouplingUMesh *support;
-    int id_level=-1;
-    if ( IDSvec[0]<10 ) {
-        id_level=0;
-    }
-
-    support = MEDCoupling::ReadUMeshFromGroups ( localFile.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), id_level,vG );
+    int id_level=-1;    if ( IDSvec[0]<10 ) {id_level=0;}
+    support = MEDCoupling::ReadUMeshFromGroups ( 
+      localFile.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), id_level,vG 
+    );
+    // interface_name+order_cmp  -> interface <-support+MedToMgMapArray
+    init_interface (interface_name, order_cmp, support, MedToMgMapArray );
+    
+    // print 
+    if(get_proc()==0)  MEDCoupling::WriteUMesh ( "RESU_MED/Interface_mesh.med",support,true );
+    
+    std::cout<< "Interface "<< interface_name <<" on group " << vG[0] << "  on_nodes "<< on_nodes;
     std::cout<<" NUMBER OF NODES "<<support->getNumberOfNodes() <<std::endl;
 
-    if(get_proc()==0)
-        MEDCoupling::WriteUMesh ( "RESU_MED/Interface_mesh.med",support,true );
-
-    init_interface ( interface_name, order_cmp, support, MedToMgMapArray );
     FieldContainingMap->decrRef();
 
     return;
 }
 
-
-void FEMUS::init_interface (
-    const int interface_name,
-    int order_cmp,
-    const std::string &medfile_name,  // medfile name    (in)
-    bool on_nodes
-) { // =========================================================================
+// ========================================================================
+/// This function gets the volume mesh from the med file (medfile_name)
+/// and sets the id and the mesh to the interfaces vector (_interface_mesh_vect[i])
+/// through the index of the interface-functions (from EquationSystemsExtendedM)
+// ========================================================================
+// ================================================================================================
+void FEMUS::init_interface (                                                
+    const int interface_name,          ///< Interface name           (in)
+    int order_cmp,                     ///< Order of the numerical field    (in)
+    const std::string &medfile_name,   ///< Name of the MED file containing the mesh   (in)
+    bool on_nodes                      ///< Flag to indicate if the field is ON_NODES or ON_CELLS  (in)
+) { // ==================================================================
 
     // Reading mesh Names from med file  ------------------------------
-
     std::string mesh_dir, localFile, filename;
     std::vector<std::string> meshNames, MeshNames, FieldNames;
-
     GetInfo ( medfile_name, mesh_dir, localFile, filename, meshNames, MeshNames, FieldNames );
-//     MEDCoupling::MEDCouplingFieldDouble *FieldContainingMap;
-//     MEDCoupling::DataArrayDouble *MedToMgMapArray;
+
+    // interface mesh file (FieldContainingMap) + map MedToMg (MedToMgMapArray)
     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>FieldContainingMap;
     MEDCoupling::DataArrayDouble *MedToMgMapArray;
-    int FinerLevel = _mg_utils->_geometry["nolevels"] -1;
     
+    int FinerLevel = _mg_utils->_geometry["nolevels"] -1;    
     if ( on_nodes ) {
-        FieldContainingMap = MEDCoupling::ReadField ( MEDCoupling::ON_NODES, filename.c_str(), 
-                                                      "Mesh_Lev_"+to_string ( FinerLevel ), 0, 
-                                                      "FinerLevelNodeIDS_Lev_"+to_string ( FinerLevel ), -1,-1 );
+        FieldContainingMap = MEDCoupling::ReadField ( 
+        MEDCoupling::ON_NODES, filename.c_str(),"Mesh_Lev_"+to_string ( FinerLevel ), 0, 
+        "FinerLevelNodeIDS_Lev_"+to_string ( FinerLevel ), -1,-1 
+        );
     } else {
-        FieldContainingMap = MEDCoupling::ReadField ( MEDCoupling::ON_CELLS, filename.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), 0, "MG_cell_id_Lev_"+to_string ( FinerLevel ), -1,-1 );
+        FieldContainingMap = MEDCoupling::ReadField ( 
+        MEDCoupling::ON_CELLS, filename.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), 0, 
+        "MG_cell_id_Lev_"+to_string ( FinerLevel ), -1,-1 
+        );
     }
 
     MedToMgMapArray = FieldContainingMap->getArray();
     
     int id_level=0;
-//     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingUMesh>
-    MEDCoupling::MEDCouplingUMesh *support = MEDCoupling::ReadUMeshFromFile ( localFile.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), id_level );
+    MEDCoupling::MEDCouplingUMesh *support = MEDCoupling::ReadUMeshFromFile (
+        localFile.c_str(), "Mesh_Lev_"+to_string ( FinerLevel ), id_level 
+    );
 
     init_interface ( interface_name, order_cmp, support, MedToMgMapArray );
 
@@ -197,10 +156,12 @@ void FEMUS::init_interface (
 
     return;
 }
-
+// ========================================================================
+/// This function gets the volume mesh from the med file as default
+// ========================================================================
 void FEMUS::init_par_interface (
-    int order_cmp,                    /**< Order (piecewise, linear, quadratic) */
-    bool on_nodes
+    int order_cmp,    ///< Order (piecewise, linear, quadratic) 
+    bool on_nodes     ///< Flag to indicate if the field is ON_NODES or ON_CELLS  (in)      
 ) {
     // Reading mesh Names from med file  ------------------------------
     const int levels = _mg_mesh->_NoLevels;
@@ -215,38 +176,39 @@ void FEMUS::init_par_interface (
     return;
 }
 
-
-void FEMUS::getNodeMapAndProcMeshAtLevel ( int level,  MEDCoupling::MEDCouplingUMesh *&FemusPar, MEDCoupling::MEDCouplingFieldDouble *&NodeMap ) {
+// ========================================================================
+/// This function gets the NodeMapAndProcMeshAtLeve
+// ========================================================================
+void FEMUS::getNodeMapAndProcMeshAtLevel ( 
+    int level,  
+    MEDCoupling::MEDCouplingUMesh *&FemusPar, 
+    MEDCoupling::MEDCouplingFieldDouble *&NodeMap 
+) {
     const int proc = get_proc();
-    std::string mesh_dir, localFile, filename;
-    std::vector<std::string> meshNames, MeshNames, FieldNames;
+    std::string mesh_dir, localFile, filename;  std::vector<std::string> meshNames, MeshNames, FieldNames;
     GetInfo ( _mg_utils->_interface_mesh, mesh_dir, localFile, filename, meshNames, MeshNames, FieldNames );
 
-    MEDCoupling::MEDCouplingUMesh *FemusPart       = MEDCoupling::ReadUMeshFromFile ( filename.c_str(),"Mesh_Lev_"+to_string ( level ), 0 ); // ORIGINAL FEMUS FROM MED FILE
-
+    MEDCoupling::MEDCouplingUMesh *FemusPart  = MEDCoupling::ReadUMeshFromFile ( 
+         filename.c_str(),"Mesh_Lev_"+to_string ( level ), 0 
+    ); // ORIGINAL FEMUS FROM MED FILE
     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> ProcField = MEDCoupling::ReadField (
-                MEDCoupling::ON_CELLS,
-                filename.c_str(),
-                "Mesh_Lev_"+to_string ( level ),
-                0,
-                "Proc_Lev_"+to_string ( level ),
-                -1,-1
+                MEDCoupling::ON_CELLS,filename.c_str(),"Mesh_Lev_"+to_string ( level ), 0,
+                "Proc_Lev_"+to_string ( level ), -1,-1
             );             // PIECEWISE FIELD CONTAINING PROC IDS
-    MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> FinerLevelIDS = MEDCoupling::ReadField ( MEDCoupling::ON_NODES,
-            filename.c_str(),
-            "Mesh_Lev_"+to_string ( level ), 0, "FinerLevelNodeIDS_Lev_"+to_string ( level ), -1,-1 );
+    MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> FinerLevelIDS = MEDCoupling::ReadField (
+        MEDCoupling::ON_NODES,filename.c_str(),"Mesh_Lev_"+to_string ( level ), 0, 
+        "FinerLevelNodeIDS_Lev_"+to_string ( level ), -1,-1 
+     );
+    
+    
     double *FinLevId = const_cast<double *> ( FinerLevelIDS->getArray()->getPointer() );
     std::vector<int> CellIdProc;
     for ( int i=0; i<ProcField->getNumberOfTuples(); i++ ) {
-        if ( ( int ) ProcField->getIJ ( i,0 ) == proc ) {
-            CellIdProc.push_back ( i );
-        }
+        if ( ( int ) ProcField->getIJ ( i,0 ) == proc )  CellIdProc.push_back ( i );
     }
 
     int *CellId = new int[CellIdProc.size()];                                                                      // ARRAY CONTAINING CELL IDS OF SINGLE PROC MESH
-    for ( int i=0; i<CellIdProc.size(); i++ ) {
-        CellId[i] = CellIdProc[i];
-    }
+    for ( int i=0; i<CellIdProc.size(); i++ )  CellId[i] = CellIdProc[i];
 
     FemusPar = FemusPart->buildPartOfMySelf ( CellId, CellId + CellIdProc.size() );  // EXTRACTION OF PROC MESH FROM GLOBAL MESH
     FemusPar->zipCoords();                                                                                         // It changes nodes numbering -> new numbering is from 0 to FemusPar->getNumberOfNodes
@@ -282,13 +244,14 @@ void FEMUS::getNodeMapAndProcMeshAtLevel ( int level,  MEDCoupling::MEDCouplingU
 }
 
 
-
+// =======================================================================================
+/// Basic interface construction with support (InterfaceMesh) and  MEDToMg map (MEDToMgMapArray) 
 void FEMUS::init_interface (
-    const int interface_name,
-    int order_cmp,
-    MEDCoupling::MEDCouplingUMesh *InterfaceMesh,
-    MEDCoupling::DataArrayDouble *MEDToMgMapArray,
-    int interface_id
+    const int interface_name,                          ///< Interface name 
+    int order_cmp,                                     ///< Order (piecewise, linear, quadratic) 
+    MEDCoupling::MEDCouplingUMesh *InterfaceMesh,      ///< MED interface mesh 
+    MEDCoupling::DataArrayDouble *MEDToMgMapArray,     ///< Array containing the map with MED/MG numeration 
+    int interface_id                                   ///< Default interface_id 
 ) {
     std::cout<< "-------------------------------"<<std::endl;
     std::cout<< MEDToMgMapArray->getIJ(0,0)<<std::endl;
@@ -303,9 +266,7 @@ void FEMUS::init_interface (
     std::vector<int> MgNodesIds, MedNodesIds;
 
     // Storing cell connectivities inside vector MgNodesIds -> numeration of mesh mg
-    for ( int i =0; i<celle; i++ ) {
-        InterfaceMesh->getNodeIdsOfCell ( i,MgNodesIds );
-    }
+    for ( int i =0; i<celle; i++ )  InterfaceMesh->getNodeIdsOfCell ( i,MgNodesIds );
 
     // Renumbering nodes and cells -> new numeration in accordance with mesh total number of nodes and cells
     InterfaceMesh->zipCoords();
@@ -350,20 +311,18 @@ void FEMUS::init_interface (
     fun->set_NumberOfNodes ( NODI );
 
     _mg_equations_map->add_interface_fun ( interface_name, fun );
-    delete [] map_med; 
-    delete [] map_mg; 
+    delete [] map_med;     delete [] map_mg; 
     MapArray = NULL;
     MedToMg.clear();
     return;
 }
 
-
+// =======================================================================================
 void FEMUS::write_Boundary_value (
     int id_boundary_name ,      ///< identity interface name (in)
     std::string mgsystem_name, ///< system name          (in)
     int n_cmp,             ///< from variable system (in)
     int first_cmp               ///< to variable system   (in)
-
 ) {
     _mg_equations_map->write_Boundary_value ( id_boundary_name, mgsystem_name,n_cmp,first_cmp );
     return;
@@ -389,10 +348,7 @@ void FEMUS::setMedMesh ( ) {
     MyAssert ( meshNames.size() > 0.5, " FEMUS::setMesh : no meshes in the file'" );
 
     _med_mesh = MEDCoupling::ReadUMeshFromFile ( localFile.c_str(), meshNames[0].c_str(), 0 );
-    if ( _med_mesh == NULL ) {
-        std::cout<<  " FEMUS::setMesh : unable to read the med-mesh'";
-        abort();
-    }
+    if ( _med_mesh == NULL ){std::cout<<  " FEMUS::setMesh : unable to read the med-mesh'"; abort();}
 
     // BUILDING LOCAL PROC MESH FROM GLOBAL MED MESH ================================================================
     int FinerLevel = _mg_utils->_geometry["nolevels"]-1;
@@ -447,8 +403,7 @@ void FEMUS::setMedMesh ( ) {
             for ( int i_cnode=0; i_cnode<FemusNodesPerCell; i_cnode++ ) {
                 NodesId[FeParCellConn[i_cnode]] = FinLevId[FeTotCellConn[i_cnode]];
             }
-            FeParCellConn.clear();
-            FeTotCellConn.clear();
+            FeParCellConn.clear();      FeTotCellConn.clear();
         }// END MAP ---------------------------------------------------------------------------------
 
         _NodeMap.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
@@ -459,27 +414,25 @@ void FEMUS::setMedMesh ( ) {
         MEDCoupling::WriteUMesh ( "RESU_MED/FEMUS_PAR_"+to_string ( proc ) +".med", FemusPar, false );
         MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/FEMUS_PAR_"+to_string ( proc ) +".med",_NodeMap[lev] );
 
-        FemusPar->decrRef();
-        FemusPart->decrRef();
-        NodeArray->decrRef();
-//         CellField->decrRef();
-//         FinerLevelIDS->decrRef();
-//         ProcField->decrRef();
-        CellId  = NULL;
-        MgCellId = NULL;
-        CellIdProc.clear();
+        FemusPar->decrRef();  FemusPart->decrRef();    NodeArray->decrRef();
+//         CellField->decrRef(); FinerLevelIDS->decrRef();   ProcField->decrRef();
+        CellId  = NULL;   MgCellId = NULL;    CellIdProc.clear();
     }
 
     return;
 }
-
-void FEMUS::setExtField ( const std::string &systemName,
-                          MEDCoupling::MEDCouplingFieldDouble *bcField ) {
+// =============================================================================
+void FEMUS::setExtField ( 
+     const std::string &systemName,
+     MEDCoupling::MEDCouplingFieldDouble *bcField 
+) {
     _mg_equations_map->write_Boundary_value ( systemName,bcField );
     return;
 }
-
- MEDCoupling::MEDCouplingFieldDouble * FEMUS::GetExtField ( const std::string &systemName) {
+// =============================================================================
+ MEDCoupling::MEDCouplingFieldDouble * FEMUS::GetExtField (
+     const std::string &systemName
+ ) {
      MEDCoupling::MEDCouplingFieldDouble * ExtField = _mg_equations_map->GetField ( systemName);
     return ExtField;
 }
@@ -496,7 +449,7 @@ void FEMUS::setAnalyticSource (
 }
 
 
-
+// =============================================================================
 void FEMUS::setFieldSource (
     int interface_name,
     int n_cmp,
@@ -514,7 +467,7 @@ void FEMUS::setFieldSource (
 
 // ============================================================================
 /// This function gets all the values on boundary with identity id
-MEDCoupling::MEDCouplingFieldDouble *FEMUS::getValuesOnBoundary (  // field (out)
+MEDCoupling::MEDCouplingFieldDouble *FEMUS::getValuesOnInterface (  // field (out)
     int  interface_name,                     // boundary name (char*) (in)
     const std::string &systemName,                   // system name           (in)
     int n_cmp,                                        // component             (in)
@@ -522,27 +475,30 @@ MEDCoupling::MEDCouplingFieldDouble *FEMUS::getValuesOnBoundary (  // field (out
 ) {
     return _mg_equations_map->getValuesOnBoundary_nodes ( interface_name,systemName.c_str(),n_cmp,first_cmp );
 }
-// ============================================================================
-/// This function gets all the values on boundary with identity id
-MEDCoupling::MEDCouplingFieldDouble *FEMUS::getDisplacement (  // field (out)
-    int  interface_name,                     // boundary name (char*) (in)
-    const std::string &systemName,                   // system name           (in)
-    int n_cmp,                                        // component             (in)
-    int first_cmp                                        // component             (in)
-) {
-    return _mg_equations_map->getDisplacement ( interface_name,systemName.c_str(),n_cmp,first_cmp );
-}
 
 
+
+
+
+
+
+
+
+
+
+// ================================================================================================
 MEDCoupling::MEDCouplingFieldDouble *FEMUS::getProcSolution (  // field (out)
-    const std::string &systemName,                   // system name           (in)
-    int n_cmp,                                        // component             (in)
-    int first_cmp,                                        // component             (in)
-    int Level
+    const std::string &systemName, ///< system name  (in)
+    int n_cmp,                     ///<  component from  first_cmp  (in)
+    int first_cmp,                 ///<  first component   (in)
+    int Level                      ///<  level   (in)
 ) {
-
-    MyAssert ( _NodeMap.size() >Level, "FEMUS::getProcSolution _NodeMap not initialized for level " +to_string ( Level ) + " maximum levels "+to_string ( _NodeMap.size() ) );
-    return _mg_equations_map->getProcValues ( _NodeMap[Level],_GlobInterfaceId,systemName.c_str(),n_cmp,first_cmp, Level );
+    MyAssert ( _NodeMap.size() >Level,
+               "FEMUS::getProcSolution _NodeMap not initialized for level " +to_string ( Level ) 
+               + " maximum levels "+to_string ( _NodeMap.size() ) );
+    return _mg_equations_map->getProcValues ( 
+             _NodeMap[Level],_GlobInterfaceId,systemName.c_str(),n_cmp,first_cmp, Level 
+                                            );
 }
 
 // ============================================================================
@@ -559,6 +515,13 @@ const MEDCoupling::MEDCouplingUMesh *FEMUS::getUMesh_orig (
 ) {
     return _mg_equations_map->getUMeshCoupling_orig ( name );
 }
+
+
+
+
+// ==================================================================================
+// MESH movement
+// ==================================================================================
 // ------------------------------------------------
 /// This function moves the FEMUS interface according to a given displacement field
 void FEMUS::update_interface (
@@ -607,33 +570,41 @@ void FEMUS::update_interface (
     return;
 }
 
-void FEMUS::GetInfo (
-    string medfile_name,
-    std::string &mesh_dir,
-    std::string &localFile,
-    std::string &filename,
-    std::vector<std::string> &meshNames,
-    std::vector<std::string> &MeshNames,
-    std::vector<std::string> &FieldNames,
-    const int index_medmesh
+
+// ============================================================================
+/// This function gets all the values on boundary with identity id
+MEDCoupling::MEDCouplingFieldDouble *FEMUS::getDisplacement (  // field (out)
+    int  interface_name,                     // boundary name (char*) (in)
+    const std::string &systemName,                   // system name           (in)
+    int n_cmp,                                        // component             (in)
+    int first_cmp                                        // component             (in)
 ) {
-    mesh_dir=_mg_utils->_mesh_dir;
-    localFile=mesh_dir+medfile_name;
+    return _mg_equations_map->getDisplacement ( interface_name,systemName.c_str(),n_cmp,first_cmp );
+}
 
+
+
+// =====================================================================
+void FEMUS::GetInfo (
+     std::string medfile_name,  ///<  medfile_name (in)    
+      std::string & mesh_dir,    ///< mesh_dir (out std::string )    
+      std::string & localFile,   ///< localFile  (out std::string )    
+      std::string & filename,    ///< filename   (out std::string  )    
+      std::vector < std::string > &meshNames,  ///< meshNames  (out std::vector<std::string>)    
+      std::vector < std::string > &MeshNames,  ///< MeshNames  (out std::vector<std::string>)    
+      std::vector < std::string > &FieldNames, ///< FieldNames  (out std::vector<std::string>)    
+      const int index_medmesh   
+) { // ---------------------------------------------------------------------------------------
+   //  mesh_dir (out) +   localFile  (out) 
+    mesh_dir=_mg_utils->_mesh_dir; localFile=mesh_dir+medfile_name;
+    //  mesh_Names (out)
     meshNames = MEDCoupling::GetMeshNames ( localFile.c_str() );
-    // Reading mesh from the index_medmesh med-mesh name
-    if ( meshNames.size() < 1 ) {
-        std::cout<<  " FEMUS::setMesh : no meshes in the file'";
-    }
-//   std::string MMMM = medfile_name;
-//   int posP = MMMM.find("_");  // position of "live" in str
-//
-//   filename =   mesh_dir+MMMM.substr(0,posP)  + "_MedToMg.med" ;
-//   std::cout<<"\n 1:"<<localFile<<"\n 2:"<<filename<<std::endl;
+    if ( meshNames.size() < 1 ) std::cout<<  " FEMUS::setMesh : no meshes in the file'";
+    
+    //  filename(out)     FieldNames (out)    MeshNames  (out) 
     filename =localFile;
-
-    FieldNames = MEDCoupling::GetAllFieldNames ( filename.c_str() );
-    MeshNames = MEDCoupling::GetMeshNames ( filename.c_str() );
+    FieldNames = MEDCoupling::GetAllFieldNames(filename.c_str());
+    MeshNames  = MEDCoupling::GetMeshNames    (filename.c_str());
 
     return;
 };
@@ -653,6 +624,66 @@ void FEMUS::SetPieceFieldOnYdist(
     
     return;
 }
+
+// ================================================================================================
+// turbulence
+// ================================================================================================
+void FEMUS::InitTurbulence() {
+    bool DynTurb, TherTurb;
+
+    ( stoi ( _mg_utils->_sim_config["MG_DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
+    ( stoi ( _mg_utils->_sim_config["MG_ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
+
+//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
+
+    TurbUtils *Parameters = new TurbUtils ( get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb );
+    _mg_utils->set_turbulence_info ( Parameters );
+    return;
+}
+// ================================================================================================
+void FEMUS::InitTurbulence(int MeshID) {
+    bool DynTurb, TherTurb;
+
+    ( stoi ( _mg_utils->_sim_config["MG_DynamicalTurbulence"] ) > 0 ) ? DynTurb = true:false;
+    ( stoi ( _mg_utils->_sim_config["MG_ThermalTurbulence"] )   > 0 ) ? TherTurb = true:false;
+
+//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
+
+    TurbUtils *Parameters = new TurbUtils ( get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb, MeshID );
+    _mg_utils->set_turbulence_info ( Parameters );
+    
+    
+    return;
+}
+// ================================================================================================
+// MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>
+void FEMUS::CalcTurbulence() {
+    int FinerLevel = _mg_mesh->_NoLevels;
+    if ( _mg_utils->_TurbParameters->_IsWallDistSet == false ) {
+        MEDCoupling::MEDCouplingFieldDouble *Dist = getProcSolution ( "C",1,0,FinerLevel-1 );
+        MEDCoupling::WriteField ( "RESU_MED/wd"+to_string ( get_proc() ) +".med",Dist,1 );
+        _mg_utils->_TurbParameters->SetWallDistAtLevel ( FinerLevel-1, Dist );
+        _mg_utils->_TurbParameters->_IsWallDistSet = true;
+        Dist->decrRef();
+    }
+    MEDCoupling::MEDCouplingFieldDouble *K1W = getProcSolution ( "K1W",1,0,FinerLevel-1 ); // CONTROLLARE CHE LA SOLUZIONE VENGA PRESA DA OGNI SINGOLO LIVELLO
+    MEDCoupling::MEDCouplingFieldDouble *K2K = getProcSolution ( "K2K",1,0,FinerLevel-1 ); //
+    _mg_utils->_TurbParameters->CalcMuTurb ( K2K,K1W,FinerLevel -1 );
+    if ( stoi ( _mg_utils->_sim_config["ThermalTurbulence"] )   > 0 ) {
+        MEDCoupling::MEDCouplingFieldDouble *TK = getProcSolution ( "TK",1,0,FinerLevel-1 ); // CONTROLLARE CHE LA SOLUZIONE VENGA PRESA DA OGNI SINGOLO LIVELLO
+        MEDCoupling::MEDCouplingFieldDouble *TW = getProcSolution ( "TK2",1,0,FinerLevel-1 ); //
+        _mg_utils->_TurbParameters->CalcAlphaTurb ( K2K,K1W,TK,TW,FinerLevel -1 );
+        TW->decrRef();
+        TK->decrRef();
+    }
+    K1W->decrRef();
+    K2K->decrRef();
+
+    return;
+}
+
+
+
 
 #endif
 

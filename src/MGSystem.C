@@ -12,7 +12,7 @@
 
 // conf files
 // #include "Equations_conf.h"
-#include "Equations_tab.h"
+// #include "Equations_tab.h"
 #include "MGFE_conf.h"   // Fem approximation conf file
 
 // local class ---------

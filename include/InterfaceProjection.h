@@ -29,7 +29,7 @@ class DataArrayDouble;
  * We need to distinguish the interpolation on boundary groups and on volume groups because
  * the algorithm for searching the target node inside the source mesh is different
  */
-// enum DomainType{Boundary=0, Volume=1};
+//  enum DomainType{Boundary=0, Volume=1};
 
 /// Class for the interpolation of a solution from a source mesh to a target mesh 
 class BoundInterp : public MMed {  
@@ -41,14 +41,15 @@ public:
    BoundInterp  (
            const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
-	       int DomainType = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
+	       DomainType bdd= Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
    BoundInterp  (
            const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
            int procId,
-	       int DomainType = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
+            DomainType bdd = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
+
    //! Destructor of the BoundInterp Class
   ~BoundInterp();
    void terminate();

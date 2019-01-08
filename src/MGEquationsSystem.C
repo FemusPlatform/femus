@@ -1158,7 +1158,8 @@ void MGEquationsSystem::movemesh() {
     }
 }
 
-#ifdef NEW_VERSION
+ 
+
 void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
 
   for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
@@ -1168,7 +1169,7 @@ void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
     
   return;
 }
-#endif
+
 
 
 // kate: indent-mode cstyle; indent-width 2; replace-tabs on; 

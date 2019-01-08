@@ -3,7 +3,7 @@
 
 // configure files --------------------
 #include "Domain_conf.h"
-#include "Equations_tab.h"
+#include "EquationsMap.h"
 // std libraries ----------------------
 #include <iostream>
 #include <cstdlib>
@@ -160,7 +160,7 @@ public:
  ///@}
  void cross(const double* a,const double* b, double* res) const;
  
- void FillFieldsVector( FIELDS_class &map_str2fieldclass, std::vector<FIELDS> &myproblemP);
+ void FillFieldsVector( EquationsMap &map_str2fieldclass, std::vector<FIELDS> &myproblemP);
 };
 
 inline void MGUtils::cross(const double* a,const double* b, double* res) const {

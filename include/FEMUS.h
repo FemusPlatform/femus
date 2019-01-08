@@ -276,131 +276,190 @@ public:
 //                              FUNCTIONS USING
 //                                    MED
 //                                 LIBRARIES
-//=============================================================================
+//=====================================================================================
 #ifdef HAVE_MED
+    //  MED-mesh function =============================================================
     //! This function sets the Med-Mesh
     void setMedMesh ( );
-
     //! This function returns the Med-Mesh
-    const MEDCoupling::MEDCouplingUMesh & getMedMesh () {
-        return *_med_mesh;
-    };
-
+    const MEDCoupling::MEDCouplingUMesh & getMedMesh () {return *_med_mesh;};
     //! Function getting node interpolated wall distance
     inline MEDCoupling::MEDCouplingFieldDouble * GetWallDistField (int Level)
-    {
-        MyAssert (_NodeWallDist.size() != 0,
-                  "FEMUS::GetWallDistField NodeWallDist not calculated yet! ");
+    { std::cout<< "FEMUS::GetWallDistField NodeWallDist not calculated yet! ";abort();
+//         MyAssert (_NodeWallDist.size() != 0,
+//                   "FEMUS::GetWallDistField NodeWallDist not calculated yet! ");
         return _NodeWallDist[Level];
     };
 
-    //! Function for setting a MED field as external source field in <systemName> equation solver
-    void setExtField (const std::string & systemName,
-                      MEDCoupling::MEDCouplingFieldDouble * bcField);
-    MEDCoupling::MEDCouplingFieldDouble * GetExtField (const std::string & systemName);
+ 
 //=============================================================================
 //   FUNCTIONS RELATED TO INTERFACE CREATION AND UPDATE
 //=============================================================================
-
+   // ========================================================================= 
+   //  external functions 
+     // ================================================================================================
+    //! GetInfo med from file    medfile_name   
+    void GetInfo (                                    
+      std::string medfile_name,  ///<  medfile_name (in)
+      std::string & mesh_dir,    ///< mesh_dir (out std::string )
+      std::string & localFile,   ///< localFile  (out std::string )
+      std::string & filename,    ///< filename   (out std::string  )
+      std::vector < std::string > &meshNames,  ///< meshNames  (out std::vector<std::string>)
+      std::vector < std::string > &MeshNames,  ///< MeshNames  (out std::vector<std::string>)
+      std::vector < std::string > &FieldNames, ///< FieldNames  (out std::vector<std::string>)
+      const int index_medmesh = 0
+    );
+    
+// ================================================================================================
+   void getNodeMapAndProcMeshAtLevel ( 
+   int level, 
+   MEDCoupling::MEDCouplingUMesh *&FemusPar, 
+   MEDCoupling::MEDCouplingFieldDouble *&NodeMap 
+   );   
+    
+   // ========================================================================= 
+   //! Function for setting a MED field as external source field in <systemName> equation solver
+    void setExtField (const std::string & systemName,
+                      MEDCoupling::MEDCouplingFieldDouble * bcField);
+    //! Function for getting a MED field as external source field in <systemName> equation solver
+    MEDCoupling::MEDCouplingFieldDouble * GetExtField (const std::string & systemName);
+    // ========================================================================= 
+    //  interfaces functions 
+    // ========================================================================= 
+    // ================================================================================================
     //! This function sets up an interface with all group ids contained in IDSvec
-    void init_interface (const int interface_name,              /**< Interface name */
-                         std::vector<int> IDSvec,               /**< Vector containing group IDS */
-                         int order_cmp,                         /**< Order of the numerical field */
-                         const std::string & medfile_name,      /**< Name of the MED file containing the mesh */
-                         bool on_nodes = true,                  /**< Flag to indicate if the field is ON_NODES or ON_CELLS */
-                         const int index_medmesh = 0	      /**< med-mesh index  */
-                        );
-
+    void init_interface (
+      const int interface_name,              ///< Interface name 
+      std::vector<int> IDSvec,               ///< Vector containing group IDS 
+      int order_cmp,                         ///< Order of the numerical field 
+      const std::string & medfile_name,      ///< Name of the MED file containing the mesh 
+      bool on_nodes = true,                  ///< Flag to indicate if the field is ON_NODES or ON_CELLS 
+      const int index_medmesh = 0	     ///< med-mesh index  
+      );
+    // ------------------------------------------------------------------------------------
     //! This function sets up an interface for the whole mesh -> interface_id not required
-    void init_interface (const int interface_name,             /**< Interface name */
-                         int order_cmp,                        /**< Order (piecewise, linear, quadratic) */
-                         const std::string & medfile_name,     /**< Name of the MED file containing the mesh */
-                         bool on_nodes = true                  /**< Flag to indicate if the field is ON_NODES or ON_CELLS */
-                        );
-
-    //! This functions actually create the interface
-    /*!
-     * The interface is created and added to #EquationSystemsExtendedM::_interfaceFunMap
-     */
-    void init_interface (const int interface_name,                        /**< Interface name */
-                         int order_cmp,                                   /**< Order (piecewise, linear, quadratic) */
-                         MEDCoupling::MEDCouplingUMesh * InterfaceMesh,    /**< MED interface mesh */
-                         MEDCoupling::DataArrayDouble * MEDToMgMapArray,   /**< Array containing the map between MED and MG numeration */
-                         int interface_id = 0                             /**< Default interface_id */
-                        );
-
-    void init_par_interface (int order_cmp,                    /**< Order (piecewise, linear, quadratic) */
-                             bool on_nodes = true                  /**< Flag to indicate if the field is ON_NODES or ON_CELLS */
-                            );
-
-    void update_interface (const int interface_name,	                                        /**< Interface name */
-                           int n_cmp,	                                                        /**< Number of components of displacement field */
-                           const std::vector < MEDCoupling::MEDCouplingFieldDouble * >&srcField	/**< Vector containing displacement MED field */
-                          );
-
+    void init_interface (
+      const int interface_name,             ///< Interface name 
+      int order_cmp,                        ///< Order (piecewise, linear, quadratic) 
+      const std::string & medfile_name,     ///< Name of the MED file containing the mesh 
+      bool on_nodes = true                  ///< Flag to indicate if the field is ON_NODES or ON_CELLS 
+      );
+    // ------------------------------------------------------------------------------------
+    /// Basic interface construction with support (InterfaceMesh) and  MEDToMg map (MEDToMgMapArray) 
+    /// The interface is created and added to #EquationSystemsExtendedM::_interfaceFunMap
+    // ------------------------------------------------------------------------------------
+    void init_interface (
+      const int interface_name,                        ///< Interface name 
+      int order_cmp,                                   ///< Order (piecewise, linear, quadratic) 
+      MEDCoupling::MEDCouplingUMesh * InterfaceMesh,   ///< MED interface mesh 
+      MEDCoupling::DataArrayDouble * MEDToMgMapArray,  ///< Array containing the map with MED/MG numeration 
+      int interface_id = 0                             ///< Default interface_id 
+     );
+    // ------------------------------------------------------------------------------------
+   /// This function gets the volume mesh from the med file as default
+     // ------------------------------------------------------------------------------------
+    void init_par_interface (
+      int order_cmp,        ///< Order (piecewise, linear, quadratic) 
+      bool on_nodes = true  ///< Flag to indicate if the field is ON_NODES or ON_CELLS 
+     );
+    
+    
+ 
+    // ================================================================================================
     //! This function sets the value from first_cmp to end_cmp of the field on the old solution x_old of the interface id. From Interface to System solution
     void write_Boundary_value (int id_boundary_name,	  ///< identity interface name (in)
                                std::string mgsystem_name,	  ///< system name          (in)
                                int n_cmp,	                  ///< from variable system (in)
                                int first_cmp = 0	          ///< to variable system   (in)
                               );
-
+    // ================================================================================================
     //! This function sets the field of interface function (interface_id) with an analitic expression
     void setAnalyticSource (int interface_name,                   /**< Interface name */
                             int n_cmp,                            /**< Number of components of displacement field */
                             const std::string & bcExpression	/**< String containing analytical expression */
                            );
-
+    // ================================================================================================
     //! This function sets the field of interface function (interface_id)
-    void setFieldSource (int interface_name,                                    /**< Interface name */
-                         int n_cmp,                                             /**< Number of components of displacement field */
-                         const MEDCoupling::MEDCouplingFieldDouble * srcField    /**< MED field to set */
+    void setFieldSource (
+      int interface_name,                                  ///< Interface name 
+      int n_cmp,                                           ///< Number of components of displacement field 
+      const MEDCoupling::MEDCouplingFieldDouble * srcField ///< MED field to set 
                         );
-
+    // ================================================================================================
     //! This function gets all the values on boundary with identity id
-    MEDCoupling::MEDCouplingFieldDouble * getValuesOnBoundary (int interface_name,	                ///< boundary name (char*) (in)
-            const std::string & systemName,	///< system name           (in)
-            int n_cmp,	                        ///< component             (in)
-            int first_cmp = 0	                ///< component             (in)
-                                                              );
+    MEDCoupling::MEDCouplingFieldDouble * getValuesOnInterface (
+      int interface_name,	        ///< boundary name (char*) (in)
+      const std::string & systemName,	///< system name           (in)
+      int n_cmp,	                ///< component             (in)
+      int first_cmp = 0	                ///< component             (in)
+     );
+    // ================================================================================================
+    MEDCoupling::MEDCouplingFieldDouble * getProcSolution (
+      const std::string & system_name,	///< system name             (in)
+      int n_cmp,	                ///<  first variable         (in)
+      int first_cmp = 0,	        ///< n variables             (in)
+      int Level = 0
+    );   
+    
+   // ==================================================================================
+   // MESH movement
+   // ==================================================================================
+    // ================================================================================================                                                          );
     //! This function gets all the values on boundary with identity id
-    MEDCoupling::MEDCouplingFieldDouble * getDisplacement (int interface_name,	                ///< boundary name (char*) (in)
-            const std::string & systemName,	///< system name           (in)
-            int n_cmp,	                        ///< component             (in)
-            int first_cmp = 0	                ///< component             (in)
-                                                          );
-
-    MEDCoupling::MEDCouplingFieldDouble * getProcSolution (const std::string & system_name,	///< system name             (in)
-            int n_cmp,	                        ///<  first variable         (in)
-            int first_cmp = 0,	                ///< n variables             (in)
-            int Level = 0);
-
-    void getNodeMapAndProcMeshAtLevel ( int level, MEDCoupling::MEDCouplingUMesh *&FemusPar, MEDCoupling::MEDCouplingFieldDouble *&NodeMap );
-
+    MEDCoupling::MEDCouplingFieldDouble * getDisplacement (
+      int interface_name,	        ///< boundary name (char*) (in)
+      const std::string & systemName,	///< system name           (in)
+      int n_cmp,	                ///< component             (in)
+      int first_cmp = 0	                ///< component             (in)
+       );
+    // ================================================================================================
+    /// This function moves the FEMUS interface according to a given displacement field
+    void update_interface (
+      const int interface_name,	                   ///< Interface name 
+      int n_cmp,	                           ///< Number of components of displacement field
+      const std::vector< MEDCoupling::MEDCouplingFieldDouble * >&srcField ///< Vector containing displacement MED field */
+     );
+ 
+ 
+ 
+ 
+// ================================================================================================
     //! This function gets actual support of the interface
-    const MEDCoupling::MEDCouplingUMesh * getUMesh (int name);
-
+    const MEDCoupling::MEDCouplingUMesh * getUMesh (
+      int name
+    );
+    // ================================================================================================
     //! This routine gets original support of the interface
-    const MEDCoupling::MEDCouplingUMesh * getUMesh_orig (int name);
-
-    void GetInfo (std::string medfile_name,
-                  std::string & mesh_dir,
-                  std::string & localFile,
-                  std::string & filename,
-                  std::vector < std::string > &meshNames,
-                  std::vector < std::string > &MeshNames,
-                  std::vector < std::string > &FieldNames,
-                  const int index_medmesh = 0);
-
+    const MEDCoupling::MEDCouplingUMesh * getUMesh_orig (
+      int name
+    );
+   
+    // ================================================================================================
     void InitTurbulence ();
     void InitTurbulence ( int MeshID );
     void CalcTurbulence ();
 
-    double GetValue(const int & ff,int flag);
-    void   SetValue(const int & ff,double value);
-    void   SetValueVector(const int & ff,std::vector<double> value);
+    // ================================================================================================
+    double GetValue(
+      const int & ff,
+      int flag
+    );
+    void   SetValue(
+      const int & ff,
+      double value
+    );
+    void   SetValueVector(
+      const int & ff,
+      std::vector<double> value
+    );
+    // ================================================================================================
+    void SetPieceFieldOnYdist(
+      MEDCoupling::MEDCouplingFieldDouble * Field, 
+      MEDCoupling::MEDCouplingFieldDouble * CellMap
+    );
     
-    void SetPieceFieldOnYdist(MEDCoupling::MEDCouplingFieldDouble * Field, MEDCoupling::MEDCouplingFieldDouble * CellMap);
+    
+
 #endif
 
 };
