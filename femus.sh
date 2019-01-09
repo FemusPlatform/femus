@@ -425,8 +425,42 @@ echo "ALL TUTORIALS: COMPLETED RUN"
 
 
 function femus_tutorial_copy () {
+   
+   while :
+do
+    case "$1" in
+      -h | --help)
+          display_help  # Call your function
+          exit 0
+          ;;
+      "")  # No more options
+          TUTORIAL_CP=$PWD
+          echo "Tutorial will be copied here"
+          echo "Confirm your choice"
+          select confirm in yes no ;
+          
+          do
+           case "$confirm" in
+            yes)
+             break
+             ;;
+            no)
+             return
+             ;;
+           esac
+          done
+          break
+          ;;
+      *)  # No more options
+          echo "Tutorials will be copied in the following path"
+          echo "path: "$1
+          TUTORIAL_CP=$1
+          break
+          ;; 
+    esac
+done
+   cd $TUTORIAL_CP
    echo "Available tutorials are"
-   cd $1
    femus_show_tutorials
    
    export TUTORIAL_PATH=$FEMUS_DIR/tutorials/
@@ -438,7 +472,7 @@ function femus_tutorial_copy () {
       
    echo "Selected test is $TUTORIAL_CASE of class $TUTORIAL_CLASS"
    
-   cp -r $FEMUS_DIR/tutorials/$TUTORIAL_CLASS/$TUTORIAL_CASE $1
+   cp -r $FEMUS_DIR/tutorials/$TUTORIAL_CLASS/$TUTORIAL_CASE $TUTORIAL_CP
    
    cd $TUTORIAL_CASE
    
