@@ -189,6 +189,8 @@ void Fill_FIELD_map(
     void setFluidStructure(EquationSystemsExtendedM & EqMap);
     void setColor(EquationSystemsExtendedM & EqMap);
     void setDisplacements(EquationSystemsExtendedM & EqMap);
+    void setAdjointFSI(EquationSystemsExtendedM & EqMap);
+    void setControlTemperature(EquationSystemsExtendedM & EqMap);    
       
 };   
 

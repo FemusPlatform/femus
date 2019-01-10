@@ -123,6 +123,8 @@ void EquationsMap::FillEquationMap(
     if(_myproblemP[iname]== CO_F)  setColor(EqMap);
     if(_myproblemP[iname]== FS_F)  setFluidStructure(EqMap);
     if(_myproblemP[iname]== SDS_F) setDisplacements(EqMap);
+    if(_myproblemP[iname]== FSA_F) setAdjointFSI(EqMap);
+    if(_myproblemP[iname]== CTRL_F) setControlTemperature(EqMap);
   }
 
   return;
@@ -249,5 +251,57 @@ void EquationsMap::setDisplacements(EquationSystemsExtendedM& EqMap) {
 #endif
 
   return;
+}
+void EquationsMap::setAdjointFSI(EquationSystemsExtendedM& EqMap) {
+#ifdef FSIA_EQUATIONS //    FLUID-STRUCTURE adjoint---  
+// ====================================================================
+
+      _nvars[0]=0; _nvars[1]=FSIA_EQUATIONS%2;   // Costant(1)  Linear(0)
+      _nvars[2]=((FSIA_EQUATIONS==2)?1:DIMENSION); // quadratic(2) Approximation
+      if(NDOF_K>0) {   _nvars[0]=1;   _nvars[1]=0;}  // konstant(0) approx
+
+#if FSIA_EQUATIONS!=2
+      EqMap.AddSolver<MGSolFSIA> ("FSIA0", FSA_F, _nvars[0],_nvars[1],_nvars[2],"ua");
+#else
+      EqMap.AddSolver<MGSolFSIA> ("FSIA0X", FSA_F, _nvars[0],_nvars[1],_nvars[2],"ua");
+      EqMap.AddSolver<MGSolFSIA> ("FSIA0Y", FSA_F + 1, _nvars[0],_nvars[1],_nvars[2],"va");
+#if DIMENSION==3
+      EqMap.AddSolver<MGSolFSIA> ("FSIA0Z", FSA_F + 2, _nvars[0],_nvars[1],_nvars[2],"wa");
+#endif
+#endif
+#if (FSIA_EQUATIONS%2==0) // - FSI_EQUATIONS==0,2  projection -
+      _nvars[0]=0;  _nvars[1]=1; _nvars[2]=0;// only  Linear(1) approx
+      EqMap.AddSolver<MGSolFSIAP> ("FSIAP", FSA_F + 3, _nvars[0],_nvars[1],_nvars[2],"pa");
+#endif
+    
+// #ifdef DSA_EQUATIONS // -------------  Displacement adjoint--------------------
+//   nvars_in[0]=0; nvars_in[1]=0;   // Costant(1)  Linear(0)
+//   nvars_in[2]=1;                  // quadratic(2) Approximation
+//
+//   MGSolDSA* mgsdsdxa=new MGSolDSA(*this,nvars_in,"SDSAX","dxa");  set_eqs(mgsdsdxa);
+//   MGSolDSA* mgsdsdya=new MGSolDSA(*this,nvars_in,"SDSAY","dya");  set_eqs(mgsdsdya);
+// #if (DIMENSION==3)
+//   MGSolDSA* mgsdsdza=new MGSolDSA(*this,nvars_in,"SDSAZ","dza");  set_eqs(mgsdsdza);
+// #endif
+#endif // ----------------  end  Disp adjoint ---------------------------------  
+      return;
+}
+
+void EquationsMap::setControlTemperature(EquationSystemsExtendedM& EqMap) {
+#ifdef CTRL_EQUATIONS
+  _nvars[0]=0; _nvars[1]=0;   // Costant(1)  Linear(0)
+  _nvars[2]=1;                // quadratic(2) Approximation
+
+  EqMap.AddSolver<MGSolCTRL> ("CTRLX", CTRLX_F, _nvars[0],_nvars[1],_nvars[2],"cx");
+  #if CTRL_EQUATIONS!=1 
+  EqMap.AddSolver<MGSolCTRL> ("CTRLY", CTRLX_F + 1, _nvars[0],_nvars[1],_nvars[2],"cy");
+  
+   #if (DIMENSION==3)
+  EqMap.AddSolver<MGSolCTRL> ("CTRLZ", CTRLX_F + 2, _nvars[0],_nvars[1],_nvars[2],"cz");
+   #endif
+    
+  #endif
+#endif
+    return;
 }
 
