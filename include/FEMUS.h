@@ -243,8 +243,9 @@ public:
                                );
 
     //! This function write solution to/from x_ooold vector
-    void set_uooold (const int &flag,	                ///<  0 xold-> x_ooold   1 x_ooold-> xold
-                     const double &toll,	                ///< tolerance
+    void set_uooold (const int &vec_from,	        ///< source vector to be copied
+                     const int &vec_to,	                ///< target vector 
+                     const double &toll,	        ///< tolerance
                      const double delta_t_step_in,	//   (in)
                      const int &eq_min,	                ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
                      const int &eq_max	                ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)

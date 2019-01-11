@@ -160,11 +160,12 @@ void MGEquationsSystem::eqnmap_steady_loop(
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::set_uooold(
-   const int & flag,  ///<  0 xold-> x_ooold   1 x_ooold-> xold
-  const double & /*toll*/,  ///< tolerance
-  const double delta_t_step_in,  //   (in)
+  const int & vec_from,     ///<source vector to be copied       (in)
+  const int & vec_to,       ///<target vector                    (in)
+  const double & /*toll*/,  ///< tolerance                       (in)
+  const double delta_t_step_in,  ///                             (in)
   const int  & eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-  const int     &  eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+  const int  & eq_max      ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
 ) {
   // loop for time steps
    int NoLevels=0;
@@ -173,8 +174,8 @@ void MGEquationsSystem::set_uooold(
         MGSolBase* mgsol = eqn->second;
           NoLevels=mgsol->_NoLevels;
            if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
-             if (flag==1) mgsol->set_xooold2x();
-              else  mgsol->set_vector(flag);
+             if (vec_from==3 && vec_to==0) mgsol->set_xooold2x();   
+              else  mgsol->set_vector(vec_from,vec_to);
             }
         }
   return;

@@ -270,7 +270,7 @@ public:
 )  const  ;    
 ///@}
   // =============================
-virtual void set_vector(const int &)=0;
+virtual void set_vector(const int &, const int &)=0;
 virtual void set_xooold2x()=0; 
 // virtual void  f_aux (double a1[]) const;
   // ==================================================================

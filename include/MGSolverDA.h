@@ -247,8 +247,8 @@ public:
         int iel,           // element           <-
         double value[]      //  point values     ->
     );
-   virtual void  set_vector(const int &);
-    virtual void  set_xooold2x();
+   virtual void  set_vector(const int &, const int &);
+   virtual void  set_xooold2x();
    virtual double MGFunctional ( double, double &);
 ///@}
 

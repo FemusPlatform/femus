@@ -63,13 +63,14 @@ void MGTimeLoop::transient_setup(
 }
 
   void MGTimeLoop::set_uooold(
-    const int& flag,               ///< initial time iteration          (in)
-    const double&  toll,                  ///< running time                    (in)
-    const double&  time,                  ///< running time                    (in)
+    const int& vec_from,                  ///< source vector to be copied   (in)
+    const int& vec_to,                    ///< target vector                (in)
+    const double&  toll,                  ///< running time                 (in)
+    const double&  time,                  ///< running time                 (in)
     const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-  const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    const int  & eq_max  ///< eq max to solve -> enum  FIELDS (equations_conf.h)
   ) { // ===================================================================================
- _mgeqmap.set_uooold(flag, toll,time,eq_min,eq_max); // solve one step
+ _mgeqmap.set_uooold(vec_from, vec_to, toll,time,eq_min,eq_max); // copy values from 'vec_from' to 'vec_to'
  
  return;
   }

@@ -102,11 +102,12 @@ void  set_mgcc(MGSolCC  & cc);
     const int     &  eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
   );
   void set_uooold(
-    const int & nmax_step,  ///< number max of steps
-    const double & toll,  ///< tolerance
-    const double delta_t_step_in,  //   (in)
+    const int & vec_from, ///< source vector to be copied     (in)
+    const int & vec_to,   ///< target vector                  (in)
+    const double & toll,  ///< tolerance                      (in)
+    const double delta_t_step_in,  //                         (in)
     const int  & eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-    const int     &  eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int  & eq_max      ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
   );
   void eqnmap_timestep_loop(
     const double time, 

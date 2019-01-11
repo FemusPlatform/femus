@@ -138,91 +138,91 @@ void MGSolDA::set_ext_fields(const std::vector<FIELDS> &pbName) {
                 _data_eq[0].n_eqs++;  // number of quadratic system
                 n_index++; // update counter
             }
-  if (_mgutils._sim_config["MG_NavierStokes"]!=""){
-    if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
-        if(NDOF_K==1)
-            for(int iname=0; iname<n_equations; iname++)
-                if(pbName[iname]== NS_F) {
-                    if(stoi(_mgutils._sim_config["MG_NavierStokes"])==2) {
-                        _data_eq[0].tab_eqs[P_F]=n_index;                      //  table
-                        _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0"); //Navier-Stokes equation pointer
-                        _data_eq[0].indx_ub[n_index+1] =_data_eq[0].indx_ub[n_index]+1;  // _data_eq[2].ub index
-                        _data_eq[0].n_eqs++;  // number of quadratic system
-                        n_index++; // update counter
+    if (_mgutils._sim_config["MG_NavierStokes"]!="") {
+        if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
+            if(NDOF_K==1)
+                for(int iname=0; iname<n_equations; iname++)
+                    if(pbName[iname]== NS_F) {
+                        if(stoi(_mgutils._sim_config["MG_NavierStokes"])==2) {
+                            _data_eq[0].tab_eqs[P_F]=n_index;                      //  table
+                            _data_eq[0].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS0"); //Navier-Stokes equation pointer
+                            _data_eq[0].indx_ub[n_index+1] =_data_eq[0].indx_ub[n_index]+1;  // _data_eq[2].ub index
+                            _data_eq[0].n_eqs++;  // number of quadratic system
+                            n_index++; // update counter
+                        }
                     }
-                }
-  }
+    }
 
 //=================================================================================
 //   LINEAR FIELDS -> _data_eq[1]
 //=================================================================================
     n_index=0;//  linear index for _ub
     // NS
-  if (_mgutils._sim_config["MG_NavierStokes"]!=""){
-    if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
-        for(int iname=0; iname<n_equations; iname++)
-            if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F) {
-                if(stoi(_mgutils._sim_config["MG_NavierStokes"])==2) {
-                    _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-                    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS2P"); //Navier-Stokes equation pointer
-                    _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-                    _data_eq[1].n_eqs++;  // number of quadratic system
-                    n_index++; // update counter
+    if (_mgutils._sim_config["MG_NavierStokes"]!="") {
+        if(stoi(_mgutils._sim_config["MG_NavierStokes"])!=0)
+            for(int iname=0; iname<n_equations; iname++)
+                if(pbName[iname]== NS_F || pbName[iname]==NSX_F || pbName[iname]==NSY_F || pbName[iname]==NSZ_F) {
+                    if(stoi(_mgutils._sim_config["MG_NavierStokes"])==2) {
+                        _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+                        _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NS2P"); //Navier-Stokes equation pointer
+                        _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+                        _data_eq[1].n_eqs++;  // number of quadratic system
+                        n_index++; // update counter
+                    }
                 }
-            }
-  }
-  if (_mgutils._sim_config["MG_AdjointNavierStokes"]!=""){
-    if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])!=0)
-        for(int iname=0; iname<n_equations; iname++)
-            if(pbName[iname]== NSA_F) {
-                if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])==2) {
-                    _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-                    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSAP"); //Navier-Stokes equation pointer
-                    _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-                    _data_eq[1].n_eqs++;  // number of quadratic system
-                    n_index++; // update counter
+    }
+    if (_mgutils._sim_config["MG_AdjointNavierStokes"]!="") {
+        if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])!=0)
+            for(int iname=0; iname<n_equations; iname++)
+                if(pbName[iname]== NSA_F) {
+                    if(stoi(_mgutils._sim_config["MG_AdjointNavierStokes"])==2) {
+                        _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+                        _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("NSAP"); //Navier-Stokes equation pointer
+                        _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+                        _data_eq[1].n_eqs++;  // number of quadratic system
+                        n_index++; // update counter
+                    }
                 }
-            }
-  }
+    }
     // FSI
-  if (_mgutils._sim_config["MG_FluidStructure"]!=""){  
-    if(stoi(_mgutils._sim_config["MG_FluidStructure"])!=0)
-        for(int iname=0; iname<n_equations; iname++)
-            if(pbName[iname]== FS_F) {
-                if(stoi(_mgutils._sim_config["MG_FluidStructure"])==2) {
-                    _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-                    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIP"); //Navier-Stokes equation pointer
-                    _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-                    _data_eq[1].n_eqs++;  // number of quadratic system
-                    n_index++; // update counter
+    if (_mgutils._sim_config["MG_FluidStructure"]!="") {
+        if(stoi(_mgutils._sim_config["MG_FluidStructure"])!=0)
+            for(int iname=0; iname<n_equations; iname++)
+                if(pbName[iname]== FS_F) {
+                    if(stoi(_mgutils._sim_config["MG_FluidStructure"])==2) {
+                        _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+                        _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIP"); //Navier-Stokes equation pointer
+                        _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+                        _data_eq[1].n_eqs++;  // number of quadratic system
+                        n_index++; // update counter
+                    }
                 }
-            }
-  }
-  if (_mgutils._sim_config["MG_AdjointFluidStructure"]!=""){
-    if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])!=0)
-        for(int iname=0; iname<n_equations; iname++)
-            if(pbName[iname]== FSA_F) {
-                if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])==2) {
-                    _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
-                    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIAP"); //Navier-Stokes equation pointer
-                    _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-                    _data_eq[1].n_eqs++;  // number of quadratic system
-                    n_index++; // update counter
+    }
+    if (_mgutils._sim_config["MG_AdjointFluidStructure"]!="") {
+        if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])!=0)
+            for(int iname=0; iname<n_equations; iname++)
+                if(pbName[iname]== FSA_F) {
+                    if(stoi(_mgutils._sim_config["MG_AdjointFluidStructure"])==2) {
+                        _data_eq[1].tab_eqs[P_F]=n_index;                      //  table
+                        _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("FSIAP"); //Navier-Stokes equation pointer
+                        _data_eq[1].indx_ub[n_index+1] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+                        _data_eq[1].n_eqs++;  // number of quadratic system
+                        n_index++; // update counter
+                    }
                 }
-            }
-  }
-if (_mgutils._sim_config["MG_DA"]!=""){
-    if(stoi(_mgutils._sim_config["MG_DA"])!=0)
-        for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
-                if(stoi(_mgutils._sim_config["MG_DA"])==2) {
-                    _data_eq[1].tab_eqs[DA_P]=n_index;                      //  table
-                    _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
-                    _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
-                    _data_eq[1].n_eqs++;  // number of quadratic system
-                    n_index++; // update counter
+    }
+    if (_mgutils._sim_config["MG_DA"]!="") {
+        if(stoi(_mgutils._sim_config["MG_DA"])!=0)
+            for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== DA_F) {
+                    if(stoi(_mgutils._sim_config["MG_DA"])==2) {
+                        _data_eq[1].tab_eqs[DA_P]=n_index;                      //  table
+                        _data_eq[1].mg_eqs[n_index]=_mgeqnmap.get_eqs("DA"); //Navier-Stokes equation pointer
+                        _data_eq[1].indx_ub[n_index] =_data_eq[1].indx_ub[n_index]+1;  // _data_eq[2].ub index
+                        _data_eq[1].n_eqs++;  // number of quadratic system
+                        n_index++; // update counter
+                    }
                 }
-            }
-}
+    }
 
 //=================================================================================
 //   QUADRATIC FIELDS -> _data_eq[2]
@@ -244,15 +244,15 @@ if (_mgutils._sim_config["MG_DA"]!=""){
 //   ActivateScalar("Control", CO_F, pbName, "CTRL",n_index, n_equations); // fsi or sm disp
 //   ActivateScalar("Laplacian", TA_F, pbName, "Lap",n_index, n_equations); // fsi or sm disp
 
-  ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "TA",n_index, n_equations); // fsi or sm disp
-  ActivateScalar("MG_DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
-  
-  
-  ActivateCoupled("MG_ColorFunction", CO_F, pbName, "C", "CK",n_index, n_equations);
-  ActivateCoupled("MG_DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
-  ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
-  ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
-  ActivateCoupled("MG_ImmersedBoundary", IB_F, pbName, "IB1", "IB2",n_index, n_equations );
+    ActivateScalar("MG_AdjointTemperature", TA_F, pbName, "TA",n_index, n_equations); // fsi or sm disp
+    ActivateScalar("MG_DA", DA_F, pbName, "DA",n_index, n_equations); // fsi or sm disp
+
+
+    ActivateCoupled("MG_ColorFunction", CO_F, pbName, "C", "CK",n_index, n_equations);
+    ActivateCoupled("MG_DynamicalTurbulence", K_F, pbName, "K2K", "K1W",n_index, n_equations);
+    ActivateCoupled("MG_ThermalTurbulence", KTT_F, pbName, "TK", "TK2",n_index, n_equations);
+    ActivateCoupled("MG_AdjointTurbulence", KA_F, pbName, "K2KA", "K1WA",n_index, n_equations);
+    ActivateCoupled("MG_ImmersedBoundary", IB_F, pbName, "IB1", "IB2",n_index, n_equations );
 
 /// c) Print
 // #ifdef PRINT_INFO // ====================================================
@@ -456,12 +456,13 @@ void MGSolDA::GenIc() {
             assert((int)dims[0]==offset);
             status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&face_id_vect[0]);
         }
-        H5Dclose(dtset); 
-        H5Sclose(filespace); 
+        H5Dclose(dtset);
+        H5Sclose(filespace);
         // Reading  mat_id ********************************************************
         // mat id vector
-        int *mat_id_vect=new int [ntot_elements]; for(int i=0; i<ntot_elements; i++)  mat_id_vect[i]=1;
-        
+        int *mat_id_vect=new int [ntot_elements];
+        for(int i=0; i<ntot_elements; i++)  mat_id_vect[i]=1;
+
         // Getting dataset
         std::ostringstream Name1;
         Name1 << "ELEMS/SUB/MAT";
@@ -479,9 +480,9 @@ void MGSolDA::GenIc() {
             status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,
                            H5P_DEFAULT,&mat_id_vect[0]);
         }  // end else
-        H5Sclose(filespace); 
-        H5Dclose(dtset); 
-        H5Fclose(file_id); 
+        H5Sclose(filespace);
+        H5Dclose(dtset);
+        H5Fclose(file_id);
 //  end Reading  mat_id ******************************************************
 
         for(int pr=0; pr <_mgmesh._iproc; pr++) {
@@ -558,7 +559,8 @@ void MGSolDA::GenBc(
     /// A) Set up: mesh,dof, bc
     //mesh ----------------------------------------------------------------------
     const int offset    =_mgmesh._NoNodes[_NoLevels-1];
-    int ntot_elements=0;  for(int ilev=0; ilev<_NoLevels; ilev++)  ntot_elements += _mgmesh._NoElements[0][ilev];
+    int ntot_elements=0;
+    for(int ilev=0; ilev<_NoLevels; ilev++)  ntot_elements += _mgmesh._NoElements[0][ilev];
     // Dof ----------------------------------------------------------------------
     const int n_kb_dofs = ((_nvars[0]>0) ? DIMENSION+1:0);  // surface dofs
     const int n_pb_dofs = ((_nvars[1]>0) ? _fe[1]->_NoShape[DIMENSION-2]:0);//get_n_shapes(DIMENSION-2);
@@ -569,21 +571,27 @@ void MGSolDA::GenBc(
     const int n_u_dofs = ((_nvars[2]>0) ? _fe[2]->_NoShape[DIMENSION-1]:0);//get_n_shapes(DIMENSION-1);
 
     // set 1 all the points for  bc (boundary condition) ------------------------
-    for(int i1=0; i1< _Dim[_NoLevels-1]; i1++) {bc[0][i1]=1;bc[1][i1]=1;}
+    for(int i1=0; i1< _Dim[_NoLevels-1]; i1++) {
+        bc[0][i1]=1;
+        bc[1][i1]=1;
+    }
     // **************************************************************************
     // B) Reading  face_id vector (boundary zones) if the dataset exists
     // Open an existing file ----------------------------------------------------
-    std::ostringstream file_bc; file_bc  << _mgutils._inout_dir << _mgutils.get_file("INMESH");//"/mesh.h5";
+    std::ostringstream file_bc;
+    file_bc  << _mgutils._inout_dir << _mgutils.get_file("INMESH");//"/mesh.h5";
 #ifdef PRINT_INFO
     std::cout << " Reading bc_id from= " <<  file_bc.str() <<  std::endl;
 #endif
     hid_t  file_id = H5Fopen(file_bc.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
     hsize_t dims[2];
     // face id vector initial setting (set 0) -----------------------------------
-    int *face_id_vect=new int [offset];  for(int i=0; i<offset; i++) face_id_vect[i]=0;
-    
+    int *face_id_vect=new int [offset];
+    for(int i=0; i<offset; i++) face_id_vect[i]=0;
+
     // Getting dataset ----------------------------------------------------------
-    std::ostringstream Name;  Name << "NODES/COORD/BC";
+    std::ostringstream Name;
+    Name << "NODES/COORD/BC";
     hid_t dtset = H5Dopen(file_id,Name.str().c_str(),H5P_DEFAULT);
     hid_t filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
     hid_t status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
@@ -604,13 +612,16 @@ void MGSolDA::GenBc(
     for(int i=0; i<ntot_elements; i++)  mat_id_vect[i]=1;
     // level loop (in the file are written for each level)
     // Getting dataset --------------------------------------------------------
-    std::ostringstream Name1;  Name1 << "ELEMS/SUB/MAT";
+    std::ostringstream Name1;
+    Name1 << "ELEMS/SUB/MAT";
     dtset = H5Dopen(file_id,Name1.str().c_str() ,H5P_DEFAULT );
 
-                  
+
     filespace = H5Dget_space(dtset);    /* Get filespace handle first. */
     status  = H5Sget_simple_extent_dims(filespace, dims, NULL);
-    if(status <0) {   std::cerr << "GenIc::read mat dims not found";    }
+    if(status <0) {
+        std::cerr << "GenIc::read mat dims not found";
+    }
     else { // reading if the dataset exists (otherwise it stays 1) ------------
         status=H5Dread(dtset,H5T_NATIVE_INT,H5S_ALL,H5S_ALL,H5P_DEFAULT,&mat_id_vect[0]);
     }  // end reading ---------------------------------------------------------
@@ -620,11 +631,11 @@ void MGSolDA::GenBc(
     H5Fclose(file_id);
     // *************************************************************************
     /// C  reading bc from function --> bc_read
-    
+
     GenBc_loop(0,NDOF_FEM,n_u_dofs,n_l_dofs,n_k_dofs,
                face_id_vect,mat_id_vect);
-    
-    
+
+
 //   GenBc_loop(1,NDOF_FEMB,n_ub_dofs,n_pb_dofs,n_kb_dofs,
 //              face_id_vect,mat_id_vect);
     // clean
@@ -720,7 +731,8 @@ void MGSolDA::GenBc_loop(
 
                     face_id_node=face_id_vect[k];
 //          for(int ivar=0; ivar<n_dofs; ivar++)  {
-                    bc_value[0]=1;   bc_Neu[0]=11;  // variable loop
+                    bc_value[0]=1;
+                    bc_Neu[0]=11;  // variable loop
                     // boundary (face_id_vect) and volume zones (mat_id_elem)
 
                     /// Calling the local point functions
@@ -1523,9 +1535,13 @@ void  MGSolDA::set_xooold2x() {
     }
     return;
 }
-// =========================================
-void  MGSolDA::set_vector(const int &flag) {
-
+// ==========================================================================
+/// This function copies values from "vec_from" to "vec_to" vectors.
+/// Available vectors are ordered as: x->0, x_old->1, x_oold->2, x_ooold->3,
+/// x_nonl->4, disp->5, disp_old->6,  disp_oold->7  
+// ==========================================================================
+void  MGSolDA::set_vector(const int &vec_from, const int &vec_to) {
+   
     for (int Level=0; Level<=_NoLevels-1; Level++) {
         const int offset=_mgmesh._NoNodes[Level]; // fine level # of nodes
 
@@ -1541,74 +1557,82 @@ void  MGSolDA::set_vector(const int &flag) {
                     for(int  i=0; i<el_nds; i++) {   // linear and quad
                         int k=_mgmesh._el_map[0][elem_gidx+i];   // the global node
                         double value=0.;
-                        switch(flag) {
-                        case 0:
+                        switch(vec_from) {
+                        case 1:
                             value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
                             break;
 
                         case 2:
-                            value= (*disp[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            value= (*x_oold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             break;
 
                         case 3:
-                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            value= (*x_ooold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             break;
 
                         case 4:
-                            value= (*x_ooold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            value= (*x_nonl[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             break;
 
                         case 5:
-                            value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            x_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            value= (*disp[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             break;
 
                         case 6:
-                            value= (*x_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             break;
 
                         case 7:
-                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            value= (*disp_oold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
                             break;
 
-                        case 8:
-                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            disp_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                        default:
+                            cout<<"Incorrect vec_from number in set_uoold function"<<endl;
                             break;
-                        case 9:
-                            value= (*disp[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            disp_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                        }
+                        switch (vec_to) {
+                        case 1:
+                            x_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
                             break;
-                        case 10:
-                            value= (*disp_oold[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
+                            
+                        case 2:
+                            x_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+                            
+                        case 3:
+                            x_ooold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+                            
+                        case 4:
+                            x_nonl[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+                            
+                        case 5:
                             disp[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
                             break;
-                        case 11:
-                            value= (*disp_old[Level])(_node_dof[_NoLevels-1][k+ivar*offset]);
-                            x_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
-                            break;                            
                             
+                        case 6:
+                            disp_old[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+                            
+                        case 7:
+                            disp_oold[Level]->set(_node_dof[_NoLevels-1][k+ivar*offset], value);    // set the field
+                            break;
+
                         default:
-                            cout<<"Incorrect flag number in set_uoold function"<<endl;
+                            cout<<"Incorrect vec_to number in set_uoold function"<<endl;
                             break;
                         }
                     }
                 }
         }
-        if (flag==0)  x[Level]->localize(*x_oold[Level]);
+        if (vec_from==1 && vec_to==3)  x[Level]->localize(*x_oold[Level]); //for backward compatibility
     }
     int ndof_lev=0;
     for(int pr=0; pr <_mgmesh._iproc; pr++) {
         int delta =_mgmesh._off_el[0][pr*_NoLevels+_NoLevels]-_mgmesh._off_el[0][pr*_NoLevels+_NoLevels-1];
         ndof_lev +=delta;
     }
-
     return;
 }
 
@@ -3472,38 +3496,38 @@ void MGSolDA::ActivateVectField(std::string FieldName, FIELDS Field, std::vector
     std::string FieldX =  SystemFieldName + "X";
     std::string FieldY =  SystemFieldName + "Y";
     std::string FieldZ =  SystemFieldName + "Z";
-  if (_mgutils._sim_config[FieldName]!=""){
-    if(stoi(_mgutils._sim_config[FieldName])!=0) {
-        for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) { // flag 2 in SimulationConfiguration.in ->  split
-                if(stoi(_mgutils._sim_config[FieldName])==2) {
-                    _data_eq[2].tab_eqs[Field]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldX);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;   // update counter
-                    _data_eq[2].tab_eqs[Field+1]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldY);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;
+    if (_mgutils._sim_config[FieldName]!="") {
+        if(stoi(_mgutils._sim_config[FieldName])!=0) {
+            for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) { // flag 2 in SimulationConfiguration.in ->  split
+                    if(stoi(_mgutils._sim_config[FieldName])==2) {
+                        _data_eq[2].tab_eqs[Field]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldX);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;   // update counter
+                        _data_eq[2].tab_eqs[Field+1]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldY);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;
 #if DIMENSION==3
-                    _data_eq[2].tab_eqs[Field+2]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldZ);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;
+                        _data_eq[2].tab_eqs[Field+2]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldZ);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;
 #endif
+                    }
+                    if(stoi(_mgutils._sim_config[FieldName])==1) {// flag 1 in SimulationConfiguration -> coupled
+                        _data_eq[2].tab_eqs[Field]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;   // update counter
+                    }
                 }
-                if(stoi(_mgutils._sim_config[FieldName])==1) {// flag 1 in SimulationConfiguration -> coupled
-                    _data_eq[2].tab_eqs[Field]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+DIMENSION; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;   // update counter
-                }
-            }
+        }
     }
-  }
     return;
 }
 
@@ -3522,68 +3546,68 @@ void MGSolDA::ActivateControl(
     std::string FieldX=SystemFieldName+"X";
     std::string FieldY=SystemFieldName+"Y";
     std::string FieldZ=SystemFieldName+"Z";
-  if (_mgutils._sim_config[FieldName]!=""){
-    if(stoi(_mgutils._sim_config[FieldName])!=0) {
-        for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) {
-                if(stoi(_mgutils._sim_config[FieldName])==2) { // flag 2 in SimulationConfiguration.in ->  split
-                    _data_eq[2].tab_eqs[Field]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldX);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;   // update counter
+    if (_mgutils._sim_config[FieldName]!="") {
+        if(stoi(_mgutils._sim_config[FieldName])!=0) {
+            for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) {
+                    if(stoi(_mgutils._sim_config[FieldName])==2) { // flag 2 in SimulationConfiguration.in ->  split
+                        _data_eq[2].tab_eqs[Field]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldX);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;   // update counter
 #if CTRL_EQUATIONS!=1
-                    _data_eq[2].tab_eqs[Field+1]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldY);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;
+                        _data_eq[2].tab_eqs[Field+1]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldY);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;
 #if DIMENSION==3
-                    _data_eq[2].tab_eqs[Field+2]=n_index;                                    // table
-                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldZ);                // FSI equation pointer
-                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                    _data_eq[2].n_eqs++;                                               // number of quadratic system
-                    n_index++;
+                        _data_eq[2].tab_eqs[Field+2]=n_index;                                    // table
+                        _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(FieldZ);                // FSI equation pointer
+                        _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                        _data_eq[2].n_eqs++;                                               // number of quadratic system
+                        n_index++;
 #endif
 #endif
+                    }
                 }
-            }
+        }
     }
-  }
     return;
 }
 
 void MGSolDA::ActivateScalar(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName, int &n_index, int n_equations) {
-  if (_mgutils._sim_config[FieldName]!=""){
-    if(stoi(_mgutils._sim_config[FieldName])!=0) {
-        for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) {
-                _data_eq[2].tab_eqs[Field]=n_index;                                    // table
-                _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName);                // equation pointer
-                _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                _data_eq[2].n_eqs++;                                               // number of quadratic system
-                n_index++;
-            }
+    if (_mgutils._sim_config[FieldName]!="") {
+        if(stoi(_mgutils._sim_config[FieldName])!=0) {
+            for(int iname=0; iname<n_equations; iname++) if(pbName[iname]== Field) {
+                    _data_eq[2].tab_eqs[Field]=n_index;                                    // table
+                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName);                // equation pointer
+                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                    _data_eq[2].n_eqs++;                                               // number of quadratic system
+                    n_index++;
+                }
+        }
     }
-  }
     return;
 }
 
 void MGSolDA::ActivateCoupled(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName,std::string SystemFieldName2, int &n_index, int n_equations) {
-  if (_mgutils._sim_config[FieldName]!=""){
-    if(stoi(_mgutils._sim_config[FieldName])!=0)
-        for(int iname=0; iname<n_equations; iname++)
-            if(pbName[iname]== Field) {
-                _data_eq[2].tab_eqs[Field]=n_index;                                    // table
-                _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName);                // Navier-Stokes equation pointer
-                _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                _data_eq[2].n_eqs++;                                               // number of quadratic system
-                n_index++;          // update counter
-                /// curvature
-                _data_eq[2].tab_eqs[Field+1]=n_index;                                    // table
-                _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName2);                // Navier-Stokes equation pointer
-                _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
-                _data_eq[2].n_eqs++;                                               // number of quadratic system
-                n_index++;  // update counter
-            }
-  }
+    if (_mgutils._sim_config[FieldName]!="") {
+        if(stoi(_mgutils._sim_config[FieldName])!=0)
+            for(int iname=0; iname<n_equations; iname++)
+                if(pbName[iname]== Field) {
+                    _data_eq[2].tab_eqs[Field]=n_index;                                    // table
+                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName);                // Navier-Stokes equation pointer
+                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                    _data_eq[2].n_eqs++;                                               // number of quadratic system
+                    n_index++;          // update counter
+                    /// curvature
+                    _data_eq[2].tab_eqs[Field+1]=n_index;                                    // table
+                    _data_eq[2].mg_eqs[n_index]=_mgeqnmap.get_eqs(SystemFieldName2);                // Navier-Stokes equation pointer
+                    _data_eq[2].indx_ub[n_index+1] =_data_eq[2].indx_ub[n_index]+1; // _data_eq[2].ub index
+                    _data_eq[2].n_eqs++;                                               // number of quadratic system
+                    n_index++;  // update counter
+                }
+    }
     return;
 }
