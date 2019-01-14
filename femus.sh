@@ -336,7 +336,7 @@ return;
 
 
 
-function runAllTutorials () {
+function femus_tutorial_run_all () {
 
 export TUTORIAL_RUN
 export TUTORIAL_HOME=$FEMUS_DIR/tutorials/
@@ -408,7 +408,7 @@ for class in $CLASSES; do
        export tutorial_path=$TUTORIAL_RUN/$class/$tutorial
        cp -r $TUTORIAL_HOME/$class/$tutorial $tutorial_path
        cd $tutorial_path
-       configureApplication opt  >> $TUTORIAL_LOG
+       femus_application_configure opt  >> $TUTORIAL_LOG
        source runTest.sh 
        cd $TUTORIAL_RUN/$class
        echo >> $TUTORIAL_LOG
