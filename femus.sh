@@ -194,7 +194,7 @@ function femus_FEMuS_run {
 # =================================================================================
 function femus_gencase_run {
 
-    if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
+   if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
 
    if [ -d  $FEMUS_DIR/bin ]; then
      echo "found bin directory "
@@ -214,6 +214,7 @@ function femus_gencase_run {
 }
 # =================================================================================
 function femus_gencase_run_lib2D {
+if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
    if [ -d  $FEMUS_DIR/bin ]; then
      echo "found bin directory "
      
@@ -221,7 +222,7 @@ function femus_gencase_run_lib2D {
        femus_gencase_compile_lib
      fi
      
-     mpiexec -np $1 gencase_2d 2> messages_gencase.log
+     mpiexec -np $pp gencase_2d 2> messages_gencase.log
      
    else
      echo "${red} ======================================================= "
@@ -234,6 +235,7 @@ function femus_gencase_run_lib2D {
 }
 # =================================================================================
 function femus_gencase_run_lib3D {
+if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
    if [ -d  $FEMUS_DIR/bin ]; then
      echo "found bin directory "
      
@@ -241,7 +243,7 @@ function femus_gencase_run_lib3D {
        femus_gencase_compile_lib
      fi
      
-     mpiexec -np $1 gencase_3d 2> messages_gencase.log
+     mpiexec -np $pp gencase_3d 2> messages_gencase.log
      
    else
      echo "${red} ======================================================= "
