@@ -1328,7 +1328,7 @@ void  MGSolDA::interp_el_bd_gdx(
 )  const {  // =================================================================
     // variable loop
 
-    int dim_b = DIMENSION - 1;
+    int dim_b = DIMENSION ;
     for(int ivar=0; ivar<nvars; ivar++) {             // loop over variables (u,v,w,...)
         for(int jdim=0; jdim< dim_b; jdim++) {
             uold_dx[ivar*dim_b+jdim]=0.;    // set zero
