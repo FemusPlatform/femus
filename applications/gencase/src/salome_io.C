@@ -617,7 +617,7 @@ void SalomeIO::read_bc_mat(
   for(int iname_dir=0; iname_dir<(int)n_bdgroup; iname_dir++) {
     H5Gget_objname_by_idx(gid, iname_dir ,&name_dir[0], 20);
     std::string a1=top_name+name_dir;
-    int gid_sub=H5Gopen(file_id,a1.c_str(),
+    hid_t gid_sub=H5Gopen(file_id,a1.c_str(),
 #if HDF5_VERSIONM!=188          
                     H5P_DEFAULT
 #endif    
@@ -628,7 +628,7 @@ void SalomeIO::read_bc_mat(
       for(int iname_sub=0; iname_sub<(int)n_bdgroup_sub; iname_sub++) {
         H5Gget_objname_by_idx(gid_sub, iname_sub ,&name_sub[0], 20);
         std::string a2=top_name+name_dir+"/"+name_sub+"/GRO/";
-        int gid3=H5Gopen(file_id,a2.c_str(),
+        hid_t gid3=H5Gopen(file_id,a2.c_str(),
 #if HDF5_VERSIONM!=188          
                     H5P_DEFAULT
 #endif
