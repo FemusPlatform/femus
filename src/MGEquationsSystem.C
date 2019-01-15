@@ -451,10 +451,9 @@ void MGEquationsSystem::print_soln_h5(const int t_flag // time flag
   for(; pos!=pos_e; pos++)    {
     MGSolBase *mgsol=pos->second;
     mgsol->print_u(filename.str(),NoLevels-1);
-#ifdef CTRL_EQUATIONS
-       mgsol->print_weight_med("mesh_sol.med",NoLevels-1);
-//     mgsol->print_u_med("mesh_sol.med",NoLevels-1);    
-#endif
+    if (_mgutils._sim_config["MG_ControlTemperature"]!="")
+      if(stoi(_mgutils._sim_config["MG_ControlTemperature"])!=0)
+        mgsol->print_weight_med("mesh_sol.med",NoLevels-1);
   }
 // printing cell system data (MGSystem-> printdata)
   for(int idata=0; idata<_n_data[0]+_n_data[1]; idata++) {
