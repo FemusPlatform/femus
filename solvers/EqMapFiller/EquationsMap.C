@@ -329,13 +329,13 @@ void EquationsMap::setAdjointDynamicTurbulence(EquationSystemsExtendedM& EqMap) 
   _nvars[0]=0;  _nvars[1]=0;  _nvars[2]=(TBKA_EQUATIONS%2)+1;
 
 #if ((TBKA_EQUATIONS/2)==1)  // k-epsilon      
-  EqMap.AddSolver<MGSolTBKA> ("KA", KA_F, _nvars[0],_nvars[1],_nvars[2],"ka");
-  EqMap.AddSolver<MGSolTBKA> ("K2A", KA_F + 1, _nvars[0],_nvars[1],_nvars[2],"ea");
+  EqMap.AddSolver<MGSolTBKA> ("KA", KA_F, _nvars[0],_nvars[1],_nvars[2],"kta");
+  EqMap.AddSolver<MGSolTBKA> ("K2A", KA_F + 1, _nvars[0],_nvars[1],_nvars[2],"eta");
 #endif
 
 #if ((TBKA_EQUATIONS/2)==2)  // k-omega  
-  EqMap.AddSolver<MGSolTBKA> ("K2KA", KA_F, _nvars[0],_nvars[1],_nvars[2],"ka");
-  EqMap.AddSolver<MGSolTBKA> ("K1WA", KA_F + 1, _nvars[0],_nvars[1],_nvars[2],"wa");
+  EqMap.AddSolver<MGSolTBKA> ("K2KA", KA_F, _nvars[0],_nvars[1],_nvars[2],"kta");
+  EqMap.AddSolver<MGSolTBKA> ("K1WA", KA_F + 1, _nvars[0],_nvars[1],_nvars[2],"wta");
 #endif
 #endif
   return;
