@@ -183,13 +183,16 @@ void Fill_FIELD_map(
       // ============================================================================= 
     
     void setNavierStokes(EquationSystemsExtendedM & EqMap);
+    void setFluidStructure(EquationSystemsExtendedM & EqMap);
+    void setDisplacements(EquationSystemsExtendedM & EqMap);
     void setTemperature(EquationSystemsExtendedM & EqMap);
     void setDynamicTurbulence(EquationSystemsExtendedM & EqMap);
     void setThermalTurbulence(EquationSystemsExtendedM & EqMap);
-    void setFluidStructure(EquationSystemsExtendedM & EqMap);
     void setColor(EquationSystemsExtendedM & EqMap);
-    void setDisplacements(EquationSystemsExtendedM & EqMap);
+    void setAdjointNavierStokes(EquationSystemsExtendedM & EqMap);
     void setAdjointFSI(EquationSystemsExtendedM & EqMap);
+    void setAdjointTemperature(EquationSystemsExtendedM & EqMap);
+    void setAdjointDynamicTurbulence(EquationSystemsExtendedM & EqMap);
     void setControlTemperature(EquationSystemsExtendedM & EqMap);    
       
 };   

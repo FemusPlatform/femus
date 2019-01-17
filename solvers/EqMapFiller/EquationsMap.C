@@ -27,8 +27,8 @@
 #ifdef  CTRL_EQUATIONS // Temperature ================
 #include "MGSolverCTRL.h"
 #endif // -----------------------------------------
-#ifdef  T_ADJ_EQUATIONS // Temperature adjoint ================
-#include "MGSolverT_ADJ.h"
+#ifdef  TA_EQUATIONS // Temperature adjoint ================
+#include "MGSolverTA.h"
 #endif // -----------------------------------------
 #ifdef  T_G_EQUATIONS // Temperature control ================
 #include "MGSolverT_G.h"
@@ -117,13 +117,16 @@ void EquationsMap::FillEquationMap(
     FIELDS problem = _myproblemP[iname];
 
     if(_myproblemP[iname]== NS_F  || _myproblemP[iname]==NSX_F || _myproblemP[iname]==NSY_F || _myproblemP[iname]==NSZ_F)         setNavierStokes(EqMap);
+    if(_myproblemP[iname]== FS_F)  setFluidStructure(EqMap);
+    if(_myproblemP[iname]== SDS_F) setDisplacements(EqMap);
     if(_myproblemP[iname]== T_F)  setTemperature(EqMap);
     if(_myproblemP[iname]== K_F   ||  _myproblemP[iname]==EW_F)   setDynamicTurbulence(EqMap);
     if(_myproblemP[iname]== KTT_F ||  _myproblemP[iname]==EWTT_F) setThermalTurbulence(EqMap);
     if(_myproblemP[iname]== CO_F)  setColor(EqMap);
-    if(_myproblemP[iname]== FS_F)  setFluidStructure(EqMap);
-    if(_myproblemP[iname]== SDS_F) setDisplacements(EqMap);
+    if(_myproblemP[iname]== NSA_F  || _myproblemP[iname]==NSAX_F || _myproblemP[iname]==NSAY_F || _myproblemP[iname]==NSAZ_F)         setAdjointNavierStokes(EqMap);
     if(_myproblemP[iname]== FSA_F) setAdjointFSI(EqMap);
+    if(_myproblemP[iname]== TA_F)  setAdjointTemperature(EqMap);
+    if(_myproblemP[iname]== KA_F   ||  _myproblemP[iname]==EWA_F)   setAdjointDynamicTurbulence(EqMap);
     if(_myproblemP[iname]== CTRL_F) setControlTemperature(EqMap);
   }
 
@@ -154,6 +157,45 @@ void EquationsMap::setNavierStokes(EquationSystemsExtendedM & EqMap) {
   EqMap.AddSolver<MGSolP> ("NS2P", NS_F, _nvars[0],_nvars[1],_nvars[2],"p");
 #endif
 #endif
+  return;
+}
+// ================================== FSI_EQUATIONS ================================
+void EquationsMap::setFluidStructure(EquationSystemsExtendedM& EqMap) {
+#ifdef FSI_EQUATIONS
+  _nvars[0]=0; _nvars[1]=FSI_EQUATIONS%2;
+  _nvars[2]=((FSI_EQUATIONS==2)?1:DIMENSION);
+  if(NDOF_K>0) {   _nvars[0]=1;   _nvars[1]=0;}
+#if FSI_EQUATIONS!=2
+  EqMap.AddSolver<MGSolFSI> ("FSI0", FS_F, _nvars[0],_nvars[1],_nvars[2],"u");
+#else
+  EqMap.AddSolver<MGSolFSI> ("FSI0X", FS_F, _nvars[0],_nvars[1],_nvars[2],"u");
+  EqMap.AddSolver<MGSolFSI> ("FSI0Y", FS_F + 1, _nvars[0],_nvars[1],_nvars[2],"v");
+#if DIMENSION==3
+  EqMap.AddSolver<MGSolFSI> ("FSI0Z", FS_F + 2, _nvars[0],_nvars[1],_nvars[2],"z");
+#endif
+#endif
+#if (FSI_EQUATIONS%2==0)
+  _nvars[0]=0;  _nvars[1]=1; _nvars[2]=0;
+  EqMap.AddSolver<MGSolFSIP> ("FSIP", FS_F + 3, _nvars[0],_nvars[1],_nvars[2],"p");
+#endif
+
+// DISPLACEMENTS
+  setDisplacements(EqMap);
+#endif
+
+  return;
+}
+// ================================== DS_EQUATIONS ================================
+void EquationsMap::setDisplacements(EquationSystemsExtendedM& EqMap) {
+#ifdef DS_EQUATIONS
+  _nvars[0]=0;  _nvars[1]=0;  _nvars[2]=1;
+  EqMap.AddSolver<MGSolDS> ("SDSX", SDSX_F , _nvars[0],_nvars[1],_nvars[2],"dx");
+  EqMap.AddSolver<MGSolDS> ("SDSY", SDSY_F , _nvars[0],_nvars[1],_nvars[2],"dy");
+#if (DIMENSION==3)
+  EqMap.AddSolver<MGSolDS> ("SDSZ", SDSZ_F , _nvars[0],_nvars[1],_nvars[2],"dz");
+#endif
+#endif
+
   return;
 }
 
@@ -213,45 +255,7 @@ void EquationsMap::setColor(EquationSystemsExtendedM& EqMap) {
   return;
 }
 
-// ================================== FSI_EQUATIONS ================================
-void EquationsMap::setFluidStructure(EquationSystemsExtendedM& EqMap) {
-#ifdef FSI_EQUATIONS
-  _nvars[0]=0; _nvars[1]=FSI_EQUATIONS%2;
-  _nvars[2]=((FSI_EQUATIONS==2)?1:DIMENSION);
-  if(NDOF_K>0) {   _nvars[0]=1;   _nvars[1]=0;}
-#if FSI_EQUATIONS!=2
-  EqMap.AddSolver<MGSolFSI> ("FSI0", FS_F, _nvars[0],_nvars[1],_nvars[2],"u");
-#else
-  EqMap.AddSolver<MGSolFSI> ("FSI0X", FS_F, _nvars[0],_nvars[1],_nvars[2],"u");
-  EqMap.AddSolver<MGSolFSI> ("FSI0Y", FS_F + 1, _nvars[0],_nvars[1],_nvars[2],"v");
-#if DIMENSION==3
-  EqMap.AddSolver<MGSolFSI> ("FSI0Z", FS_F + 2, _nvars[0],_nvars[1],_nvars[2],"z");
-#endif
-#endif
-#if (FSI_EQUATIONS%2==0)
-  _nvars[0]=0;  _nvars[1]=1; _nvars[2]=0;
-  EqMap.AddSolver<MGSolFSIP> ("FSIP", FS_F + 3, _nvars[0],_nvars[1],_nvars[2],"p");
-#endif
 
-// DISPLACEMENTS
-  setDisplacements(EqMap);
-#endif
-
-  return;
-}
-// ================================== DS_EQUATIONS ================================
-void EquationsMap::setDisplacements(EquationSystemsExtendedM& EqMap) {
-#ifdef DS_EQUATIONS
-  _nvars[0]=0;  _nvars[1]=0;  _nvars[2]=1;
-  EqMap.AddSolver<MGSolDS> ("SDSX", SDSX_F , _nvars[0],_nvars[1],_nvars[2],"dx");
-  EqMap.AddSolver<MGSolDS> ("SDSY", SDSY_F , _nvars[0],_nvars[1],_nvars[2],"dy");
-#if (DIMENSION==3)
-  EqMap.AddSolver<MGSolDS> ("SDSZ", SDSZ_F , _nvars[0],_nvars[1],_nvars[2],"dz");
-#endif
-#endif
-
-  return;
-}
 void EquationsMap::setAdjointFSI(EquationSystemsExtendedM& EqMap) {
 #ifdef FSIA_EQUATIONS //    FLUID-STRUCTURE adjoint---  
 // ====================================================================
@@ -286,7 +290,57 @@ void EquationsMap::setAdjointFSI(EquationSystemsExtendedM& EqMap) {
 #endif // ----------------  end  Disp adjoint ---------------------------------  
       return;
 }
+// ================================== NSA_EQUATIONS ================================
+void EquationsMap::setAdjointNavierStokes(EquationSystemsExtendedM & EqMap) {
+#ifdef NSA_EQUATIONS
+  _nvars[2]=((NSA_EQUATIONS==2)?1:DIMENSION);          // quadratic(2) approx
+  _nvars[0]=0;   _nvars[1]=NSA_EQUATIONS%2; // linear(1) approx
+  if(NDOF_K>0) {   _nvars[0]=1;   _nvars[1]=0;}  // konstant(0) approx
 
+#if NSA_EQUATIONS==2     // - NS_EQUATIONS==2 -
+  EqMap.AddSolver<MGSolNSA> ("NSA0X", NSA_F, _nvars[0],_nvars[1],_nvars[2],"ua");
+  EqMap.AddSolver<MGSolNSA> ("NSA0Y", NSA_F, _nvars[0],_nvars[1],_nvars[2],"va");
+#if DIMENSION==3
+  EqMap.AddSolver<MGSolNSA> ("NSA0Z", NSA_F, _nvars[0],_nvars[1],_nvars[2],"wa");
+#endif
+#endif
+#if (NSA_EQUATIONS==0 || NSA_EQUATIONS==1)      // - NS_EQUATIONS==0,1 -
+  EqMap.AddSolver<MGSolNSA> ("NSA0", NSA_F, _nvars[0],_nvars[1],_nvars[2],"ua");
+#endif
+
+#if (NSA_EQUATIONS%2==0) // - NS_EQUATIONS==0,2  projection -
+  _nvars[0]=0;  _nvars[1]=1; _nvars[2]=0;// only  Linear(1) approx
+  EqMap.AddSolver<MGSolPA> ("NSA2P", NSA_F, _nvars[0],_nvars[1],_nvars[2],"pa");
+#endif
+#endif
+  return;
+}
+// ================================== TA_EQUATIONS ================================
+void EquationsMap::setAdjointTemperature(EquationSystemsExtendedM& EqMap) {
+#ifdef TA_EQUATIONS
+  _nvars[0]=0;  _nvars[1]=0; _nvars[2]=1;  // only Quadratic[2] approx
+  EqMap.AddSolver<MGSolTA> ("TA", TA_F, _nvars[0],_nvars[1],_nvars[2],"TA");
+#endif
+  return;
+}
+// ================================== TBKA_EQUATIONS ================================
+void EquationsMap::setAdjointDynamicTurbulence(EquationSystemsExtendedM& EqMap) {
+#ifdef TBKA_EQUATIONS
+  _nvars[0]=0;  _nvars[1]=0;  _nvars[2]=(TBKA_EQUATIONS%2)+1;
+
+#if ((TBKA_EQUATIONS/2)==1)  // k-epsilon      
+  EqMap.AddSolver<MGSolTBKA> ("KA", KA_F, _nvars[0],_nvars[1],_nvars[2],"ka");
+  EqMap.AddSolver<MGSolTBKA> ("K2A", KA_F + 1, _nvars[0],_nvars[1],_nvars[2],"ea");
+#endif
+
+#if ((TBKA_EQUATIONS/2)==2)  // k-omega  
+  EqMap.AddSolver<MGSolTBKA> ("K2KA", KA_F, _nvars[0],_nvars[1],_nvars[2],"ka");
+  EqMap.AddSolver<MGSolTBKA> ("K1WA", KA_F + 1, _nvars[0],_nvars[1],_nvars[2],"wa");
+#endif
+#endif
+  return;
+}
+// ================================== CTRL_EQUATIONS ================================
 void EquationsMap::setControlTemperature(EquationSystemsExtendedM& EqMap) {
 #ifdef CTRL_EQUATIONS
   _nvars[0]=0; _nvars[1]=0;   // Costant(1)  Linear(0)
