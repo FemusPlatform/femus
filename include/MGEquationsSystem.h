@@ -132,6 +132,15 @@ void  set_mgcc(MGSolCC  & cc);
     bool         & converged        ///< check if the solution converged (1->converged)     (out)
       );
   
+    void eqnmap_timestep_loop_control(  
+    const int    & nmax_step,       ///< number max of steps
+    const double & it,
+    const double   delta_t_step_in, //   (in)  
+    const int    & eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int    & eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    std::vector<double>    controlled_eq,   /// vector with the number of convergence-controlled equation 
+    bool         & converged        ///< check if the solution converged (1->converged)     (out)
+      );
   
     void eqnmap_timestep_loop_and_update(
       const double time, 

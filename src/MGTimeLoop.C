@@ -273,6 +273,7 @@ void MGTimeLoop::transient_control_onestep(
     const int  & eq_max,        ///< eq max to solve -> enum  FIELDS (equations_conf.h)
     bool       & converged      ///< check if the solution converged (1->converged) (out)
 )  { // =================================================================================
+    
 
   // A Soving the system ****************************************************************
 #if PRINT_TIME==1 // only for cpu time check --------------------------------------------
@@ -281,6 +282,48 @@ void MGTimeLoop::transient_control_onestep(
   std::cout<<"\n **Solving control step "<<it<<", time= "<<time<<"***"<<std::endl;
             
   _mgeqmap.eqnmap_timestep_loop_control(nmax_step,it, dt,eq_min,eq_max,converged); // solve one step control
+
+#if PRINT_TIME==1 // only for cpu time check ----------------------------------
+  std::clock_t    end_time=std::clock();
+#endif            // ----------------------------------------------------------
+  // B) print iteration t_step every print_step *****************************************
+  // print solution in xdmf format
+//   if(((t_step-t_in)/print_step)*print_step == (t_step-t_in) && t_step-t_in>0) {
+    _mgeqmap.print_soln(it);      // print sol.N.h5 and sol.N.xmf
+    _mgeqmap._mgmesh.write_c(it); // print mesh.N.h5
+//   }
+//   time += dt;
+#if PRINT_TIME==1 // only for cpu time check -----------------------------------
+  std::clock_t    end_time2=std::clock();
+  std::cout <<" Time solver ----->= " << double(end_time- start_time) / CLOCKS_PER_SEC
+            <<" Time printing ----->= " << double(end_time2- end_time) / CLOCKS_PER_SEC <<
+            std::endl;
+#endif  // ----------------------------------------------------------------------
+
+  return;
+}
+/// This function controls the transient loop
+void MGTimeLoop::transient_control_onestep(
+    const int  & nmax_step,     ///< number max of steps         (in)
+    const int  & it,            ///< initial time iteration      (in)
+    const int  & t_step,        ///< running time iteration      (in)
+    const int  & print_step,    ///< print every                 (in)
+    double     & time,          ///< running time                (in)
+    double     & dt,            ///< step time                   (in)  
+    const int  & eq_min,        ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int  & eq_max,        ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    std::vector<double>    controlled_eq,   /// vector with the number of convergence-controlled equation 
+    bool       & converged      ///< check if the solution converged (1->converged) (out)
+)  { // =================================================================================
+    
+
+  // A Soving the system ****************************************************************
+#if PRINT_TIME==1 // only for cpu time check --------------------------------------------
+  std::clock_t  start_time=std::clock();
+#endif   // ----------------------------------------------------------------------------- 
+  std::cout<<"\n **Solving control step "<<it<<", time= "<<time<<"***"<<std::endl;
+            
+  _mgeqmap.eqnmap_timestep_loop_control(nmax_step,it, dt,eq_min,eq_max,controlled_eq,converged); // solve one step control
 
 #if PRINT_TIME==1 // only for cpu time check ----------------------------------
   std::clock_t    end_time=std::clock();
