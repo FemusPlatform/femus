@@ -201,19 +201,6 @@ public:
                         const int &eq_max = 30	///< eq max to solve -> enum  FIELDS (equations_conf.h)
                        );
 
-    //! This function solves one step with subiterations reacahing an imposed criterion
-    void solve_onestep_iterative (
-        const int   &t_in,                 ///< initial time iteration
-        const int   &t_step,               ///< actual time iteration
-        const int   &print_step,            ///< print every
-        double      &time,                ///< actual time
-        double      &dt,                   ///< step time
-        const int   &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-        const int   &eq_max , ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-        double      &toll,   ///< convergence criterion
-        const int   &iter_rob   ///< max sub-iteration for each timestep
-    );
-
     //! This function solves the problem
     void dummy_step (const int &t_in,	        ///< initial time iteration
                      const int &t_step,	        ///< actual time iteration
@@ -242,16 +229,17 @@ public:
                                 bool      &converged      ///< check if the solution converged (1->converged) (out)
                                );
         //! This function solves one step  for transient problems
-    void solve_control_onestep (const int &nmax_step,     ///< number max of steps         (in)
-                                const int &it,	        ///< iteration
-                                const int &t_step,	///< actual time iteration
-                                const int &print_step,	///< print every
-                                double    &time,	        ///< actual time
-                                double    &dt,	        ///< step time
-                                const int &eq_min,        ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-                                const int &eq_max,        ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
-                                std::vector<double>    controlled_eq,
-                                bool      &converged      ///< check if the solution converged (1->converged) (out)
+    void solve_control_onestep (const int               &nmax_step,         ///< number max of steps         (in)
+                                const int               &it,	            ///< iteration
+                                const int               &t_step,	        ///< actual time iteration
+                                const int               &print_step,	    ///< print every
+                                double                  &time,	            ///< actual time
+                                double                  &dt,	            ///< step time
+                                const int               &eq_min,            ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+                                const int               &eq_max,            ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+                                std::vector<double>     controlled_eq,
+                                bool                    &converged,         ///< check if the solution converged (1->converged) (out)
+                                const double            &toll = 1e-5        /// tolerance set by default 1e-5
                                );
 
     //! This function write solution to/from x_ooold vector

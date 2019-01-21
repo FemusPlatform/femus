@@ -354,23 +354,8 @@ void FEMUS::solve_and_update ( const int &t_in,         ///< initial time iterat
     _mg_time_loop->transient_solve_and_update ( t_in,t_step,print_step,time,dt,eq_min,eq_max ); ///< step time
     return;
 }
- // ========================================================================
-void FEMUS::solve_onestep_iterative (
-    const int   & t_in,                 ///< initial time iteration
-    const int   & t_step,               ///< actual time iteration
-    const int   & print_step,           ///< print every
-    double      & time,                 ///< actual time
-    double      & dt,                   ///< step time
-    const int   & eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-    const int   & eq_max ,              ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-    double      & toll,                 ///< convergence criterion 
-    const int   & iter_rob              ///< max sub-iteration for each timestep
-) { // ========================================================================
-    _mg_time_loop->transient_onestep_iterative ( t_in,t_step,print_step,time,dt,eq_min,eq_max,toll,iter_rob ); ///< step time
-    return;
-}
 
- // ========================================================================
+// ========================================================================
 // This function solves one step  for transient problems
 void  FEMUS::solve_steady (
     const int &nmax_step,   ///< number max of steps
@@ -423,10 +408,11 @@ void FEMUS::solve_control_onestep (
     double      &dt,              ///< step time
     const int   &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
     const int   &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
-    std::vector<double>    controlled_eq,
-    bool        &converged        ///< check if the solution converged (1->converged)     (out)
+    std::vector<double>    controlled_eq,  ///< vector containing numbers of controlled equations
+    bool        &converged,       ///< check if the solution converged (1->converged)     (out)
+    const double      &toll             ///< tolerance
 ) { // ========================================================================
-    _mg_time_loop->transient_control_onestep (nmax_step, it,t_step,print_step,time,dt,eq_min,eq_max,controlled_eq,converged ); ///< step time
+    _mg_time_loop->transient_control_onestep (nmax_step, it,t_step,print_step,time,dt,eq_min,eq_max,controlled_eq,converged,toll ); ///< step time
     return;
 }
  // ========================================================================

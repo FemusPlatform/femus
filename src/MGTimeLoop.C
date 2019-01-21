@@ -219,46 +219,6 @@ void MGTimeLoop::transient_solve_and_update(
   return;
 }
 
-// ======================================================================================
-/// This function controls the transient loop wit sub-iterations
-void MGTimeLoop::transient_onestep_iterative(
-    const int  & t_in,                 ///< initial time iteration      (in)
-    const int  & t_step,               ///< running time iteration      (in)
-    const int  & print_step,           ///< print every                 (in)
-    double     &  time,                ///< running time                (in)
-    double     &  dt,                  ///< step time                   (in) 
-    const int  & eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-    const int  & eq_max,               ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-    double     & toll,                 ///< convergence criterion 
-    const int  & iter_rob              ///< max sub-iteration for each timestep
-)  { // ===================================================================================
-
-  // A Soving the system ******************************************************************
-    std::cout<<"\n  ** Solving time step "<<t_step<< ", time = "<<time<<" ***"<< std::endl;
-#if PRINT_TIME==1 // only for cpu time check ----------------------------------
-    std::clock_t  start_time=std::clock();
-#endif   // -------------------------------------------------------------------             
-    _mgeqmap.eqnmap_timestep_loop_iterative(time, t_step-t_in-1,eq_min,eq_max,toll,iter_rob); // solve one step
-#if PRINT_TIME==1 // only for cpu time check ----------------------------------
-    std::clock_t    end_time=std::clock();
-#endif            // ----------------------------------------------------------
-  // B) print iteration t_step every print_step ********************************************
-  // print solution in xdmf format
-    if(_mgeqmap._mgmesh._iproc==0){
-      if(((t_step-t_in)/print_step)*print_step == (t_step-t_in) && t_step-t_in>0) {
-        _mgeqmap.print_soln(t_step);      // print sol.N.h5 and sol.N.xmf
-        _mgeqmap._mgmesh.write_c(t_step); // print mesh.N.h5
-      }
-    }
-#if PRINT_TIME==1 // only for cpu time check -----------------------------------
-  std::clock_t    end_time2=std::clock();
-  std::cout <<" Time solver ----->= " << double(end_time- start_time) / CLOCKS_PER_SEC
-            <<" Time printing ----->= " << double(end_time2- end_time) / CLOCKS_PER_SEC <<
-            std::endl;
-#endif  // ----------------------------------------------------------------------
-  return;
-}
-
 // ===========================================================================
 
 /// This function controls the transient loop
@@ -313,7 +273,8 @@ void MGTimeLoop::transient_control_onestep(
     const int  & eq_min,        ///< eq min to solve -> enum  FIELDS (equations_conf.h)
     const int  & eq_max,        ///< eq max to solve -> enum  FIELDS (equations_conf.h)
     std::vector<double>    controlled_eq,   /// vector with the number of convergence-controlled equation 
-    bool       & converged      ///< check if the solution converged (1->converged) (out)
+    bool       & converged,     ///< check if the solution converged (1->converged) (out)
+    const double     &toll
 )  { // =================================================================================
     
 
@@ -323,7 +284,7 @@ void MGTimeLoop::transient_control_onestep(
 #endif   // ----------------------------------------------------------------------------- 
   std::cout<<"\n **Solving control step "<<it<<", time= "<<time<<"***"<<std::endl;
             
-  _mgeqmap.eqnmap_timestep_loop_control(nmax_step,it, dt,eq_min,eq_max,controlled_eq,converged); // solve one step control
+  _mgeqmap.eqnmap_timestep_loop_control(nmax_step,it, dt,eq_min,eq_max,controlled_eq,converged,toll); // solve one step control
 
 #if PRINT_TIME==1 // only for cpu time check ----------------------------------
   std::clock_t    end_time=std::clock();

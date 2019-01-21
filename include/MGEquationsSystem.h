@@ -115,14 +115,6 @@ void  set_mgcc(MGSolCC  & cc);
     const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
     const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
   );
-  void eqnmap_timestep_loop_iterative(
-    const double time,             // real time
-    const int delta_t_step_in,     // integer time
-    const int  & eq_min,           ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-    const int  & eq_max,           ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-    double     toll,   	           ///< convergence criterion 
-    const int  iter_rob            ///< max sub-iteration for each timestep 
-  );
   void eqnmap_timestep_loop_control(  
     const int    & nmax_step,       ///< number max of steps
     const double & it,
@@ -139,7 +131,8 @@ void  set_mgcc(MGSolCC  & cc);
     const int    & eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
     const int    & eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
     std::vector<double>    controlled_eq,   /// vector with the number of convergence-controlled equation 
-    bool         & converged        ///< check if the solution converged (1->converged)     (out)
+    bool         & converged,       ///< check if the solution converged (1->converged)     (out)
+    const double & toll
       );
   
     void eqnmap_timestep_loop_and_update(
