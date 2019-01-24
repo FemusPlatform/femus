@@ -45,37 +45,6 @@
 
 
 
-using namespace MEDCoupling;
-//   template<class T>
-//   MEDCoupling::MCAuto<typename Traits<T>::FieldType> ReadFieldCellLikeT(typename MLFieldTraits<T>::F1TSType *ff, MEDCoupling::TypeOfField type, const std::string& fileName, const std::string& meshName, int meshDimRelToMax, const std::string& fieldName, int iteration, int order)
-//    {
-//      MEDCoupling::MCAuto<MEDCoupling::MEDFileMesh> mm(MEDCoupling::MEDFileMesh::New(fileName,meshName));
-//      MEDCoupling::MCAuto<MEDCoupling::MEDFileUMesh> muPtr(MEDCoupling::DynamicCast<MEDCoupling::MEDFileMesh,MEDCoupling::MEDFileUMesh>(mm));
-//      MEDCoupling::MCAuto<MEDCoupling::MEDCouplingMesh> m(mm->getMeshAtLevel(meshDimRelToMax,false));
-//      MEDCoupling::MCAuto<typename Traits<T>::FieldType> ret(ff->getFieldOnMeshAtLevel(type,m));
-//      if(muPtr.isNotNull())
-//        {
-//          const MEDCoupling::DataArrayInt *num(muPtr->getNumberFieldAtLevel(meshDimRelToMax));
-//          if(num)
-//            ret->renumberCells(num->begin());
-//        }
-//      return ret;
-//    }
-   
-//    MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> FEMUS::ReadField(MEDCoupling::TypeOfField type, const std::string& fileName, const std::string& meshName, int meshDimRelToMax, const std::string& fieldName, int iteration, int order)
-//    {
-//      MEDCoupling::MCAuto<MEDCoupling::MEDFileAnyTypeField1TS> f(MEDCoupling::MEDFileAnyTypeField1TS::New(fileName,fieldName,iteration,order));
-//      {
-//        MEDCoupling::MCAuto<MEDCoupling::MEDFileField1TS> f1(MEDCoupling::DynamicCast<MEDCoupling::MEDFileAnyTypeField1TS,MEDCoupling::MEDFileField1TS>(f));
-//        if(f1.isNotNull())
-//          {
-//            MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> ret(MEDCoupling::ReadFieldCellLikeT<double>(f1,type,fileName,meshName,meshDimRelToMax,fieldName,iteration,order));
-//            return ret.retn();
-//          }
-//      }
-//    }
-
-
 // ========================================================================
 /// This function gets the Group mesh from the med file (medfile_name)
 /// and sets the id and the mesh to the interfaces vector (_interface_mesh_vect[i])
@@ -134,7 +103,7 @@ void FEMUS::init_interface(
   }
 
   MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      FieldContainingMap(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp));
+      FieldContainingMap(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp));
     MEDCoupling::DataArrayDouble *MedToMgMapArray=  MedToMgMapArray = FieldContainingMap->getArray();
   // support (mesh interface)
   MEDCoupling::MEDCouplingUMesh *support;
@@ -192,7 +161,7 @@ void FEMUS::init_interface(
                          );
   }
  MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      FieldContainingMap(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp));
+      FieldContainingMap(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp));
   MedToMgMapArray = FieldContainingMap->getArray();
 
   int id_level=0;
@@ -245,7 +214,7 @@ void FEMUS::getNodeMapAndProcMeshAtLevel(
         /*MEDCoupling::ON_CELLS,*/filename.c_str(),"Mesh_Lev_"+to_string(level), 0,
         "Proc_Lev_"+to_string(level), -1,-1);
    MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      ProcField(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp));     
+      ProcField(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp));     
         
                    // PIECEWISE FIELD CONTAINING PROC IDS
   MEDCoupling::MCAuto<MEDCoupling::MEDCouplingField> tmp1 = MEDCoupling::ReadFieldNode(
@@ -253,7 +222,7 @@ void FEMUS::getNodeMapAndProcMeshAtLevel(
         "FinerLevelNodeIDS_Lev_"+to_string(level), -1,-1
       );
  MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      FinerLevelIDS(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp1)); 
+      FinerLevelIDS(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp1)); 
 
   double *FinLevId = const_cast<double *>(FinerLevelIDS->getArray()->getPointer());
   std::vector<int> CellIdProc;
@@ -416,14 +385,14 @@ void FEMUS::setMedMesh() {
         dataFile,  "Mesh_Lev_"+to_string(lev), 0, "Proc_Lev_"+to_string(lev), -1,-1);                    // PIECEWISE FIELD CONTAINING PROC IDS
     
     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      ProcField(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp));
+      ProcField(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp));
       
     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingField> tmp2 =
     MEDCoupling::ReadFieldCell(/*MEDCoupling::ON_CELLS,*/
         dataFile,
         "Mesh_Lev_"+to_string(lev), 0, "MG_cell_id_Lev_"+to_string(lev), -1,-1);
       MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      CellField(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp2));
+      CellField(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp2));
     
     
     
@@ -433,7 +402,7 @@ void FEMUS::setMedMesh() {
         dataFile,
         "Mesh_Lev_"+to_string(lev), 0, "FinerLevelNodeIDS_Lev_"+to_string(lev), -1,-1);
      MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>  
-      FinerLevelIDS(MEDCoupling::DynamicCast<MEDCouplingField,MEDCouplingFieldDouble>(tmp1));
+      FinerLevelIDS(MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField,MEDCoupling::MEDCouplingFieldDouble>(tmp1));
       
       
     double *FinLevId = const_cast<double *>(FinerLevelIDS->getArray()->getPointer());
