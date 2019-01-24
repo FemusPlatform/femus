@@ -383,11 +383,11 @@ struct dependent_false : false_type {};
 template <typename T>
 class StandardType : public DataType
 {
-// #ifdef LIBMESH_HAVE_CXX11
+ #ifdef LIBMESH_HAVE_CXX11
     // Get a slightly better compiler diagnostic if we have C++11
     static_assert ( dependent_false<T>::value,
                     "Only specializations of StandardType may be used, did you forget to include a header file (e.g. parallel_algebra.h)?" );
-// #endif
+#endif
 
     /*
      * The unspecialized class is useless, so we make its constructor

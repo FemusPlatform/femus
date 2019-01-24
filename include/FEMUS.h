@@ -6,6 +6,7 @@
 #include "mpi.h"
 #include "MGUtils.h"
 
+
 #ifdef HAVE_MED
 namespace MEDCoupling
 {
@@ -387,7 +388,29 @@ public:
       const MEDCoupling::MEDCouplingFieldDouble * srcField ///< MED field to set 
                         );
     // ================================================================================================
-    //! This function gets all the values on boundary with identity id
+    // ============================================================================
+/// This function gets all the values on boundary with identity id
+MEDCoupling::MEDCouplingFieldDouble *getValuesOnInterface_from_node(   // field (out)
+  int  interface_name,           // boundary name (char*) (in)
+  const std::string &systemName, // system name           (in)
+  int n_cmp,                     // component             (in)
+  int order=2,                   // return order quad=2 lin=1 (in)
+  int first_cmp =0               // component             (in)
+) ;
+// ============================================================================
+/// This function gets all the values on boundary with identity id
+MEDCoupling::MEDCouplingFieldDouble *getValuesOnInterface_from_cell(   // field (out)
+  int  interface_name,           // boundary name (char*) (in)
+  const std::string &systemName, // system name           (in)
+  int n_cmp,                     // component             (in) 
+  int order =2,                  // return order quad=2 lin=1 (in)
+  int first_cmp=0                // component             (in)
+) ;
+
+    
+    
+    
+    //! This function gets all the values on boundary with identity id old !!!!!!!!!!!!!!!!!!!!
     MEDCoupling::MEDCouplingFieldDouble * getValuesOnInterface (
       int interface_name,	        ///< boundary name (char*) (in)
       const std::string & systemName,	///< system name           (in)
@@ -459,6 +482,9 @@ public:
       MEDCoupling::MEDCouplingFieldDouble * CellMap
     );
     
+//     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> ReadField(
+//        MEDCoupling::TypeOfField type, const std::string& fileName, const std::string& meshName, int meshDimRelToMax, const std::string& fieldName, int iteration, int order
+//                                                   );
     
 
 #endif

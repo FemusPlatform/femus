@@ -37,7 +37,9 @@ EquationSystemsExtendedM::~EquationSystemsExtendedM() {
 #ifdef HAVE_MED
   std::map<int, InterfaceFunctionM *>::iterator it = _interfaceFunMap.begin();
   for(; it != _interfaceFunMap.end(); it++) {
-    if(it->second) { delete it->second; }
+    if(it->second) {
+      delete it->second;
+    }
     it->second = NULL;
   }
 #endif
@@ -71,8 +73,8 @@ void EquationSystemsExtendedM::print_case_bc_h5(const int t_init) {
     // file ---------------------------------------
 //     const int NoLevels  = _mgutils.get_par("nolevels");
 //     const int ndigits   = _mgutils.get_par("ndigits");
-    
-     const int NoLevels  = (int)(_mgutils._geometry["nolevels"]);
+
+    const int NoLevels  = (int)(_mgutils._geometry["nolevels"]);
     const int ndigits   = stoi(_mgutils._sim_config["ndigits"]);
     std::string output_dir = _mgutils._inout_dir;
     std::string   basecase = _mgutils.get_file("BASECASE");
@@ -93,10 +95,12 @@ void EquationSystemsExtendedM::setBC(
   int name,
   int  n_cmp,
   const MEDCouplingFieldDouble *field
-) {// =======================================================================
+) { // =======================================================================
 
-  InterfaceFunctionM * fct = get_interface_fun(name);  // interface-function
-  if(fct == NULL) { return; }
+  InterfaceFunctionM * fct = get_interface_fun(name);    // interface-function
+  if(fct == NULL) {
+    return;
+  }
   fct->set_field(field);
 #ifdef PRINT_MED
 //   fct->printOn(std::cout,name);
@@ -113,7 +117,9 @@ void EquationSystemsExtendedM::setBC(
 ) { // ======================================================================
 
   InterfaceFunctionM * fct = get_interface_fun(name);
-  if(fct == NULL) { return; }
+  if(fct == NULL) {
+    return;
+  }
   if(name>9) {
     fct->set_analytic_field(s, n_cmp);
   } else {
@@ -179,9 +185,98 @@ void EquationSystemsExtendedM::add_interface_fun(       ///<map position(return)
 #endif
   return;
 }
-
 // ============================================================================
 // This function gets the  the value of the variable with id number
+//  "variable_id" on nodes on the boundary with identity "id" in the
+//  system "system_name"
+MEDCouplingFieldDouble * EquationSystemsExtendedM::getValues_from_node(
+  int                name,           // int boundary identity   (in)
+  const char *system_name,           // system name             (in)
+  int               n_cmp,           //  first variable         (in)
+  int               order,           // order quad=2 lin=1(in)
+  int           first_cmp            // n variables             (in)
+) { // ========================================================================
+  int o2to1[30];    o2to1[3]=2;    o2to1[9]=4;    o2to1[27]=8;// map quad to linear
+
+  // Getting interface function fct
+  InterfaceFunctionM * fct = get_interface_fun(name);
+  if(fct == NULL) {   return NULL; }
+  int nNodes = fct->getSupport()->getNumberOfNodes();  int n_nodes_mg  = fct->get_n();
+  int nCells = fct->getSupport()->getNumberOfCells();  int order_fct = fct->get_order();
+  int Dim   = fct->getSupport()->getSpaceDimension();
+  int npt_elem=fct->getSupport()->getNumberOfNodesInCell(0);    // # of points in one element
+  int * map_mg    = fct->get_map_mg();  int * map_med   = fct->get_map_med();
+  // from MGMesh
+  int Level=_mg_mesh->_NoLevels-1;  int offset=_mg_mesh->_NoNodes[Level];
+  // from  MGSystem* system;
+  MGSolBase * mgsyst=get_eqs(system_name);
+  MEDCoupling::MEDCouplingFieldDouble * f;  MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();
+
+  if(order==0) {    // average values constant over element ----------------------------------------------------
+    f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
+    f->setMesh(fct->getSupport());    f->setName(system_name);    f->setNature(IntensiveMaximum);
+    // A new ayyay for f
+    array->alloc(nCells,n_cmp);    array->fillWithZero();
+
+    std::map <int, int> MedMg; // point mapping
+    for(int nMed = 0; nMed < fct->getSupport()->getNumberOfNodes(); nMed++) {
+      MedMg[map_med[nMed]] = map_mg[nMed];
+    }
+    std::vector<int> conn;
+    
+    for(int i_mg=0; i_mg < fct->getSupport()->getNumberOfCells(); i_mg++) {
+      fct -> getSupport() -> getNodeIdsOfCell(i_mg,conn);
+      for(int jcmp=0; jcmp<n_cmp; jcmp++) {
+        double sum=0.;
+        for(int i_node = 0; i_node<npt_elem; i_node ++) {
+          const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (jcmp+first_cmp) * offset];
+          double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+          sum +=var/npt_elem;
+        }
+        array->setIJ(i_mg,jcmp,sum);
+      }
+      conn.clear();
+    }
+
+  } // order 0 ----------------------------------------------------------------------------------------
+  else if(order !=0) {  // nNodes is quad and not linear ! -------------------------------------
+    int np_cell=npt_elem;
+    if(order==1 && order_fct==2)   np_cell=o2to1[npt_elem];
+    f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
+    f->setMesh(fct->getSupport());    f->setName(system_name);    f->setNature(IntensiveMaximum);
+    // An array for f  (array->f)
+    array->alloc(nNodes,n_cmp);    array->fillWithZero();
+
+    std::map <int, int> MedMg; // a  point mapping
+    for(int nMed = 0; nMed < fct->getSupport()->getNumberOfNodes(); nMed++) MedMg[map_med[nMed]] = map_mg[nMed];
+    
+    std::vector<int> conn;
+    for(int i_mg=0; i_mg < fct->getSupport()->getNumberOfCells(); i_mg++) {
+      fct -> getSupport() -> getNodeIdsOfCell(i_mg,conn);
+      for(int i_node = 0; i_node<np_cell; i_node ++) {
+        for(int j_cmp=0; j_cmp<n_cmp; j_cmp++) {
+          const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (j_cmp+first_cmp) * offset];
+          double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+          array->setIJ(conn[i_node],j_cmp,var);
+        }
+      }
+      conn.clear();
+    }
+    
+  }// order >0 -------------------------------------------------------------
+
+//  Name to variables = eqname(0,1,2) -------------------------------------
+  for(int kj=0; kj<n_cmp; kj++)   array->setInfoOnComponent(kj,std::to_string(kj+first_cmp)); // set info -> array
+  f->setArray(array);    // set array -> f
+  array->decrRef();     // delete array
+  f->checkConsistencyLight();  // check f
+//  fct->printOn(std::cout,name);   // print fct
+
+  return f;
+
+}
+// ============================================================================
+// This function gets the  the value of the variable with id number  old!!!!!!!!!
 //  "variable_id" on nodes on the boundary with identity "id" in the
 //  system "system_name"
 MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
@@ -189,10 +284,12 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
   const char *system_name,           // system name             (in)
   int               n_cmp,           //  first variable         (in)
   int           first_cmp            // n variables             (in)
-)  {// ========================================================================
+) { // ========================================================================
   // from LibMesh function fct
   InterfaceFunctionM * fct = get_interface_fun(name);
-  if(fct == NULL) { return NULL; }
+  if(fct == NULL) {
+    return NULL;
+  }
   int nNodes = fct->getSupport()->getNumberOfNodes();
   int n_nodes_mg  = fct->get_n();
   int * map_mg    = fct->get_map_mg();
@@ -207,37 +304,43 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
 
   // A new LibMesh function f
   MEDCoupling::MEDCouplingFieldDouble * f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-  f->setMesh(fct->getSupport());  f->setName(system_name);  f->setNature(IntensiveMaximum);
+  f->setMesh(fct->getSupport());
+  f->setName(system_name);
+  f->setNature(IntensiveMaximum);
   // array function to fill f
-  MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();  array->alloc(nNodes,n_cmp);  array->fillWithZero();
+  MEDCoupling::DataArrayDouble *array = MEDCoupling::DataArrayDouble::New();
+  array->alloc(nNodes,n_cmp);
+  array->fillWithZero();
   int order = fct->get_order();
   int Dim   = fct->getSupport()->getSpaceDimension();
-  int npt_elem=fct->getSupport()->getNumberOfNodesInCell(0);  // # of points in one element 
+  int npt_elem=fct->getSupport()->getNumberOfNodesInCell(0);    // # of points in one element
   int Fcc=npt_elem; // # of vertices (linear) in one element
-  
-  string str(system_name);
-  for(int ji=0; ji<n_cmp; ji++) { // --------------------------------------------------------------
-    if(((str=="NS0" || str=="FSI0" ||str=="FSIA0"||str=="NSA0")) && ji+first_cmp == Dim) order=1;
 
-    if(order==2) {
+  string str(system_name);
+  for(int ji=0; ji<n_cmp; ji++) {    // --------------------------------------------------------------
+    if(((str=="NS0" || str=="FSI0" ||str=="FSIA0"||str=="NSA0")) && ji+first_cmp == Dim) {
+      order=1;
+    }
+
+    if(order==2) {    // ----------------------------------------------------------------------
       for(int i_mg=0; i_mg < nNodes; i_mg++) {
         int node_mg   = map_mg[i_mg];  // mg  node
         int node_med  = map_med[i_mg];  // med node
-        const int kdof_top = mgsyst->_node_dof[Level][node_mg+(ji+first_cmp)*offset];
-        double v = (*(mgsyst->x_old[Level]))(kdof_top);
+        const int kdof_top = mgsyst->_node_dof[Level][node_mg+ (ji+first_cmp) *offset];
+        double v = (* (mgsyst->x_old[Level]))(kdof_top);
         array->setIJ(node_med,ji,v);
       }
-    } 
-    else if(order==1) {
+    } // ---------------------------------------------------------------------------------
+    else if(order==1) {    // ===============================================================
       switch(npt_elem) {
-      case(3):
-        Fcc=2; 
+      case(3) :
+        Fcc=2;
         break;
-      case(9):
-         Fcc=4; 
+      case(9) :
+        Fcc=4;
         break;
-      case(27):
-        Fcc=8; 
+      case(27) :
+        Fcc=8;
         break;
       default:
         std::cout<<"\033[0;34m++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\033[0m\n";
@@ -253,16 +356,20 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
       for(int i_mg=0; i_mg < fct->getSupport()->getNumberOfCells(); i_mg++) {
         fct -> getSupport() -> getNodeIdsOfCell(i_mg,conn);
         for(int i_node = 0; i_node<Fcc; i_node ++) {
-          const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] +(ji+first_cmp) * offset];
-          double intvar      = (*(mgsyst->x_old[Level]))(kdof_top);
+          const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (ji+first_cmp) * offset];
+          double intvar      = (* (mgsyst->x_old[Level]))(kdof_top);
           array->setIJ(conn[i_node],ji,intvar);
         }
         conn.clear();
       }
     }
-  }
-  for(int kj=0; kj<n_cmp; kj++) { array->setInfoOnComponent(kj,std::to_string(kj+first_cmp)); }  // set info -> array
-  f->setArray(array);   // set array -> f
+  } // =================================================================================
+  for(int kj=0; kj<n_cmp; kj++) {
+    string a=std::to_string(kj+first_cmp);
+    array->setInfoOnComponent(kj,std::to_string(kj+first_cmp));
+
+  }  // set info -> array
+  f->setArray(array);    // set array -> f
   array->decrRef();     // delete array
   f->checkConsistencyLight();  // check f
 //  fct->printOn(std::cout,name);   // print fct
@@ -271,7 +378,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
 
 }
 // ============================================================================
-// This function gets the  the value of the variable with id number
+// This function gets the  the value of the variable with id number  old !!!!!!!!!!!!
 //  "variable_id" on nodes on the boundary with identity "id" in the
 //  system "system_name"
 MEDCouplingFieldDouble * EquationSystemsExtendedM::getDisplacement(
@@ -279,10 +386,12 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getDisplacement(
   const char *system_name,           // system name             (in)
   int               n_cmp,           //  first variable         (in)
   int           first_cmp            // n variables             (in)
-)  {// ========================================================================
+) { // ========================================================================
   // from LibMesh function fct
   InterfaceFunctionM * fct = get_interface_fun(name);
-  if(fct == NULL) { return NULL; }
+  if(fct == NULL) {
+    return NULL;
+  }
   int nNodes = fct->getSupport()->getNumberOfNodes();
   int n_nodes_mg  = fct->get_n();
   int * map_mg    = fct->get_map_mg();
@@ -299,29 +408,36 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getDisplacement(
 
   // A new LibMesh function f
   MEDCouplingFieldDouble * f = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-  f->setMesh(fct->getSupport());  f->setName(system_name);  f->setNature(IntensiveMaximum);
+  f->setMesh(fct->getSupport());
+  f->setName(system_name);
+  f->setNature(IntensiveMaximum);
   // array function to fill f
-  DataArrayDouble *array = DataArrayDouble::New();  array->alloc(nNodes,n_cmp);  array->fillWithZero();
+
   int order = fct->get_order();
   int Dim   = fct->getSupport()->getSpaceDimension();
-  int npt_elem=fct->getSupport()->getNumberOfNodesInCell(0);  // # of points in one element 
+  int npt_elem=fct->getSupport()->getNumberOfNodesInCell(0);    // # of points in one element
   int Fcc=npt_elem; // # of vertices (linear) in one element
-  
-  string str(system_name);
-  for(int ji=0; ji<n_cmp; ji++) { // --------------------------------------------------------------
 
-      for(int i_mg=0; i_mg < nNodes; i_mg++) {
-        int node_mg   = map_mg[i_mg];  // mg  node
-        int node_med  = map_med[i_mg];  // med node
-        const int kdof_top = mgsyst->_node_dof[Level][node_mg+(ji+first_cmp)*offset];
-        double v = (*(mgsyst->disp[Level]))(kdof_top);
-        array->setIJ(node_med,ji,v);
-      }
-    } 
-  
-  for(int kj=0; kj<n_cmp; kj++) { array->setInfoOnComponent(kj,std::to_string(kj+first_cmp)); }  // set info -> array
-  f->setArray(array);   // set array -> f
-  array->decrRef();     // delete array
+  DataArrayDouble *array = DataArrayDouble::New();
+  array->alloc(nNodes,n_cmp);
+  array->fillWithZero();
+//   string str(system_name);
+  for(int ji=0; ji<n_cmp; ji++) {    // --------------------------------------------------------------
+
+    for(int i_mg=0; i_mg < nNodes; i_mg++) {
+      int node_mg   = map_mg[i_mg];  // mg  node
+      int node_med  = map_med[i_mg];  // med node
+      const int kdof_top = mgsyst->_node_dof[Level][node_mg+ (ji+first_cmp) *offset];
+      double v = (* (mgsyst->disp[Level]))(kdof_top);
+      array->setIJ(node_med,ji,v);
+    }
+  }
+
+  for(int kj=0; kj<n_cmp; kj++) {
+    array->setInfoOnComponent(kj,std::to_string(kj+first_cmp));       // set info -> array
+  }
+  f->setArray(array);
+  array->decrRef();    //  set array -> f and delete array
   f->checkConsistencyLight();  // check f
 //  fct->printOn(std::cout,name);   // print fct
 
@@ -329,9 +445,89 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getDisplacement(
 
 }
 
-
 // ============================================================================
 // This function gets the  the value of the variable with id number
+//  "variable_id" on cell on the boundary with identity "id" in the
+//  system "system_name"
+MEDCouplingFieldDouble * EquationSystemsExtendedM::getValues_from_cell(
+  int                  id,           // int boundary identity   (in)el_conn
+  const char *system_name,           // system name             (in)
+  int               n_cmp,           //  first variable       (in)
+  int               order,           // approximation order   (in)
+  int           first_cmp            // n variables       (in)
+) { // ========================================================================
+  // To do better see below
+//    int o2to1[30];    o2to1[3]=2;    o2to1[9]=4;    o2to1[27]=8;// map quad to linear
+//   // from LibMesh function fct
+//   InterfaceFunctionM * fct = get_interface_fun(id);
+//   if(fct == NULL) {    return NULL;  }
+//   int nNodes = fct->getSupport()->getNumberOfNodes();  int n_nodes_mg = fct->get_n();
+//   int nCells = fct->getSupport()->getNumberOfCells();
+//   int * map_mg  = fct->get_map_mg();  int * map_med = fct->get_map_med();
+//   // from MGMesh
+//   int Level=_mg_mesh->_NoLevels-1;  int offset=_mg_mesh->_NoNodes[Level];
+//    int off_nelements=_mg_mesh->_NoElements[Level];
+//   // from  MGSystem* system;
+//   MGSolBase * mgsyst=get_eqs(system_name);
+// 
+//   // A new LibMesh function f on nodes
+//   MEDCouplingFieldDouble * f;
+//   DataArrayDouble *array = DataArrayDouble::New();
+//   
+//   if(order==0){
+//      f = MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
+//      f->setMesh(fct->getSupport());  f->setName(system_name);
+//      array->alloc(Cells,n_cmp);// array function to fill f
+//      // filling array
+//      std::map <int, int> MedMg; // point mapping
+//      for(int nMed = 0; nMed < fct->getSupport()->getNumberOfNodes(); nMed++) MedMg[map_med[nMed]] = map_mg[nMed];
+//     
+//     for(int i_mg=0; i_mg < nCells; i_mg++) {
+//       for(int jcmp=0; jcmp<n_cmp; jcmp++) {
+//           const int kdof_top  = mg-> _element_dof[Level][i_mg] + (jcmp+first_cmp) * off_nelements];
+//           double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+//         array->setIJ(i_mg,jcmp,var);
+//       }
+//     }
+//     
+//   }
+//   else{
+//     
+//       f = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
+//       f->setMesh(fct->getSupport());  f->setName(system_name); 
+//      array->alloc(nNodes,n_cmp);// array function to fill f
+//     // filling array
+//        std::map <int, int> MedMg; // point mapping
+//     for(int nMed = 0; nMed < fct->getSupport()->getNumberOfNodes(); nMed++) {
+//       MedMg[map_med[nMed]] = map_mg[nMed];
+//     }
+//     std::vector<int> conn;
+//     
+//     for(int i_mg=0; i_mg < fct->getSupport()->getNumberOfCells(); i_mg++) {
+//       fct -> getSupport() -> getNodeIdsOfCell(i_mg,conn);
+//       for(int jcmp=0; jcmp<n_cmp; jcmp++) {
+//         double sum=0.;
+//         for(int i_node = 0; i_node<npt_elem; i_node ++) {
+//           const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (jcmp+first_cmp) * offset];
+//           double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+//           sum +=var/npt_elem;
+//         }
+//         array->setIJ(i_mg,jcmp,sum);
+//       }
+//       conn.clear();
+//     }
+//   }
+//   
+//   f->setArray(array);    // set array -> f
+//   array->decrRef();     // delete array
+//   f->checkConsistencyLight();  // check f
+// //   fct->printOn(std::cout,id);   // print fct
+// 
+//   return f;
+
+}
+// ============================================================================
+// This function gets the  the value of the variable with id number  old !!!!!!!!!
 //  "variable_id" on nodes on the boundary with identity "id" in the
 //  system "system_name"
 MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
@@ -339,10 +535,12 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
   const char *system_name,           // system name             (in)
   int               n_cmp,           //  first variable       (in)
   int           first_cmp            // n variables       (in)
-)  {// ========================================================================
+) { // ========================================================================
   // from LibMesh function fct
   InterfaceFunctionM * fct = get_interface_fun(id);
-  if(fct == NULL) { return NULL; }
+  if(fct == NULL) {
+    return NULL;
+  }
   int nNodes = fct->getSupport()->getNumberOfNodes();
 //   std::map<int, int> & NodeID = fct->NodeID();
   int n_nodes_mg = fct->get_n();
@@ -372,11 +570,11 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
 
     for(int j=  first_cmp; j< first_cmp+n_cmp; j++) {
       const int kdof_top = mgsyst->_node_dof[Level][node_mg+j*offset];
-      double v = (*(mgsyst->x_old[Level]))(kdof_top);
+      double v = (* (mgsyst->x_old[Level]))(kdof_top);
       array->setIJ(node_med,j,v);
     }
   }
-  f->setArray(array);   // set array -> f
+  f->setArray(array);    // set array -> f
   array->decrRef();     // delete array
   f->checkConsistencyLight();  // check f
 //   fct->printOn(std::cout,id);   // print fct
@@ -392,16 +590,18 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
 //  system "system_name"
 MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
   MEDCoupling::MEDCouplingFieldDouble *NodeMap,
-  int InterfaceId,                                                               
+  int InterfaceId,
   const char *system_name,           // system name             (in)
   int               n_cmp,           //  first variable       (in)
   int           first_cmp,            // n variables       (in)
   int Level2
-)  {// ========================================================================
+) { // ========================================================================
 
 
   InterfaceFunctionM * fct = get_interface_fun(InterfaceId);
-  if(fct == NULL) { return NULL; }
+  if(fct == NULL) {
+    return NULL;
+  }
 
 //   std::map<int, int> & NodeID = fct->NodeID();
   int n_nodes_mg = fct->get_n();
@@ -409,8 +609,8 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
   int * map_med = fct->get_map_med();
 
   // from MGMesh
-  
-  int Level=_mg_mesh->_NoLevels-1;  
+
+  int Level=_mg_mesh->_NoLevels-1;
   int offset=_mg_mesh->_NoNodes[Level];
   // from  MGSystem* system;
   MGSolBase * mgsyst=get_eqs(system_name);
@@ -425,27 +625,27 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
   DataArrayDouble *array = DataArrayDouble::New();
   array->alloc(nNodes,n_cmp);
   // filling array
-  
- 
-  
+
+
+
   for(int i_mg=0; i_mg < nNodes; i_mg++) {
-    int node_mg   = map_mg[(int)NodeMap->getIJ(i_mg,0)];  // mg  node
-    node_mg   =(int)NodeMap->getIJ(i_mg,0);  // mg  node
-    
+    int node_mg   = map_mg[(int) NodeMap->getIJ(i_mg,0)];       // mg  node
+    node_mg   = (int) NodeMap->getIJ(i_mg,0);      // mg  node
+
 //     int node_med  = map_med[i_mg];  // med node
 
-    
+
 
     for(int j=  first_cmp; j< first_cmp+n_cmp; j++) {
       const int kdof_top = mgsyst->_node_dof[Level][node_mg+j*offset];
-      double v = (*(mgsyst->x_old[Level]))(kdof_top);
+      double v = (* (mgsyst->x_old[Level]))(kdof_top);
 //       if(i_mg== 589 || i_mg == 594 || i_mg == 593 || i_mg == 751 || i_mg == 756 || i_mg == 755 || i_mg == 749 || i_mg == 754 || i_mg == 753)
 //         std::cout<<"mg node "<<node_mg<<" for med node "<<i_mg<<" out of "<<nNodes<<" nodes, value "<<v<<std::endl;
-      
+
       array->setIJ(i_mg,j,v);
     }
   }
-  f->setArray(array);   // set array -> f
+  f->setArray(array);    // set array -> f
   array->decrRef();     // delete array
   f->checkConsistencyLight();  // check f
 //   fct->printOn(std::cout,id);   // print fct
@@ -465,7 +665,9 @@ void EquationSystemsExtendedM::write_Boundary_value(
 
 
   InterfaceFunctionM * fct = get_interface_fun(id_boundary_name);
-  if(fct == NULL) { return; }
+  if(fct == NULL) {
+    return;
+  }
 
 
   // interface support (mesh) fct -----------------------------------
@@ -480,7 +682,9 @@ void EquationSystemsExtendedM::write_Boundary_value(
   int Level=_mg_mesh->_NoLevels-1;
   int offset= _mg_mesh->_NoNodes[Level];
   NumericVectorM *old_sol_top= mgsyst->x_old[Level];
-  if(mgsystem_name=="NS2P") old_sol_top= mgsyst->x_nonl[Level];                      // MOD
+  if(mgsystem_name=="NS2P") {
+    old_sol_top= mgsyst->x_nonl[Level];    // MOD
+  }
   // Mesh -----------------------------------------------------------
   MeshExtended  *ext_mesh=dynamic_cast<MeshExtended *>(&_mgmesh);
   std::vector<int> mat=ext_mesh->_mat_id;
@@ -494,28 +698,30 @@ void EquationSystemsExtendedM::write_Boundary_value(
   // setting the boundary values --------------------------------------------------------------------
   for(int kvar=0; kvar<n_cmp; kvar++) {
 
-    if(((mgsystem_name=="NS0" || mgsystem_name=="FSI0" ||mgsystem_name=="FSIA0"||mgsystem_name=="NSA0")) && kvar+first_cmp == Dim) { order=1; }
+    if(((mgsystem_name=="NS0" || mgsystem_name=="FSI0" ||mgsystem_name=="FSIA0"||mgsystem_name=="NSA0")) && kvar+first_cmp == Dim) {
+      order=1;
+    }
 
-    if(order==2) { // --------------- order 2 -------------------------------------------------
-      for(int i_mg=0; i_mg < n_nodes_mg; i_mg++) { // -----------------------------------
+    if(order==2) {    // --------------- order 2 -------------------------------------------------
+      for(int i_mg=0; i_mg < n_nodes_mg; i_mg++) {    // -----------------------------------
         int gl_node_bd = map_mg[i_mg];  // mg  node
         int node_med  = map_med[i_mg];  // med node
 
         fct->eval(node_med,n_cmp, bc_value);
-        const int kdof_top = mgsyst->_node_dof[Level][gl_node_bd+(kvar+first_cmp)*offset];
+        const int kdof_top = mgsyst->_node_dof[Level][gl_node_bd+ (kvar+first_cmp) *offset];
         old_sol_top->set(kdof_top , bc_value[kvar]);
       } // ------------------------------------------------------------------------------
     }  // --------------- order 2 --------------------------------------------------------------
-    else if(order==1) { // --------------- order 1 --------------------------------------------------------------------
+    else if(order==1) {    // --------------- order 1 --------------------------------------------------------------------
       int Fcc;
       switch(NodesPerCell) {
-      case(3):
+      case(3) :
         Fcc = 2;
         break;
-      case(9):
+      case(9) :
         Fcc = 4;
         break;
-      case(27):
+      case(27) :
         Fcc = 8;
         break;
       default:
@@ -535,7 +741,7 @@ void EquationSystemsExtendedM::write_Boundary_value(
         // Loop for the calculation of the field on the gauss point
         for(int i_node = 0; i_node<Fcc; i_node ++) {
           fct->eval(conn[i_node],n_cmp, bc_value);
-          const int kdof_top = mgsyst->_node_dof[Level][MedMg[conn[i_node]]+(kvar+first_cmp)*offset];
+          const int kdof_top = mgsyst->_node_dof[Level][MedMg[conn[i_node]]+ (kvar+first_cmp) *offset];
           old_sol_top->set(kdof_top , bc_value[kvar]);
         }
         conn.clear();
@@ -558,19 +764,22 @@ void EquationSystemsExtendedM::write_Boundary_value(
   return;
 }
 
-  MEDCoupling::MEDCouplingFieldDouble *  EquationSystemsExtendedM::GetField(const std::string &systemName){
-    MGSolBase * mgsyst=get_eqs(systemName.c_str());
-    MEDCoupling::MEDCouplingFieldDouble * ExtField = mgsyst->_ExtField->deepCopy();
-    return ExtField;
-  }
+MEDCoupling::MEDCouplingFieldDouble *  EquationSystemsExtendedM::GetField(const std::string &systemName) {
+  MGSolBase * mgsyst=get_eqs(systemName.c_str());
+  MEDCoupling::MEDCouplingFieldDouble * ExtField = mgsyst->_ExtField->deepCopy();
+  return ExtField;
+}
 
 //get actual support
 const MEDCouplingUMesh* EquationSystemsExtendedM::getUMeshCoupling(
   int name
-) {// =======================================================================
+) { // =======================================================================
 
-  InterfaceFunctionM * fct = get_interface_fun(name);  // interface-function
-  if(fct == NULL) {std::cout << "getUMeshCoupling: fct empty \n"; abort();}
+  InterfaceFunctionM * fct = get_interface_fun(name);    // interface-function
+  if(fct == NULL) {
+    std::cout << "getUMeshCoupling: fct empty \n";
+    abort();
+  }
   const MEDCouplingUMesh *sourceMesh = fct->getSupport();
   MEDCoupling::WriteUMesh("source.med",sourceMesh,true);
   return sourceMesh;
@@ -579,9 +788,9 @@ const MEDCouplingUMesh* EquationSystemsExtendedM::getUMeshCoupling(
 //get original support
 const MEDCouplingUMesh* EquationSystemsExtendedM::getUMeshCoupling_orig(
   int name
-) {// =======================================================================
+) { // =======================================================================
 
-  InterfaceFunctionM * fct = get_interface_fun(name);  // interface-function
+  InterfaceFunctionM * fct = get_interface_fun(name);    // interface-function
 //   if(fct == NULL) return;
   const MEDCouplingUMesh *sourceMesh = fct->getSupport_orig();
   return sourceMesh;

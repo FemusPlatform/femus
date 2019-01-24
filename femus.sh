@@ -199,9 +199,11 @@ function femus_gencase_run {
    if [ -d  $FEMUS_DIR/bin ]; then
      echo "found bin directory "
      if [ ! -f "$FEMUS_DIR/bin/gencase" ]; then
+       echo gencase not found make .....
        make gencase -j$pp
      fi
-     mpiexec -np $pp gencase 2> messages_gencase.log
+     echo run gencase .. $FEMUS_DIR/bin/gencase
+     mpiexec -np $pp $FEMUS_DIR/bin/gencase 
      
    else
      echo "${red} ======================================================= "

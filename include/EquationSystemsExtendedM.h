@@ -135,7 +135,33 @@ public:
 			     MEDCoupling::MEDCouplingFieldDouble * bcField	///[in] MED field to write
     );
   MEDCoupling::MEDCouplingFieldDouble * GetField(const std::string &systemName);
-  //! Get values on mesh nodes
+  
+  
+  
+  // ============================================================================
+// This function gets the  the value of the variable with id number
+//  "variable_id" on nodes on the boundary with identity "id" in the
+//  system "system_name"
+MEDCoupling::MEDCouplingFieldDouble * getValues_from_node(
+  int                  id,           // int boundary identity   (in)
+  const char *system_name,           // system name             (in)
+  int               n_cmp,           // first variable         (in)
+  int               order,           // order (in)
+  int            first_cmp= 0        // n variables             (in)
+) ;
+// =============================================================================================
+///  The function returns a MED field containing the solution of equation with name <system_name>.
+//  The values are relative to mesh cells of interface with name <id>
+MEDCoupling::MEDCouplingFieldDouble * getValues_from_cell(
+  int                  id,           // int boundary identity   (in)
+  const char *system_name,           // system name             (in)
+  int               n_cmp,           // first variable         (in)
+  int               order=2,           // order (in)
+  int            first_cmp= 0        // n variables             (in)
+) ;
+  
+  
+  //! Get values on mesh nodes  old old !!!!!!!!!!!!
   /*!
    *  The function returns a MED field containing the solution of equation with name <system_name>.
    *  The values are relative to mesh nodes of interface with name <id>
@@ -146,7 +172,7 @@ public:
 								  int first_cmp = 0	///< [in] First component
     );
 
-  //! Get values on mesh cells
+  //! Get values on mesh cells  old old !!!!!!!!!!!!
   /*!
    *  The function returns a MED field containing the solution of equation with name <system_name>.
    *  The values are relative to mesh cells of interface with name <id>
