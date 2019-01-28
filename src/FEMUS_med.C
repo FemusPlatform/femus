@@ -120,7 +120,7 @@ void FEMUS::init_interface(
   std::cout<< "Interface "<< interface_name <<" on group " << vG[0] << "  on_nodes "<< on_nodes;
   std::cout<<" NUMBER OF NODES "<<support->getNumberOfNodes() <<std::endl;
 
-  FieldContainingMap->decrRef();
+//   FieldContainingMap->decrRef();
 
   return;
 }
@@ -171,7 +171,7 @@ void FEMUS::init_interface(
 
   init_interface(interface_name, order_cmp, support, MedToMgMapArray);
 
-  FieldContainingMap->decrRef();
+//   FieldContainingMap->decrRef();
 
   return;
 }
