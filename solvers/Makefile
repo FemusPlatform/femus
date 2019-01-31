@@ -11,6 +11,8 @@
 
 # DIRECTORY FOR LOCAL COMPILED OBJECT FILES
 OBJ_DIR = SRC/obj/
+# DIRECTORY FOR LIBRARY COMPILED OBJECT FILES
+LIB_OBJ_DIR = src/obj/
 
 # COMPILER
 CXX = mpicxx
@@ -112,6 +114,13 @@ OBJS_APP = $(addprefix $(OBJ_DIR), $(SRC_APP_OBJS))
 
 # FEMUS AND CONTRIB OBJECT FILES
 SRC_FEMUS_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_FEMUS))
+
+# FEMUS AND CONTRIB OBJECT FILES
+LIB_SRC_APP_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/src/*.C )))
+LIB_SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(LIB_SRC_APP_FILES))
+LIB_SRC_FEMUS_OBJS = $(addprefix $(FEMUS_DIR)/src/obj/, $(LIB_SRC_APP_OBJS))
+
+# CONTRIB
 CONTRIB_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_CONTRIB))
 # END SOURCE AND OBJECTS ================================================
 
@@ -127,7 +136,7 @@ all:    $(MAIN)
 # this is the rule for linking the objects to obtain the executable file.
 # There are two groups of objects, the SRC and the CONTRIB objects, which
 # are recompiled in different cases
-$(MAIN): $(OBJS_APP)  $(SRC_FEMUS_OBJS) $(OBJ_FILLER) $(CONTRIB_OBJS)  
+$(MAIN): $(OBJS_APP)  $(LIB_SRC_FEMUS_OBJS) $(OBJ_FILLER) $(CONTRIB_OBJS)  
 	@echo 
 	@echo "Linking "$@"..."
 	@echo 
@@ -142,6 +151,7 @@ $(MAIN): $(OBJS_APP)  $(SRC_FEMUS_OBJS) $(OBJ_FILLER) $(CONTRIB_OBJS)
 # DEPENDENCIES FOR RECOMPILATION
 $(OBJS_APP): $(INCLUDES_SRC)
 $(SRC_FEMUS_OBJS): $(INCLUDES_SRC)
+$(LIB_SRC_FEMUS_OBJS): $(INCLUDES_SRC)
 $(OBJ_FILLER): $(INCLUDES_SRC)
 $(CONTRIB_OBJS): $(INCLUDES_CONTRIB)
 
@@ -155,9 +165,16 @@ SRC/obj/%-$(METHOD).o : %.C
 	@mkdir -p $(dir $@)
 	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
 	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+# RULE FOR LIBRARY FILES
+$(FEMUS_DIR)/src/obj/%-$(METHOD).o : %.C
+	@mkdir -p $(dir $@)
+	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
+	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@	
 	
 # vpath SETTINGS - WHERE TO LOOK FOR SOURCE FILES
 vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
+vpath %.C $(FEMUS_DIR)/src/
 vpath %.C ./SRC/
 
 
