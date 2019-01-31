@@ -100,7 +100,7 @@ public:
 #endif
     /// MESH RELATED FUNCTIONS -------------------------------------------------
     //! Default setMesh function
-    void setMesh ();
+    void set_mesh();
     //! setMesh function and computation of parallel mesh
     void setMeshTurbCase ();
     //! String for assigning a mesh name label
@@ -108,10 +108,7 @@ public:
     
     
     //! Initialization of equations to solve
-    void setSystem (const std::vector < FIELDS > &pbName,int n_data_points = 0, int n_data_cell = 0);
-   
-    void setSystemNew (const std::vector < FIELDS > &pbName);
-    void setSystemNew ();
+    void init_systems ();
     
 
     inline EquationSystemsExtendedM & get_MGExtSystem ()

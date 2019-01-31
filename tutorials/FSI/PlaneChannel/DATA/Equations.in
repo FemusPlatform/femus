@@ -1,0 +1,19 @@
+ # ===============================================================
+ / #          EQUATIONS TO SOLVE
+ # =============================================================== 
+   MG_DA                      0
+   MG_NavierStokes            0
+   MG_Temperature             0
+   MG_DynamicalTurbulence     0
+   MG_ThermalTurbulence       0
+   MG_FluidStructure          1
+   MG_StructuralMechanics     0
+   MG_Displacement            2
+   MG_ColorFunction           0
+   MG_Laplacian               0
+   MG_ControlTemperature      0
+   MG_AdjointNavierStokes     0
+   MG_AdjointTemperature      0
+   MG_AdjointTurbulence       0
+   MG_AdjointFluidStructure   0
+ / #--------------------------------------------------------------   

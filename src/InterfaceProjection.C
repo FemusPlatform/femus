@@ -411,8 +411,8 @@ void BoundInterp::FillParameters (
 
             }
             TrgConn.clear();
-//       for (int i = 0; i < SrcIntCells; ++i)   delete [] ExtrCoord[i];
-//         delete [] ExtrCoord;
+            for (int i = 0; i < SrcIntCells; ++i)   delete [] ExtrCoord[i];
+            delete [] ExtrCoord;
         } // end loop
 
 //     MEDCouplingFieldDouble * CellBelonging = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);

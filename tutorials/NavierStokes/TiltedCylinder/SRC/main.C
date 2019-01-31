@@ -52,13 +52,8 @@ int main ( int argc, char** argv ) {
     int    itime_0 = stoi ( mgutils[0]->_sim_config["itime"] );
     double time    = 0.;
 
-    // system problem =========================================================
-    EquationsMap FIELDclass(*mgutils[0]); 
-   
     // CONSTRUCTION OF FEMUS PROBLEM ------------------------------------------
     FEMUS P(*mgutils[0]);  //  parameter list <- mgutils[0]
-    FIELDclass.FillEquationMap(P);
-    P.setSystemNew();
     
     // INITIALIZATION OF EQUATIONS TO SOLVE -----------------------------------
     P.solve_setup ( itime_0,time );                 // initial time loop (t=0)

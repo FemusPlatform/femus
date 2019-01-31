@@ -683,64 +683,6 @@ void FEMUS::SetPieceFieldOnYdist(
   return;
 }
 
-// ================================================================================================
-// turbulence
-// ================================================================================================
-void FEMUS::InitTurbulence() {
-  bool DynTurb, TherTurb;
-
-  (stoi(_mg_utils->_sim_config["MG_DynamicalTurbulence"]) > 0) ? DynTurb = true:false;
-  (stoi(_mg_utils->_sim_config["MG_ThermalTurbulence"])   > 0) ? TherTurb = true:false;
-
-//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
-
-  TurbUtils *Parameters = new TurbUtils(get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb);
-  _mg_utils->set_turbulence_info(Parameters);
-  return;
-}
-// ================================================================================================
-void FEMUS::InitTurbulence(int MeshID) {
-  bool DynTurb, TherTurb;
-
-  (stoi(_mg_utils->_sim_config["MG_DynamicalTurbulence"]) > 0) ? DynTurb = true:false;
-  (stoi(_mg_utils->_sim_config["MG_ThermalTurbulence"])   > 0) ? TherTurb = true:false;
-
-//      MyAssert ( _NodeWallDist.size() != 0, "FEMUS::InitTurbulence() _NodeWallDist not computed! \n" );
-
-  TurbUtils *Parameters = new TurbUtils(get_proc(), _mg_mesh->_NoLevels, _NodeMap, DynTurb, TherTurb, MeshID);
-  _mg_utils->set_turbulence_info(Parameters);
-
-
-  return;
-}
-// ================================================================================================
-// MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>
-void FEMUS::CalcTurbulence() {
-  int FinerLevel = _mg_mesh->_NoLevels;
-  if(_mg_utils->_TurbParameters->_IsWallDistSet == false) {
-    MEDCoupling::MEDCouplingFieldDouble *Dist = getProcSolution("C",1,0,FinerLevel-1);
-    MEDCoupling::WriteField("RESU_MED/wd"+to_string(get_proc()) +".med",Dist,1);
-    _mg_utils->_TurbParameters->SetWallDistAtLevel(FinerLevel-1, Dist);
-    _mg_utils->_TurbParameters->_IsWallDistSet = true;
-    Dist->decrRef();
-  }
-  MEDCoupling::MEDCouplingFieldDouble *K1W = getProcSolution("K1W",1,0,FinerLevel-1);    // CONTROLLARE CHE LA SOLUZIONE VENGA PRESA DA OGNI SINGOLO LIVELLO
-  MEDCoupling::MEDCouplingFieldDouble *K2K = getProcSolution("K2K",1,0,FinerLevel-1);    //
-  _mg_utils->_TurbParameters->CalcMuTurb(K2K,K1W,FinerLevel -1);
-  if(stoi(_mg_utils->_sim_config["ThermalTurbulence"])   > 0) {
-    MEDCoupling::MEDCouplingFieldDouble *TK = getProcSolution("TK",1,0,FinerLevel-1);    // CONTROLLARE CHE LA SOLUZIONE VENGA PRESA DA OGNI SINGOLO LIVELLO
-    MEDCoupling::MEDCouplingFieldDouble *TW = getProcSolution("TK2",1,0,FinerLevel-1);    //
-    _mg_utils->_TurbParameters->CalcAlphaTurb(K2K,K1W,TK,TW,FinerLevel -1);
-    TW->decrRef();
-    TK->decrRef();
-  }
-  K1W->decrRef();
-  K2K->decrRef();
-
-  return;
-}
-
-
 
 
 #endif

@@ -410,7 +410,7 @@ public:
 // ========================================================================
     ///@{ \name EXTERNAL FIELDS
     // ========================================================================
-    void set_ext_fields ( const std::vector<FIELDS> & pbName );
+//     void set_ext_fields(const std::vector<FIELDS> &pbName);
     virtual double eval_var1 ( double [] ) {
         return 0.;
     };
@@ -421,11 +421,12 @@ public:
         return 0.;
     };
     
-    
-    void ActivateVectField(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName, int &n_index, int n_equations);   // quad vector
-    void ActivateScalar(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName, int &n_index, int n_equations);      // quad scalar
-    void ActivateControl(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName, int &n_index, int n_equations);   // quad vector
-    void ActivateCoupled(std::string FieldName, FIELDS Field, std::vector<FIELDS> pbName, std::string SystemFieldName, std::string SystemFieldName2, int &n_index, int n_equations);
+    void setUpExtFieldData();
+    void ActivateVectField (int Order, int Field, std::string SystemFieldName, int &n_index, int coupled );
+    void ActivateScalar    (int Order, int Field, std::string SystemFieldName, int &n_index);
+    void ActivateControl   (int Order, int Field, std::string SystemFieldName, int &n_index);
+    void ActivateCoupled   (int Order, int Field, std::string SystemFieldName, std::string SystemFieldName2, int &n_index);
+    void ActivateEquation  (int Order, int Field, std::string SystemFieldName, int &n_index);
 ///@}  double _xxg[DIMENSION];
 };
 

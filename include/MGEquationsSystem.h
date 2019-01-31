@@ -21,13 +21,14 @@ class MGEquationsSystem: public MGSystem {
 
   protected:
     // data --------------------------------
-    map<std::string, MGSolBase*> _equations;   // system map
+    
    
 public:  
 //     MGUtils& _mgutils;  ///< MGUtils class  pointer
 //     MGSystem& _mgphys;  ///< MGSystem class pointer
 //     MGMesh&   _mgmesh;  ///< MGMesh  class  pointer
     map<std::string,int> _num_equations;   // system map
+    map<std::string, MGSolBase*> _equations;   // system map
     MGFEMap& _mgfemap;  ///< MGFEMap class  pointer
     
   // Constructor / Destructor -----------------------------------
@@ -58,6 +59,16 @@ public:
      int nLinear, 
      int nQuadratic, 
      std::string VarName
+);
+  
+  template<class SolverClass> void AddSolver(
+  std::string SystemName, 
+  int nSys,
+  int nPieceWise, 
+  int nLinear, 
+  int nQuadratic, 
+  std::string VarName,
+  std::vector<FIELDS> PBname  
 );
   
   inline  void  set_num_eqs(std::string name,int num)          {_num_equations.insert(make_pair(name,num));}

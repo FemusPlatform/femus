@@ -530,7 +530,7 @@ _field= MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS,MEDCoupli
   _field->setName(symbolic_eq);
   _field->checkConsistencyLight();
   std::cout << "InterfaceFunctionM::set_analytic_field_elem_interface \n";
-//   printOn(std::cout,1);
+  delete [] sum;
   return;
 }
 

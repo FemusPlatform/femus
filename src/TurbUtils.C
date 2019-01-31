@@ -8,6 +8,7 @@
 #include "MEDCouplingUMesh.hxx"
 #include "MEDCouplingFieldDouble.hxx"
 
+//
 using namespace std;
 
 TurbUtils::TurbUtils() :
@@ -24,7 +25,6 @@ __Proc ( 0 ), __Levels ( 0 ) {
 
 TurbUtils::TurbUtils ( int proc,
                        int levels,
-                       std::vector<MEDCoupling::MEDCouplingFieldDouble *>NodeMap,
                        bool DynTurb,
                        bool TherTurb
                      ) :
@@ -32,147 +32,26 @@ __Proc ( proc ), __Levels ( levels ) {
     int MeshID = 0;
     FillModelMap();
     FillParameters(); // DEFAULT VALUES
-
-    _NodeMap  = NodeMap;
-
-    double *FinerMap  = const_cast<double*> ( _NodeMap[_NodeMap.size() -1]->getArray()->getPointer() );
-    for ( int i=0; i< _NodeMap[__Levels-1]->getMesh()->getNumberOfNodes(); i++ ) {
-        _MgToMed.insert ( std::pair<int,int> ( ( int ) FinerMap[i], i ) );
-    }
-    FinerMap=NULL;
-
-    for ( int lev=0; lev<__Levels; lev++ ) {
-        const int NumNodes = _NodeMap[lev]->getMesh()->getNumberOfNodes();
-
-        MEDCoupling::DataArrayDouble *NodeDist = MEDCoupling::DataArrayDouble::New();
-        NodeDist->alloc ( NumNodes, 1 );
-        NodeDist->fillWithZero();
-        NodeDist->setName ( "NodeWallDist" );
-
-        _NodeWallDist.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
-        _NodeWallDist[lev]->setMesh ( _NodeMap[lev]->getMesh() );
-        _NodeWallDist[lev]->setArray ( NodeDist );
-        _NodeWallDist[lev]->setName ( "NodeWallDist_Lev_"+to_string ( lev ) );
-        NodeDist->decrRef();
-
-        if ( DynTurb ) {
-            MEDCoupling::DataArrayDouble *MuTurbArray = MEDCoupling::DataArrayDouble::New();
-            MuTurbArray->alloc ( NumNodes, 1 );
-            MuTurbArray->fillWithZero();
-            MuTurbArray->setName ( "MuTurb" );
-
-            _MuTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
-            _MuTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
-            _MuTurbField[lev]->setArray ( MuTurbArray );
-            _MuTurbField[lev]->setName ( "MuTurb_Lev_"+to_string ( lev ) );
-            MuTurbArray->decrRef();
-        }
-        if ( TherTurb ) {
-            MEDCoupling::DataArrayDouble *AlphaTurbArray = MEDCoupling::DataArrayDouble::New();
-            AlphaTurbArray->alloc ( NumNodes, 1 );
-            AlphaTurbArray->fillWithZero();
-            AlphaTurbArray->setName ( "AlphaTurb" );
-
-            _AlphaTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
-            _AlphaTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
-            _AlphaTurbField[lev]->setArray ( AlphaTurbArray );
-            _AlphaTurbField[lev]->setName ( "AlphaTurb_Lev_"+to_string ( lev ) );
-            AlphaTurbArray->decrRef();
-        }
-    }
-    _CanElemMap = new int*[2];
-    _CanElemMap[0] = new int[9];
-    _CanElemMap[1] = new int[27];
-    for ( int i=0; i<27; i++ ) {
-        if ( i<9 ) _CanElemMap[0][i] = _LibToMed_2D[i];
-        _CanElemMap[1][i] = _LibToMed_3D[i];
-    }
 }
 
 TurbUtils::TurbUtils ( int proc,
                        int levels,
-                       std::vector<MEDCoupling::MEDCouplingFieldDouble *>NodeMap,
                        bool DynTurb,
                        bool TherTurb,
-		       int MeshID
+                       int MeshID
                      ) :
 __Proc ( proc ), __Levels ( levels ), _MeshID ( MeshID ) {
     FillModelMap();
     FillParameters(); // DEFAULT VALUES
-
-    _NodeMap  = NodeMap;
-
-    double *FinerMap  = const_cast<double*> ( _NodeMap[_NodeMap.size() -1]->getArray()->getPointer() );
-    for ( int i=0; i< _NodeMap[__Levels-1]->getMesh()->getNumberOfNodes(); i++ ) {
-        _MgToMed.insert ( std::pair<int,int> ( ( int ) FinerMap[i], i ) );
-    }
-    FinerMap=NULL;
-
-    for ( int lev=0; lev<__Levels; lev++ ) {
-        const int NumNodes = _NodeMap[lev]->getMesh()->getNumberOfNodes();
-
-        MEDCoupling::DataArrayDouble *NodeDist = MEDCoupling::DataArrayDouble::New();
-        NodeDist->alloc ( NumNodes, 1 );
-        NodeDist->fillWithZero();
-        NodeDist->setName ( "NodeWallDist" );
-
-        _NodeWallDist.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
-        _NodeWallDist[lev]->setMesh ( _NodeMap[lev]->getMesh() );
-        _NodeWallDist[lev]->setArray ( NodeDist );
-        _NodeWallDist[lev]->setName ( "NodeWallDist_Lev_"+to_string ( lev ) );
-        NodeDist->decrRef();
-
-        if ( DynTurb ) {
-            MEDCoupling::DataArrayDouble *MuTurbArray = MEDCoupling::DataArrayDouble::New();
-            MuTurbArray->alloc ( NumNodes, 1 );
-            MuTurbArray->fillWithZero();
-            MuTurbArray->setName ( "MuTurb" );
-
-            _MuTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
-            _MuTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
-            _MuTurbField[lev]->setArray ( MuTurbArray );
-            _MuTurbField[lev]->setName ( "MuTurb_Lev_"+to_string ( lev ) );
-            MuTurbArray->decrRef();
-        }
-        if ( TherTurb ) {
-            MEDCoupling::DataArrayDouble *AlphaTurbArray = MEDCoupling::DataArrayDouble::New();
-            AlphaTurbArray->alloc ( NumNodes, 1 );
-            AlphaTurbArray->fillWithZero();
-            AlphaTurbArray->setName ( "AlphaTurb" );
-
-            _AlphaTurbField.push_back ( MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES ) );
-            _AlphaTurbField[lev]->setMesh ( _NodeMap[lev]->getMesh() );
-            _AlphaTurbField[lev]->setArray ( AlphaTurbArray );
-            _AlphaTurbField[lev]->setName ( "AlphaTurb_Lev_"+to_string ( lev ) );
-            AlphaTurbArray->decrRef();
-        }
-    }
-    _CanElemMap = new int*[2];
-    _CanElemMap[0] = new int[9];
-    _CanElemMap[1] = new int[27];
-    for ( int i=0; i<27; i++ ) {
-        if ( i<9 ) _CanElemMap[0][i] = _LibToMed_2D[i];
-        _CanElemMap[1][i] = _LibToMed_3D[i];
-    }
 }
 
 
-TurbUtils::~TurbUtils() {
-    int sizeN = _NodeWallDist.size();
-    int sizeM = _MuTurbField.size();
-    int sizeA = _AlphaTurbField.size();
-    if ( sizeN != 0 )
-        for ( int Level=0; Level<sizeN; Level++ )
-            _NodeWallDist[Level]->decrRef();
-    if ( sizeM != 0 )
-        for ( int Level=0; Level<sizeM; Level++ )
-            _MuTurbField[Level]->decrRef();
-    if ( sizeA != 0 )
-        for ( int Level=0; Level<sizeA; Level++ )
-            _AlphaTurbField[Level]->decrRef();
-}
+TurbUtils::~TurbUtils() {}
 
 void TurbUtils::FillParameters() {
+  
+     _IsFilled=false;
+  
     _BoundWallDist = 1.e-3;
     _nu = 1.e-4;
     _alpha = 1.e-4;
@@ -180,7 +59,7 @@ void TurbUtils::FillParameters() {
     _wlog  = 0.;
     _khlog = 0.;
     _whlog = 0.;
-
+    _Fraction=1;
     read_file();
 
     std::cout<<"\n ========================================================= \n"
@@ -202,69 +81,76 @@ void TurbUtils::FillParameters() {
     int FTE = _ThermalModel[_FileMap["FirstThermalEquation"]];
     int STE = _ThermalModel[_FileMap["SecondThermalEquation"]];
 //
-    _Nagano = ( FDE/10 ) %2;
-    _Wilcox = ( ( FDE/10 ) &2 ) >>1;
-    _klog  = ( FDE%10 ) %2;
-    _wlog  = ( SDE%10 ) %2;
-    _emod  = ( ( SDE%10 ) &2 ) >>1;
-    _numod = ( ( FDE%10 ) &2 ) >>1;
+    std::cerr<<"==================================================== \n";
+    std::cerr<<" TURB_UTILS: available dynamic turbulence models: \n";
+    for ( auto it = ::DynTurbModelMap.cbegin(); it != ::DynTurbModelMap.cend(); ++it )
+        std::cerr <<"     "<< it->first << " " << it->second<< "\n";
+    std::cerr<<" TURB_UTILS: available thermal turbulence models: \n";
+    for ( auto it = ::ThermTurbModelMap.cbegin(); it != ::ThermTurbModelMap.cend(); ++it )
+        std::cerr <<"     "<< it->first << " " << it->second<< "\n";
+    std::cerr<<"    Chosen dynamic turb model: "<<_FileMap["RANS_dynamic"]<<std::endl;
+    std::cerr<<"    Chosen themral turb model: "<<_FileMap["RANS_thermal"]<<std::endl;
 
-
-
-    int RANS_dynamic = _DynamicModel[_FileMap["RANS_dynamic"]];
+    std::string DynModel = ( _FileMap["RANS_dynamic"] != "" ) ? _FileMap["RANS_dynamic"]:"default";
+    int RANS_dynamic = ::DynTurbModelMap.at ( DynModel );
     switch ( RANS_dynamic ) {
-    case nagano_ke:
+    case default_dyn:
         _Nagano = 1;
-        _Wilcox = 0;
-        _klog  = 0;
-        _wlog  = 0;
-        _emod  = 1;
-        _numod = 0;
+        _Wilcox = _klog = _wlog = _emod = _numod = 0;
+        break;
+    case nagano_ke:
+        _Nagano = _emod = 1;
+        _Wilcox = _klog = _wlog = _numod =0;
         break;
     case nagano_kw:
         _Nagano = 1;
-        _Wilcox = 0;
-        _klog  = 0;
-        _wlog  = 0;
-        _emod  = 0;
-        _numod = 0;
+        _Wilcox = _klog = _wlog = _emod = _numod = 0;
         break;
     case nagano_log:
-        _Nagano = 1;
-        _Wilcox = 0;
-        _klog  = 1;
-        _wlog  = 1;
-        _emod  = 0;
-        _numod = 0;
+        _Nagano = _klog = _wlog = 1;
+        _Wilcox = _numod = _emod =0;
         break;
     case wilcox:
-        _Nagano = 0;
+        _Nagano = _klog = _wlog = _emod = _numod = 0;
         _Wilcox = 1;
-        _klog  = 0;
-        _wlog  = 0;
-        _emod  = 0;
-        _numod = 0;
         break;
     case wilcox_log:
-        _Nagano = 0;
-        _Wilcox = 1;
-        _klog  = 1;
-        _wlog  = 1;
-        _emod  = 0;
-        _numod = 0;
+        _Nagano = _emod = _numod = 0;
+        _Wilcox = _klog = _wlog =1;
         break;
     default:
         std::cout<<"\033[1;31m\n=====================================================\n"
-        <<"   TURB_UTILS: unknown turbulence model "<<_FileMap["RANS_dynamic"]
+        <<"   TURB_UTILS: unknown dynamical turbulence model "<<_FileMap["RANS_dynamic"]
         <<"\n=====================================================\n\033[0m";
         abort();
         break;
     }
 
+    std::string ThermModel = ( _FileMap["RANS_thermal"] != "" ) ? _FileMap["RANS_thermal"]:"default";
+    int RANS_thermal = ::ThermTurbModelMap.at ( ThermModel );
+    switch ( RANS_thermal ) {
+    case default_therm:
+        _ehmod = _khlog = _whlog = 0;
+        break;
+    case nagano_keT:
+        _ehmod = 1;
+        _khlog = _whlog = 0;
+        break;
+    case nagano_kwT:
+        _ehmod = _khlog = _whlog = 0;
+        break;
+    case nagano_logT:
+        _ehmod = 0;
+        _khlog = _whlog = 1;
+        break;
+    default:
+        std::cout<<"\033[1;31m\n=====================================================\n"
+        <<"   TURB_UTILS: unknown thermal turbulence model "<<_FileMap["RANS_thermal"]
+        <<"\n=====================================================\n\033[0m";
+        abort();
+        break;
+    }
 
-
-    _khlog = FTE%10;
-    _whlog = STE%10;
 
     _IsFilled = true;
 
@@ -281,6 +167,9 @@ void TurbUtils::FillParameters() {
     if ( _FileMap ["utau"]!="" ) _InputUtau = stod ( _FileMap["utau"] );
     else _InputUtau = -1; // if negative then profiles will be calculated with default utau method
 
+    if ( _FileMap ["WallFunction"]!="" ) _WallFunction = stoi ( _FileMap["WallFunction"] );
+    else _WallFunction = 0; // if negative then profiles will be calculated with default utau method
+    
     if ( __Proc==0 ) {
         std::cerr <<" \n =====================================================\n";
         std::cerr <<"  TURB UTILS PARAMETERS   \n";
@@ -300,6 +189,7 @@ void TurbUtils::FillParameters() {
         std::cerr <<"   _wlog        "<<_wlog   <<std::endl;
         std::cerr <<"   _emod        "<<_emod  <<std::endl;
         std::cerr <<"   _numod       "<<_numod  <<std::endl;
+	std::cerr <<"   _WallFunction       "<<_WallFunction  <<std::endl;
         std::cerr <<" =====================================================\n";
     }
 
@@ -373,10 +263,6 @@ void TurbUtils::FillParameters ( double wall_dist,
     YesNo["yes"] = true;
     YesNo["no"]  = false;
 
-    _SolveNS   = YesNo[SolveEqs[0]];
-    _SolveT    = YesNo[SolveEqs[1]];
-    _SolveTBK  = YesNo[SolveEqs[2]];
-    _SolveTTBK = YesNo[SolveEqs[3]];
 
     _Durbin    = YesNo[Constrain[0]];
     _YapCorr   = YesNo[Constrain[1]];
@@ -399,7 +285,6 @@ void TurbUtils::FillModelMap() {
     _DynamicModel["wilcox_nut"]    = wilcox_nut  ;
     _DynamicModel["wilcox_w"]      = wilcox_w    ;
     _DynamicModel["wilcox_logw"]   = wilcox_logw ;
-
 
     _DynamicModel["nagano_ke"]  =     nagano_ke  ;
     _DynamicModel["nagano_kw"]  =     nagano_kw  ;
@@ -437,7 +322,7 @@ double TurbUtils::CalcUtau ( double vel_bound, double dist ) {
 
     ulog = 0.;
     ulold = 11.6/vel_bound;
-
+    umusk = 100.*ulold;
     // Calculation of utau through the linear relation
     ulin = sqrt ( vel_bound * _nu / dist );
     yp = ulin*dist/_nu;
@@ -495,138 +380,84 @@ double TurbUtils::Musker ( double dist, double utau ) {
     return vel;
 }
 
-void TurbUtils::CalcMuTurb (
-    MEDCoupling::MEDCouplingFieldDouble * FirstDynVar,
-    MEDCoupling::MEDCouplingFieldDouble * SecDynVar,
-    int Level
-) { // CALCULATION OF MU_TURB ON WHOLE PROC DOMAIN
-
-    if ( _NodeWallDist.size() < Level ) {
-        std::cout<<"TurbUtils::CalcMuTurb() empty _NodeWallDist! \n";
-        abort();
-    }
-    const int NNodes = _NodeWallDist[Level]->getMesh()->getNumberOfNodes();
-
-    double *Kappa  = const_cast<double*> ( FirstDynVar->getArray()->getPointer() );
-    double *Omega  = const_cast<double*> ( SecDynVar->getArray()->getPointer() );
-    double *MuTurb = const_cast<double*> ( _MuTurbField[Level]->getArray()->getPointer() );
-    double *Dist   = const_cast<double*> ( _NodeWallDist[Level]->getArray()->getPointer() );
-//
-    double KappaAndOmega[2];
-    double dist;
-
-    for ( int l=0; l<NNodes; l++ ) {
-        KappaAndOmega[0] = Kappa[l];
-        KappaAndOmega[1] = Omega[l];
-        dist             = Dist[l];
-        MuTurb[l] = CalcMuTurb ( KappaAndOmega, dist );
-    }
-
-    Kappa  = NULL;
-    Omega  = NULL;
-    MuTurb = NULL;
-    Dist   = NULL;
-
-    if ( Level > 0 ) {
-        double *MuTurb = const_cast<double*> ( _MuTurbField[Level]->getArray()->getPointer() );
-        for ( int lev=0; lev<Level; lev++ ) {
-            double *MuTurbLev = const_cast<double*> ( _MuTurbField[lev]->getArray()->getPointer() );
-            double *NodeMap = const_cast<double*> ( _NodeMap[lev]->getArray()->getPointer() );
-
-            for ( int i=0; i<_MuTurbField[lev]->getMesh()->getNumberOfNodes(); i++ ) {
-                MuTurbLev[i] = MuTurb[_MgToMed[ ( int ) NodeMap[i]]];
-            }
-            MuTurbLev = NULL;
-            NodeMap   = NULL;
-        }
-        MuTurb = NULL;
-    }
-
-
-    return;
-}
-
-
-
 double TurbUtils::CalcMuTurb ( double KappaAndOmega[], double dist, double vel_sp ) {
 
-    if ( _numod ) {
+    if ( _numod==1 ) {
         _MuTurb = KappaAndOmega[0]/_nu;
     } else { // WILCOX AND NAGANO TURBULENCE MODELS - NOT FOR NUT EQUATION
-        double kappa, omega, epsilon;
-        {
-            // REAL K, OMEGA AND EPSILON CALCULATION
-            kappa = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
-            kappa = ( kappa>1.e-20 ) ? kappa:1.e-20;
-            if ( _emod ) {
-                epsilon = KappaAndOmega[1];
-                omega   = epsilon/ ( kappa*__CMU );
-            } else omega = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
-            omega = ( omega>1.e-20 ) ? omega:1.e-20;
+
+        // REAL K, OMEGA AND EPSILON CALCULATION
+       double kappa  = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
+       double omega  = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
+       double epsilon  = (_emod ==1) ?  KappaAndOmega[1]: omega*kappa * 0.09;
+       
+       kappa    = (kappa > 1.e-10)?    kappa:1.e-10;
+       epsilon  = (epsilon > 1.e-10)?  epsilon:1.e-10;
+       omega    = (omega > 1.e-10)?    omega:1.e-10;
+       
+       if(_emod==1)  omega  = epsilon  / (__CMU * kappa);
+        
+        // EDDY VISCOSITY CALCULATION
+        __Ret   = kappa/ ( _nu*omega );            //  viscosity ratio
+        __Rt    = __Ret/__CMU;                     // turbulent Reynolds number
+        const double Kolm_length = pow(_nu*_nu*_nu/epsilon, 0.25);
+	    __Rd    = dist / Kolm_length;
+        _MuTurb = __Ret;                           // turbulent viscosity ratio
+        if ( _Nagano==1 ) {
+            __fmu   = ( 1.-exp ( -1.*__Rd/14. ) ) * ( 1.-exp ( -1.*__Rd/14. ) );
+            __fcorr = 1. + 5./pow ( __Rt,0.75 ) *exp ( -1.*__Rt*__Rt/40000. );
+	    if(_WallFunction==1) __fmu = 1.;
+            _MuTurb *= __fcorr*__fmu;
+        } else { // fmu and fcorr set to 1 -> in CalcAlphaTurb we calculate nut/__fmu*__fcorr
+            __fmu = 1;
+            __fcorr = 1;
         }
-
-        {
-            // EDDY VISCOSITY CALCULATION
-            __Ret   = kappa/ ( _nu*omega );            //  viscosity ratio
-            __Rt    = __Ret/__CMU;                     // turbulent Reynolds number
-            __Rd    = dist*sqrt ( kappa/sqrt ( __Rt ) ) /_nu;
-            _MuTurb = __Ret;                           // turbulent viscosity ratio
-            if ( _Nagano ) {
-                __fmu   = ( 1.-exp ( -1.*__Rd/14. ) ) * ( 1.-exp ( -1.*__Rd/14. ) );
-                __fcorr = 1. + 5./pow ( __Rt,0.75 ) *exp ( -1.*__Rt*__Rt/40000. );
-                _MuTurb *= __fcorr*__fmu;
-            } else { // fmu and fcorr set to 1 -> in CalcAlphaTurb we calculate nut/__fmu*__fcorr
-                __fmu = 1;
-                __fcorr = 1;
-            }
-        }
-
-//         std::cout<<kappa<<"  "<<KappaAndOmega[1]<<"  "<<kappa*kappa/epsilon<<"   "<<_MuTurb*_nu<<std::endl;
-
-//     if(_Durbin){
-//      if (_MuTurb > kappa/(sqrt(vel_sp + 1.e-10)*_nu)) {
-//         _MuTurb = kappa/(sqrt(vel_sp + 1.e-10)*_nu);
-//      }
-//     if (muturb > sqrt(2./3.)*kappa/(sqrt(0.5*vel_sp)*_nu)) muturb = sqrt(2./3.)*kappa/(sqrt(0.5*vel_sp)*_nu);  // 3D
-//     }
     }
-//      std::cout<<_MuTurb*_nu<<"  "<<KappaAndOmega[0]*KappaAndOmega[0]/KappaAndOmega[1]<<"  "<<dist<<std::endl;
     return _MuTurb;
 }
 
 void TurbUtils::CalcDynTurSourceAndDiss ( double KappaAndOmega[], double dist, double vel_sp ,double &muturb, double source[2], double diss[2], double div_g ) {
     // REAL KAPPA, OMEGA AND EPSILON
-    double kappa,omega,epsilon;
-    kappa =  omega = epsilon =1.;
-    kappa = KappaAndOmega[0];
-    omega = KappaAndOmega[1];
-    epsilon = KappaAndOmega[1];
+    double kappa  = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
+    double omega  = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
+    double epsilon  = (_emod ==1) ?  KappaAndOmega[1]: omega*kappa * 0.09;
 
-    if ( !_numod ) kappa = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
-    if ( !_emod )  omega = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
+    kappa    = (kappa > 1.e-10)?    kappa:1.e-10;
+    epsilon  = (epsilon > 1.e-10)?  epsilon:1.e-10;
+    omega    = (omega > 1.e-10)?    omega:1.e-10;
 
-    kappa = ( kappa>1.e-20 ) ? kappa:1.e-20;
-    omega = ( omega>1.e-20 ) ? omega:1.e-20;
-    if ( _emod ) epsilon = ( epsilon>1.e-20 ) ? epsilon:1.e-20;
-
+    if(_emod==1)  omega  = epsilon  / (__CMU * kappa);
     const double kCorr = ( _klog/kappa + ( 1.-_klog ) );
     const double wCorr = ( _wlog/omega + ( 1.-_wlog ) );
 
     // Values of __Rt and __Rd are assigned within TurbUtils::CalcMuTurb
     muturb =  CalcMuTurb ( KappaAndOmega,dist );
     double prod_k = 0.5 * _nu * muturb * vel_sp /*- 2.*kappa*div_g/3.*/;
-    prod_k = min ( prod_k, sqrt ( 8./3. ) *kappa*sqrt ( vel_sp ) ); // k production limitation -> Park
+    if ( _Park==1 )
+        prod_k = min ( prod_k, sqrt ( 8./3. ) *kappa*sqrt ( vel_sp ) ); // k production limitation -> Park
 
-    if ( _Nagano ) { // NAGANO TURBULENCE MODEL-----------------------------------------------------------------------
-        const double f_exp  = ( 1.-exp ( -1.*__Rd/ ( 3.1 ) ) ) * ( 1.-exp ( -1.*__Rd/ ( 3.1 ) ) ) * ( 1.- 0.3*exp ( -1.*__Rt*__Rt/42.25 ) );
-        if ( _emod ) { // KAPPA - EPSILON TURBULENCE MODEL
-            diss[0]   = __CMU*epsilon/kappa;      // correggere
-            diss[1]   = epsilon*__C20*f_exp/kappa;
+    if ( _Nagano==1 ) { // NAGANO TURBULENCE MODEL-----------------------------------------------------------------------
+        double f_exp  = ( 1.-exp ( -1.*__Rd/ ( 3.1 ) ) ) * ( 1.-exp ( -1.*__Rd/ ( 3.1 ) ) ) * ( 1.- 0.3*exp ( -1.*__Rt*__Rt/42.25 ) );
+
+
+        if ( _emod==1 ) { // KAPPA - EPSILON TURBULENCE MODEL
+
+            diss[0]   = epsilon;                      // -> it can be set explicit in matrix
+            diss[1]   = epsilon*epsilon*__C20*f_exp/kappa;    // -> it can be set explicit in matrix
             source[0] = prod_k*kCorr;
-            source[1] = __C10*prod_k*epsilon/kappa;
+            source[1] = __C10*prod_k*epsilon/kappa;            
+            
+            if ( _YapCorr==1 ) {
+                double l_epsilon = pow ( __CMU,0.75 ) * 0.41*dist;
+                double p1 = 0.83 * epsilon*epsilon/kappa;
+                double p2 = ( kappa*sqrt ( kappa ) / ( epsilon * l_epsilon ) - 1 );
+                double p3 = ( kappa*sqrt ( kappa ) / ( epsilon * l_epsilon ) ) * ( kappa*sqrt ( kappa ) / ( epsilon * l_epsilon ) );
+                double yap_term = p1*p2*p3;
+                source[1] += max ( yap_term,0. );
+            }
         } else { // KAPPA - OMEGA AND LOG FORMULATION TURBULENCE MODEL
             diss[0]   = __CMU*omega;
-            diss[1]   = __CMU*omega* ( __C20*f_exp -1 );
+            diss[1]   = __CMU*omega* ( __C20*f_exp -1);
             source[0] = prod_k*kCorr;
             source[1] = ( __C10-1. ) *prod_k*omega*wCorr/kappa;
             if ( _YapCorr==1 ) {
@@ -635,9 +466,9 @@ void TurbUtils::CalcDynTurSourceAndDiss ( double KappaAndOmega[], double dist, d
             }
         }
     }//----------------------------------------------------------------------------------------------------------
-    if ( _Wilcox ) { // WILCOX TURBULENCE MODEL-----------------------------------------------------------------------
+    if ( _Wilcox==1 ) { // WILCOX TURBULENCE MODEL-----------------------------------------------------------------------
         // FIRST EQUATION SOURCE AND DISSIPATION
-        if ( _numod ) { // NUT EQUATION
+        if ( _numod==1 ) { // NUT EQUATION
             diss[0]   = __BETAN*omega;
             source[0] = 0.5*vel_sp*__AN/omega;
         } else { // KAPPA AND LOG(KAPPA) EQUATION
@@ -651,67 +482,34 @@ void TurbUtils::CalcDynTurSourceAndDiss ( double KappaAndOmega[], double dist, d
     return;
 }
 
-
-
-void TurbUtils::CalcAlphaTurb (
-    MEDCoupling::MEDCouplingFieldDouble * FirstDynVar,
-    MEDCoupling::MEDCouplingFieldDouble * SecDynVar,
-    MEDCoupling::MEDCouplingFieldDouble * FirstThermVar,
-    MEDCoupling::MEDCouplingFieldDouble * SecThermVar,
-    int Level ) { // CALCULATION OF MU_TURB ON WHOLE PROC DOMAIN
-
-    if ( _NodeWallDist.size() < Level ) {
-        std::cout<<"TurbUtils::CalcMuTurb() empty _NodeWallDist! \n";
-        abort();
-    }
-    const int NNodes = _NodeWallDist[Level]->getMesh()->getNumberOfNodes();
-
-    double *Kappa  = const_cast<double*> ( FirstDynVar->getArray()->getPointer() );
-    double *Omega  = const_cast<double*> ( SecDynVar->getArray()->getPointer() );
-    double *KappaT  = const_cast<double*> ( FirstThermVar->getArray()->getPointer() );
-    double *OmegaT  = const_cast<double*> ( SecThermVar->getArray()->getPointer() );
-    double *AlphaTurb = const_cast<double*> ( _AlphaTurbField[Level]->getArray()->getPointer() );
-    double *Dist   = const_cast<double*> ( _NodeWallDist[Level]->getArray()->getPointer() );
-//
-    double KappaAndOmega[2];
-    double KappaAndOmegaT[2];
-    double dist;
-
-    for ( int l=0; l<NNodes; l++ ) {
-        KappaAndOmega[0] = Kappa[l];
-        KappaAndOmega[1] = Omega[l];
-        KappaAndOmegaT[0] = KappaT[l];
-        KappaAndOmegaT[1] = OmegaT[l];
-        dist             = Dist[l];
-        AlphaTurb[l] = CalcAlphaTurb ( KappaAndOmega,KappaAndOmegaT, dist );
-    }
-
-    Kappa  = NULL;
-    Omega  = NULL;
-    AlphaTurb = NULL;
-    Dist   = NULL;
-
-    if ( Level > 0 ) {
-        double *AlphaTurb = const_cast<double*> ( _AlphaTurbField[Level]->getArray()->getPointer() );
-        for ( int lev=0; lev<Level; lev++ ) {
-            double *AlphaTurbLev = const_cast<double*> ( _AlphaTurbField[lev]->getArray()->getPointer() );
-            double *NodeMap = const_cast<double*> ( _NodeMap[lev]->getArray()->getPointer() );
-            for ( int i=0; i<_AlphaTurbField[lev]->getMesh()->getNumberOfNodes(); i++ ) {
-                AlphaTurbLev[i] = AlphaTurb[_MgToMed[ ( int ) NodeMap[i]]];
-            }
-            AlphaTurbLev = NULL;
-            NodeMap   = NULL;
-        }
-        AlphaTurb = NULL;
-    }
-    return;
+double TurbUtils::KaysPrt (double KappaAndOmega[], double dist){
+    double nut = CalcMuTurb ( KappaAndOmega, dist );
+    const double kays_prt = (0.85 + 0.7*__IPr/(nut + 1.e-10));
+    return kays_prt;
 }
+
 
 double TurbUtils::CalcAlphaTurb ( double KappaAndOmega[], double TKappaAndOmega[], double dist ) {
     // REAL OMEGA AND OMEGAT
+    double kappa  = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
     double omega  = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
+    double kappaT = ( 1.-_khlog ) * TKappaAndOmega[0] + _khlog*exp ( _khlog*TKappaAndOmega[0] );
     double omegaT = ( 1.-_whlog ) * TKappaAndOmega[1] + _whlog*exp ( _whlog*TKappaAndOmega[1] );
 
+    double epsilon  = (_emod ==1) ?  KappaAndOmega[1]: omega*kappa * 0.09;
+    double epsilonT = (_ehmod==1) ? TKappaAndOmega[1]: omegaT*kappaT * 0.09;
+
+    kappa    = (kappa > 1.e-10)?    kappa:1.e-10;
+    epsilon  = (epsilon > 1.e-10)?  epsilon:1.e-10;
+    omega    = (omega > 1.e-10)?    omega:1.e-10;
+    kappaT   = (kappaT > 1.e-10)?   kappaT:1.e-10;
+    epsilonT = (epsilonT > 1.e-10)? epsilonT:1.e-10;
+    omegaT   = (omegaT > 1.e-10)?   omegaT:1.e-10;
+
+    if(_emod==1)  omega  = epsilon  / (__CMU * kappa);
+    if(_ehmod==1) omegaT = epsilonT / (__CMU * kappaT);
+    
+       
     // MU_TURB calculation
     // __fmu __fcorr __Ret __Rt __Rd
     double nut = CalcMuTurb ( KappaAndOmega, dist );
@@ -721,12 +519,16 @@ double TurbUtils::CalcAlphaTurb ( double KappaAndOmega[], double TKappaAndOmega[
     __F2at    = exp ( -4.e-6*__Rt*__Rt );
     __F2bt    = exp ( -2.e-5*__Rt*__Rt );
 
+    const double InvKaysPrt = 1./(KaysPrt(KappaAndOmega, dist));
+
     const double  IPrdlT = ( 0.1/__CMU ) *__F1t* (
                                __Prdl_inf                                                   /* Asymptotic contribution */
                                + 2.*__rT/ ( __rT+0.3 ) *__F2at                              /* Contribution far from wall */
                                + 1.3*__IPr*sqrt ( 2.*__rT ) / ( pow ( __Rt,0.75 ) ) *__F2bt /* Near Wall contribution */
                            );
-    const double alphaT = nut * IPrdlT; //*_nu
+    double alphaT = nut * IPrdlT; //*_nu
+//     alphaT = nut * InvKaysPrt;
+    
     return alphaT;
 }
 
@@ -740,47 +542,77 @@ void TurbUtils::CalcThermTurSourceAndDiss ( double KappaAndOmega[], // Dynamic T
         double diss[],            // Dissipation terms
         double meccterm[] ) {     // Mechanical contribution
 
-    // REAL K AND OMEGA, MECHANICAL AND THERMAL
+	  //  to try
+	  //  
+	  //  cp1 = 1.7, cd1 = 2, cd2 = 0.9, cp2 = 0.93
+	  //
+	  
     double kappa  = ( 1.-_klog ) * KappaAndOmega[0] + _klog*exp ( _klog*KappaAndOmega[0] );
     double omega  = ( 1.-_wlog ) * KappaAndOmega[1] + _wlog*exp ( _wlog*KappaAndOmega[1] );
     double kappaT = ( 1.-_khlog ) * TKappaAndOmega[0] + _khlog*exp ( _khlog*TKappaAndOmega[0] );
     double omegaT = ( 1.-_whlog ) * TKappaAndOmega[1] + _whlog*exp ( _whlog*TKappaAndOmega[1] );
 
-    kappa = ( kappa>0 ) ? kappa:1.e-10;
+    double epsilon  = (_emod ==1) ?  KappaAndOmega[1]: omega*kappa * 0.09;
+    double epsilonT = (_ehmod==1) ? TKappaAndOmega[1]: omegaT*kappaT * 0.09;
 
-    // ALPHA_TURB CALCULATION
-    // __fmu __fcorr __Ret __Rt __Rd __rT __F1t __F2at __F2bt
+    kappa    = (kappa > 1.e-10)?    kappa:1.e-10;
+    epsilon  = (epsilon > 1.e-10)?  epsilon:1.e-10;
+    omega    = (omega > 1.e-10)?    omega:1.e-10;
+    kappaT   = (kappaT > 1.e-10)?   kappaT:1.e-10;
+    epsilonT = (epsilonT > 1.e-10)? epsilonT:1.e-10;
+    omegaT   = (omegaT > 1.e-10)?   omegaT:1.e-10;
+
+    if(_emod==1)  omega  = epsilon  / (__CMU * kappa);
+    if(_ehmod==1) omegaT = epsilonT / (__CMU * kappaT);        
+            
+
     alphaturb = CalcAlphaTurb ( KappaAndOmega, TKappaAndOmega, dist );
-    const double TkCorr = ( ( 1.-_khlog ) + _khlog/kappaT );
-    const double TwCorr = ( ( 1.-_whlog ) + _whlog/omegaT );
-    const double f_exp  = ( __CD2* ( 1.-0.3*exp ( -__Rt*__Rt/42.25 ) )-1. ) * ( 1. - exp ( -__Rd/5.7 ) ) * ( 1.-exp ( -__Rd/5.7 ) );
-
+    
+    double f_exp  = ( __CD2 * ( 1.-0.3*exp ( -__Rt*__Rt/42.25 ) )-1. ) * ( 1. - exp ( -__Rd/5.7 ) ) * ( 1.-exp ( -__Rd/5.7 ) );
+    const double fd1    = ( 1. - exp ( -__Rd ) ) * ( 1.-exp ( -__Rd) );
     double muturb = __fmu*__fcorr*kappa/omega;
     if ( _Durbin==1 ) {
         if ( muturb > kappa/ ( sqrt ( sp ) *_nu ) ) {
             muturb = kappa/ ( sqrt ( sp ) *_nu );
         }
     }
-
+    
     const double prod_k = 0.5*sp*muturb;
     const double prod_kt = _nu*alphaturb*st;
 
-    // THERMAL SOURCE
-    source[0] = prod_kt*TkCorr;
-    source[1] = ( __CP1-1. ) *prod_kt*TwCorr*omegaT/kappaT;
+    if ( _ehmod==0 ) {// THERMAL KAPPA AND OMEGA TURBULENCE MODEL
 
-    // THERMAL DISSIPATION
-    diss[0]   = __CMU*omegaT;
-    diss[1]   = ( __CD1-1. ) *__CMU*omegaT;
+        const double TkCorr = ( ( 1.-_khlog ) + _khlog/kappaT );
+        const double TwCorr = ( ( 1.-_whlog ) + _whlog/omegaT );
 
-    // MECHANICAL DISSIPATION AND SOURCE
-    meccterm[0]  = f_exp*__CMU*omega;                      // DISSIPATION
-    meccterm[1]  = __CP2*prod_k*omegaT*TwCorr/kappa;       // SOURCE
+        // THERMAL SOURCE
+        source[0] = prod_kt*TkCorr;
+        source[1] = ( __CP1-1. ) *prod_kt*TwCorr*omegaT/kappaT; //( __CP1-1. )
 
-    if ( _YapCorr==1 ) {
-        const double yap_term = 0.83*kappa*kappa* ( sqrt ( kappa ) / ( __CMU*omega*2.44*dist )-1. ) / ( __CMU * ( _wlog + ( 1.-_wlog ) *omega ) );
-        meccterm[1]  += max ( yap_term,0. );
+        // THERMAL DISSIPATION
+        diss[0]   = __CMU*omegaT*kappaT*TkCorr;
+        diss[1]   = ( __CD1-1. ) *__CMU*omegaT*omegaT*TwCorr;   // ( __CD1-1. )
+
+        // MECHANICAL DISSIPATION AND SOURCE
+        meccterm[0]  = f_exp*__CMU*omega*omegaT*TwCorr;                       // DISSIPATION
+        meccterm[1]  = __CP2*prod_k*omegaT*TwCorr/kappa;       // SOURCE     __CP2
+        
+    } else {// THERMAL KAPPA AND EPSILON TURBULENCE MODEL
+
+        // THERMAL SOURCE
+        source[0] = prod_kt;
+        source[1] = __CP1 *prod_kt*epsilonT/kappaT;
+
+        // THERMAL DISSIPATION
+        diss[0]   = epsilonT;
+        diss[1]   = __CD1 *epsilonT*epsilonT/kappaT;
+
+        // MECHANICAL DISSIPATION AND SOURCE
+        meccterm[0]  = f_exp*__CMU*omega*epsilonT;          // DISSIPATION
+        meccterm[1]  = __CP2*prod_k*epsilonT/kappa;       // SOURCE
     }
+
+
     return;
 }
 
@@ -796,9 +628,9 @@ void TurbUtils::DynTurInitValues ( double & kappa, double & omega, double WallDi
         const double w_in     = sqrt ( k_in ) /len;
         const double n_in    = k_in/w_in;
 
-        if ( _numod ) kappa = n_in;
+        if ( _numod==1 ) kappa = n_in;
         else          kappa = ( 1-_klog ) *k_in + _klog*log ( k_in );
-        if ( _emod ) omega = e_in;
+        if ( _emod==1 ) omega = e_in;
         else         omega = ( 1-_wlog ) *w_in + _wlog*log ( w_in );
     } else {
         // FIRST MESH POINT ASSUMED TO BE AT y+ = 10.
@@ -833,10 +665,10 @@ void TurbUtils::DynTurInitValues ( double & kappa, double & omega, double WallDi
 //     if(k < exp(-11.)) k = exp(-11.);
 //     w = w_log/3.;
 
-    if ( _numod ) kappa = nut;
+    if ( _numod==1 ) kappa = nut;
     else  kappa = ( 1-_klog ) *k + _klog*log ( k );
-
-    if ( _emod ) omega = Utau*Utau*Utau/ ( 0.41*WD );
+//     if ( _emod==1 ) omega = Utau*Utau*Utau/ ( 0.41*WD );
+    if ( _emod==1 ) omega = __CMU * w * k;
     else omega = ( 1-_wlog ) *w + _wlog*log ( w );
 
     return;
@@ -847,11 +679,14 @@ void TurbUtils::TherTurInitValues ( double& kappaT, double& omegaT, double WallD
     double kappa, omega, yp;
     DynTurInitValues ( kappa, omega, WallDist, FlatProfile );
 
+    double real_k, real_w;
+    real_k = ( 1-_klog ) *kappa + _klog*exp ( _klog*kappa );
+    real_w = ( 1-_wlog ) *omega + _wlog*exp ( _wlog*omega );
     if ( FlatProfile ) {
-        kappaT = kappa* ( _alpha/_nu );
-        omegaT = omega* ( _alpha/_nu );
-        kappaT = kappa;
-        omegaT = omega;
+        kappaT = real_k* ( _alpha/_nu );
+        omegaT = real_w* ( _alpha/_nu );
+        kappaT = real_k;
+        omegaT = real_w;
 
     } else {
         // FIRST MESH POINT ASSUMED TO BE AT y+ = 10.
@@ -860,17 +695,20 @@ void TurbUtils::TherTurInitValues ( double& kappaT, double& omegaT, double WallD
         yp     = utau*WallDist/_nu;
 
         double wh1, wh2;
-        wh2    = omega*sqrt ( _alpha/_nu );
+        wh2    = real_w*sqrt ( _alpha/_nu );
         wh1    = 2.*_alpha/ ( __CMU*WallDist*WallDist );
         omegaT     = sqrt ( wh1*wh2 );
-        omegaT     = omega*4;                                   // Assumed value of R = omega/omegaT = 0.25
-        kappaT     = kappa*T_tau*T_tau/ ( utau*utau*_alpha/_nu );
+        omegaT     = real_w*4;                                   // Assumed value of R = omega/omegaT = 0.25
+        kappaT     = real_k*T_tau*T_tau/ ( utau*utau*_alpha/_nu );
         const double yPr = yp*_nu/_alpha;
         const double khlin = 0.0001*pow ( yPr,1.5 );
         const double khlog = 1./ ( yPr*yPr*yPr );
         kappaT     = khlin*khlog/ ( khlin+khlog );
     }
 
+    if ( _ehmod==1 ) omegaT = kappaT * omegaT * __CMU;          // epsilon
+    else omegaT = ( 1-_whlog ) * omegaT + _whlog * log ( omegaT ); // omega or log_omega
+    kappaT = ( 1-_khlog ) * kappaT + _khlog * log ( kappaT );   // kappa or log_kappa
     return;
 }
 
@@ -883,12 +721,6 @@ void TurbUtils::PrintStatus ( std::vector<std::string>TurbModels ) {
     output.open ( "SimulationSpecs.txt" );
     output << " MESSAGE PRINTED BY TURBUTILS CLASS "<<endl;
     output << endl << " TurbUtils filled: "<<_IsFilled<<endl;
-    output << "---------------------------------------" <<endl;
-    output << " Solved Equations: "<<endl;
-    output << "\t Navier Stokes:        "<<_SolveNS<<endl;
-    output << "\t Temperature:          "<<_SolveT<<endl;
-    output << "\t Dynamical Turbulence: "<<_SolveTBK<<endl;
-    output << "\t Thermal Turbulence:   "<<_SolveTTBK<<endl;
     output << "---------------------------------------" <<endl;
     output << " Turbulence Models: "<<endl;
     output << "\t Dynamic, first equation:  "<<TurbModels[0]<<endl;
@@ -915,19 +747,16 @@ void TurbUtils::read_file() { // READING Tparameter.in =========================
     std::ostringstream file, file1, file2;
     std::vector<std::string> FILES;
 
-    if(NUM_MESH>1)
-    {
-    file   <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/DATA"<< std::to_string(_MeshID) <<"/Turbulence.in";
-    file1  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/DATA"<<std::to_string(_MeshID)<<"/GeometrySettings.in";
-    file2  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/DATA"<<std::to_string(_MeshID)<<"/MaterialProperties.in";
+    if ( NUM_MESH>1 ) {
+        file   <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( _MeshID ) <<"/Turbulence.in";
+        file1  <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( _MeshID ) <<"/GeometrySettings.in";
+        file2  <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( _MeshID ) <<"/MaterialProperties.in";
+    } else {
+        file   <<getenv ( "APP_PATH" ) <<"/DATA/Turbulence.in";
+        file1  <<getenv ( "APP_PATH" ) <<"/DATA/GeometrySettings.in";
+        file2  <<getenv ( "APP_PATH" ) <<"/DATA/MaterialProperties.in";
     }
-    else
-    {
-    file   <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/Turbulence.in";
-    file1  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/GeometrySettings.in";
-    file2  <<getenv ( "FEMUS_DIR" ) <<"/USER_APPL/"<<getenv ( "FM_MYAPP" ) <<"/DATA/MaterialProperties.in";
-    }
-    
+
     FILES.push_back ( file1.str() );
     FILES.push_back ( file.str() );
     FILES.push_back ( file2.str() );
@@ -980,113 +809,6 @@ void TurbUtils::print_par() {
 }
 
 
-void TurbUtils::SetMuTurbFieldAtLevel ( int Level, MEDCoupling::MEDCouplingFieldDouble * MuTurb ) {
-    if ( _MuTurbField.size() >Level ) {
-        _MuTurbField[Level]->setArray ( MuTurb->getArray() );
-    }
-
-    if ( Level > 0 ) {
-        double *MuTurb = const_cast<double*> ( _MuTurbField[Level]->getArray()->getPointer() );
-        for ( int lev=0; lev<Level; lev++ ) {
-            double *MuTurbLev = const_cast<double*> ( _MuTurbField[lev]->getArray()->getPointer() );
-            double *NodeMap = const_cast<double*> ( _NodeMap[lev]->getArray()->getPointer() );
-
-            for ( int i=0; i<_MuTurbField[lev]->getMesh()->getNumberOfNodes(); i++ ) {
-                MuTurbLev[i] = MuTurb[_MgToMed[ ( int ) NodeMap[i]]];
-            }
-            MuTurbLev = NULL;
-            NodeMap   = NULL;
-        }
-        MuTurb = NULL;
-    }
-    return;
-};
-
-void TurbUtils::SetAlphaTurbFieldAtLevel ( int Level, MEDCoupling::MEDCouplingFieldDouble * AlphaTurb ) {
-    if ( _AlphaTurbField.size() >Level ) {
-        _AlphaTurbField[Level]->setArray ( AlphaTurb->getArray() );
-    }
-
-    if ( Level > 0 ) {
-        double *AlphaTurb = const_cast<double*> ( _AlphaTurbField[Level]->getArray()->getPointer() );
-        for ( int lev=0; lev<Level; lev++ ) {
-            double *AlphaTurbLev = const_cast<double*> ( _AlphaTurbField[lev]->getArray()->getPointer() );
-            double *NodeMap = const_cast<double*> ( _NodeMap[lev]->getArray()->getPointer() );
-
-            for ( int i=0; i<_AlphaTurbField[lev]->getMesh()->getNumberOfNodes(); i++ ) {
-                AlphaTurbLev[i] = AlphaTurb[_MgToMed[ ( int ) NodeMap[i]]];
-            }
-            AlphaTurbLev = NULL;
-            NodeMap   = NULL;
-        }
-        AlphaTurb = NULL;
-    }
-    return;
-};
-
-void TurbUtils::SetWallDistAtLevel ( int Level, MEDCoupling::MEDCouplingFieldDouble * WallDist ) {
-    if ( _NodeWallDist.size() >Level ) {
-        _NodeWallDist[Level]->setArray ( WallDist->getArray() );
-    }
-
-    if ( Level > 0 ) {
-        double *FinerWallDist = const_cast<double*> ( _NodeWallDist[Level]->getArray()->getPointer() );
-        for ( int lev=0; lev<Level; lev++ ) {
-            double *CoarseWallDist = const_cast<double*> ( _NodeWallDist[lev]->getArray()->getPointer() );
-            double *NodeMap = const_cast<double*> ( _NodeMap[lev]->getArray()->getPointer() );
-
-            for ( int i=0; i<_NodeWallDist[lev]->getMesh()->getNumberOfNodes(); i++ ) {
-                CoarseWallDist[i] = FinerWallDist[_MgToMed[ ( int ) NodeMap[i]]];
-            }
-            CoarseWallDist = NULL;
-            NodeMap   = NULL;
-        }
-        FinerWallDist = NULL;
-    }
-    return;
-};
-
-void TurbUtils::GetLevelElemNodeWallDist (
-    int iel,
-    int Level,
-    double WallDist[]
-) {
-    std::vector<int> NodeConn;
-    _NodeWallDist[Level]->getMesh()->getNodeIdsOfCell ( iel,NodeConn );
-    int dim = _NodeWallDist[Level]->getMesh()->getMeshDimension();
-    int nodes = NodeConn.size();
-    for ( int f=0; f<nodes; f++ ) WallDist[_CanElemMap[dim-2][f]] = _NodeWallDist[Level]->getIJ ( NodeConn[f],0 );
-    return;
-}
-
-
-void TurbUtils::GetLevelElemMuTurb (
-    int iel,
-    int Level,
-    double WallDist[]
-) {
-    std::vector<int> NodeConn;
-    _MuTurbField[Level]->getMesh()->getNodeIdsOfCell ( iel,NodeConn );
-    int dim = _MuTurbField[Level]->getMesh()->getMeshDimension();
-    int nodes = NodeConn.size();
-    for ( int f=0; f<nodes; f++ ) WallDist[_CanElemMap[dim-2][f]] = _MuTurbField[Level]->getIJ ( NodeConn[f],0 );
-    return;
-}
-
-
-void TurbUtils::GetLevelElemAlphaTurb (
-    int iel,
-    int Level,
-    double WallDist[]
-) {
-    std::vector<int> NodeConn;
-    _AlphaTurbField[Level]->getMesh()->getNodeIdsOfCell ( iel,NodeConn );
-    int dim = _AlphaTurbField[Level]->getMesh()->getMeshDimension();
-    int nodes = NodeConn.size();
-    for ( int f=0; f<nodes; f++ ) WallDist[_CanElemMap[dim-2][f]] = _AlphaTurbField[Level]->getIJ ( NodeConn[f],0 );
-    return;
-}
-
 void TurbUtils::CalcWallFuncKappaAndOmega ( double KappaAndOmega[], int NodeOnBound, double WallDist, double utau ) {
     double k,w;
     double wd = WallDist + 1.e-10;
@@ -1107,12 +829,12 @@ void TurbUtils::CalcWallFuncKappaAndOmega ( double KappaAndOmega[], int NodeOnBo
     double klin = utau*utau* ( 0.041*yplus*yplus );
     double klog = utau*utau/0.3;
     k = 1/ ( 1/klin + 1/klog );
-    if ( _Nagano ) {
-        if ( _nu )   KappaAndOmega[0] = Mu*_nu;
+    if ( _Nagano==1 ) {
+        if ( _numod==1 )   KappaAndOmega[0] = Mu*_nu;
         else      KappaAndOmega[0] = ( 1.-_klog ) *k + _klog*log ( k );
-        if ( _emod ) KappaAndOmega[1] = __CMU*k*w;
+        if ( _emod==1 ) KappaAndOmega[1] = __CMU*k*w;
         else      KappaAndOmega[1] = ( 1.-_wlog ) *w + _wlog*log ( w );
-    } else if ( _Wilcox ) {
+    } else if ( _Wilcox==1 ) {
         KappaAndOmega[0] = ( 1.-_klog ) *k + _klog*log ( k );
         KappaAndOmega[1] = ( 1.-_wlog ) *w + _wlog*log ( w );
     }
@@ -1140,92 +862,87 @@ void TurbUtils::CalcWallFuncThermalKappaAndOmega ( double KappaAndOmega[], int N
 
     w *= _alpha/_nu;
     k *= _alpha/_nu;
-    if ( _Nagano ) {
-        if ( _nu )   KappaAndOmega[0] = Mu*_nu;
+    if ( _Nagano==1 ) {
+        if ( _numod==1 )   KappaAndOmega[0] = Mu*_nu;
         else      KappaAndOmega[0] = ( 1.-_klog ) *k + _klog*log ( k );
-        if ( _emod ) KappaAndOmega[1] = __CMU*k*w;
+        if ( _emod==1 ) KappaAndOmega[1] = __CMU*k*w;
         else      KappaAndOmega[1] = ( 1.-_wlog ) *w + _wlog*log ( w );
-    } else if ( _Wilcox ) {
+    } else if ( _Wilcox==1 ) {
         KappaAndOmega[0] = ( 1.-_klog ) *k + _klog*log ( k );
         KappaAndOmega[1] = ( 1.-_wlog ) *w + _wlog*log ( w );
     }
     return;
-}
-MEDCoupling::MEDCouplingFieldDouble * TurbUtils::BuildInitTurbField ( int TurbVar ) {
-    MEDCoupling::MEDCouplingFieldDouble * InitField = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
-    MEDCoupling::DataArrayDouble * FieldArray = MEDCoupling::DataArrayDouble::New();
-    const int NumNodes = _NodeMap[__Levels-1]->getMesh()->getNumberOfNodes();
-    FieldArray->alloc ( NumNodes,1 );
-
-    double *NodeDist  = const_cast<double*> ( _NodeWallDist[__Levels-1]->getArray()->getPointer() );
-    double *InitVal  = const_cast<double*> ( FieldArray->getPointer() );
-    const double utau = ( _InputUtau<0 ) ? 0.5*_nu/_BoundWallDist : _InputUtau;
-
-    if ( TurbVar<2 ) {// DYNAMICAL TURBULENCE
-        for ( int i=0; i<NumNodes; i++ ) {
-            double kappa, omega, initial_value[2];
-            DynTurInitValues ( kappa, omega, NodeDist[i] + 1.e-10, utau );
-            if ( _numod ) initial_value[0] = kappa;
-            else initial_value[0] = ( 1.-_klog ) *kappa + _klog*log ( kappa );
-            if ( _emod ) initial_value[0] = omega;
-            else initial_value[1] = ( 1.-_wlog ) *omega + _wlog*log ( omega );
-            InitVal[i] = initial_value[TurbVar];
-        }
-    }
-    InitField->setArray ( FieldArray );
-    InitField->setMesh ( _NodeMap[__Levels-1]->getMesh() );
-    InitField->setName ( "TurbField" );
-//     if ( TurbVar>1 ) {// THERMAL TURBULENCE
-//         for ( int i=0; i<NumNodes; i++ ) {
-//             double kappa, omega, initial_value[2];
-//             DynTurInitValues ( kappa, omega, NodeDist[i] + 1.e-10, utau );
-//             if ( _numod ) initial_value[0] = kappa;
-//             else initial_value[0] = ( 1.-_klog ) *kappa + _klog*log ( kappa );
-//             if ( _emod ) initial_value[0] = omega;
-//             else initial_value[1] = ( 1.-_wlog ) *omega + _wlog*log ( omega );
-//             InitVal[i] = initial_value[TurbVar];
-//         }
-//     }
-
-    return InitField;
 }
 
 
 void TurbUtils::DynTurNearWallValues ( double & kappa, double & omega, double WallDist, double Utau ) {
 
     const double y_plus = WallDist * Utau / _nu;
-  
+
     // omega derivative on cell mid point
     const double w_der_lin = -4.*_nu/ ( 0.09*WallDist*WallDist*WallDist );
-    const double w_der_log = -1.*Utau/ ( sqrt ( 0.09 ) *0.41*WallDist*WallDist );    
+    const double w_der_log = -1.*Utau/ ( sqrt ( 0.09 ) *0.41*WallDist*WallDist );
     double OmegaNearWallDer = ( y_plus<5. ) ? w_der_lin:w_der_log;
     // omega modelled value on cell mid point
     const double wlin  = 2.*_nu/ ( 0.09*WallDist*WallDist );
     const double wlog  = Utau/ ( 0.41 * WallDist * sqrt ( 0.09 ) );
-    double OmegaNearWall = (y_plus<5)? wlin:wlog;
-    // omega linear reconstruction up to wall  
+    double OmegaNearWall = ( y_plus<5 ) ? wlin:wlog;
+    // omega linear reconstruction up to wall
     double OmegaWall = OmegaNearWall - WallDist * OmegaNearWallDer;
-    
+
     // eddy viscosity on cell mid point
     double a = 0.41;
     double c = 0.001093;
-    double den = (a + c*y_plus*y_plus);
-    
+    double den = ( a + c*y_plus*y_plus );
+
     double Mu = _nu/ ( 1./ ( c*y_plus*y_plus*y_plus ) + 1./ ( 0.41*y_plus ) );
-    double MuDer = _nu*c*a * (3.*a*y_plus*y_plus + c*y_plus*y_plus*y_plus*y_plus)/(den*den);
-    double Mu2Der = _nu*c*a *2*y_plus*c* (a*y_plus*y_plus - 3.*c)/(den*den*den);
-    
+    double MuDer = _nu*c*a * ( 3.*a*y_plus*y_plus + c*y_plus*y_plus*y_plus*y_plus ) / ( den*den );
+    double Mu2Der = _nu*c*a *2*y_plus*c* ( a*y_plus*y_plus - 3.*c ) / ( den*den*den );
+
     // eddy viscosity reconstructed up to wall
     double MuWall = Mu - MuDer * y_plus + Mu2Der*y_plus*y_plus;
-    MuWall = (MuWall > 0)? MuWall:1.e-20;    
-    
-    // reconstruction of kappa wall value 
+    MuWall = ( MuWall > 0 ) ? MuWall:1.e-20;
+
+    // reconstruction of kappa wall value
     double KappaWall = MuWall * OmegaWall;
 
-    if ( _numod ) kappa = MuWall;
+    if ( _numod==1 ) kappa = MuWall;
     else  kappa = ( 1-_klog ) *KappaWall + _klog*log ( KappaWall );
 
-    if ( _emod ) omega = __CMU * KappaWall * OmegaWall;
+    if ( _emod==1 ) omega = __CMU * KappaWall * OmegaWall;
     else omega = ( 1-_wlog ) *OmegaNearWall + _wlog*log ( OmegaNearWall );
     return;
+}
+
+void TurbUtils::ThermTurNearWallValues ( double & kappa, double & omega, double WallDist, double Utau ) {
+
+    const double y_plus = WallDist * Utau / _nu;
+
+    // omega derivative on cell mid point
+    const double w_der_lin = -4.*_alpha/ ( 0.09*WallDist*WallDist*WallDist );
+    const double w_der_log = -1.*_alpha*Utau/ ( _nu*sqrt ( 0.09 ) *0.41*WallDist*WallDist );
+    double OmegaNearWallDer = ( y_plus<5. ) ? w_der_lin:w_der_log;
+    // omega modelled value on cell mid point
+    const double wlin  = 2.*_nu/ ( 0.09*WallDist*WallDist );
+    const double wlog  = Utau/ ( 0.41 * WallDist * sqrt ( 0.09 ) );
+    double OmegaNearWall = ( y_plus<5 ) ? wlin:wlog;
+    // omega linear reconstruction up to wall
+    double OmegaWall = OmegaNearWall - WallDist * OmegaNearWallDer;
+
+    double KappaWall = 1.e-8;
+
+    kappa = ( 1-_khlog ) *KappaWall + _khlog*log ( KappaWall );
+
+    if ( _ehmod==1 ) omega = __CMU * KappaWall * OmegaWall;
+    else omega = ( 1-_whlog ) *OmegaNearWall + _whlog*log ( OmegaNearWall );
+    return;
+}
+
+double TurbUtils::IntegrateMusker(double xp){
+  double Integral = 
+       - 5.424 * (xp - 4.075) * atan(0.488024 - 0.11976 *xp) - 22.6452 *log(xp*xp - 8.15 *xp + 86.3281)
+       + (4.1693 *xp + 44.1946) *log(xp + 10.6) - 4.1693 *xp 
+       + (3.53955 - 0.8686 *xp) *log(xp*xp - 8.15 *xp + 86) + 14.4714 *atan(0.489176 - 0.120043 *xp) + 1.7372 *xp 
+       -3.52 *xp;
+  return Integral;
 }
