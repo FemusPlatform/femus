@@ -173,7 +173,7 @@ clean:
 	$(RM) $(MAIN)
 
 src_clean:
-	@rm -f ../../src/*.o ../../contrib/matrix/*.o ../../contrib/parallel/*.o
+	@rm -f ../../src/*.o ../../src/obj/*.o ../../contrib/matrix/*.o ../../contrib/parallel/*.o
 
 
 

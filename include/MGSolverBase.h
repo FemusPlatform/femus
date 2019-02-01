@@ -486,18 +486,18 @@ class MGSolBase
 // ========================================================================
 // ****************** HERE STARTS VANKA SECTION ***************************
 // ========================================================================
-// void Vanka_solve(
-//     int Level,
-//   SparseMatrixM&  matrix_in,
-//   NumericVectorM& solution_in,
-//   NumericVectorM& rhs_in,
-//   const double tol,
-//   const  int m_its
-// );
-//
-//   double Vanka_test(
-//     int Level           // Level
-//   );
+void Vanka_solve(
+    int Level,
+  SparseMatrixM&  matrix_in,
+  NumericVectorM& solution_in,
+  NumericVectorM& rhs_in,
+  const double tol,
+  const  int m_its
+);
+
+  double Vanka_test(
+    int Level           // Level
+  );
 //
 //   virtual double MGStep_Vanka(    ///< MultiGrid Step
 //     int       Level,       //  MG level <-

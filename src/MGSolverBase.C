@@ -740,17 +740,17 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
 // ========================================================================
 // ****************** HERE STARTS VANKA SECTION ***************************
 // ========================================================================
-// #include "numeric_vectorM.h"
-// #include "sparse_matrixM.h"
-// #include "sparse_MmatrixM.h"
-// #include "dense_vectorM.h"
-// #include "dense_matrixM.h"
-// #include "petsc_matrixM.h"
-// #include "petsc_macroM.h"
-// #include "petsc_linear_solverM.h"
-// #include "petsc_preconditionerM.h"
-// #include "petsc_vectorM.h"
-// #include "petsc_matrixM.h"
+#include "numeric_vectorM.h"
+#include "sparse_matrixM.h"
+#include "sparse_MmatrixM.h"
+#include "dense_vectorM.h"
+#include "dense_matrixM.h"
+#include "petsc_matrixM.h"
+#include "petsc_macroM.h"
+#include "petsc_linear_solverM.h"
+#include "petsc_preconditionerM.h"
+#include "petsc_vectorM.h"
+#include "petsc_matrixM.h"
 //
 // ====================================================================
 /// This function does one multigrid step
@@ -858,116 +858,112 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
 
 
 
-// // ========================================================
-// void MGSolBase::Vanka_solve(
-//   int Level,
-//   SparseMatrixM&  matrix_in,
-//   NumericVectorM& solution_in,
-//   NumericVectorM& rhs_in,
-//   const double tol,
-//   const  int m_its
-// ) {
-//
-// //   START_LOG("solve()", "PetscLinearSolverM");
-//   // Make sure the data passed in are really of Petsc types
-//   PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
-//   PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*>(&solution_in);
-//   PetscVectorM* rhs      = libmeshM_cast_ptr<PetscVectorM*>(&rhs_in);
-// //   this->init(matrix);
-// //   int Level=0;
-//   int its=0, max_its = static_cast<int>(m_its);
-//   PetscReal final_resid=0.;
-//   // Close the matrices and vectors in case this wasn't already done.
-//   matrix->close();    solution->close(); rhs->close();
-//
-//   PetscErrorCode ierr;
-//   PetscInt m=1;
-//   PetscInt n=1;
-// //   const PetscInt idxm[1]={9};
-// //   const PetscInt idxn[1]={9};
-//   PetscScalar v[1];
-//
-//
-//
-//
-//
-//
-//   /// a) Set up
-//   // geometry -----------------------------------------------------------------------------------
-//   const int  ndim = DIMENSION;                                           //dimension
-//   const int  offset = _mgmesh._NoNodes[0];                     // mesh nodes
-// //   const int  el_sides= _mgmesh._GeomEl._n_sides[0];                      // element nodes
-//   int        el_conn[NDOF_FEM], elb_conn[NDOF_FEMB];                     // element connectivity
-//   int        el_neigh[NDOF_FEM];                                         // element connectivity
-//   int        sur_toply[NDOF_FEMB];                                       // boundary topology
-//   double     xx_qnds[DIMENSION*NDOF_FEM], xxb_qnds[DIMENSION*NDOF_FEMB]; // element node coords
-//   double     normal[DIMENSION]; double    mu_m;                                          // normal to the boundary
-//
-//   // Gauss integration ---------------------------------------------------------------------------
-// //   const int  el_ngauss = _fe[2]->_NoGauss1[ndim-1];                //elem gauss points
-// //   const int  elb_ngauss = _fe[2]->_NoGauss1[DIMENSION-2];          //elem gauss points
-//   double det[3],JxW_g[3],InvJac[3][DIMENSION*DIMENSION];           // Jac, Jac*w Jacobean
-//   double dphijdx_g[3][DIMENSION];  double dphiidx_g[3][DIMENSION]; // global derivatives at g point
-//
-//   // Number of  element dof: constant[0]-linear[1]-quadratic[2] -----------------------------------
-//
-//   PetscInt ncols;
-//   const PetscInt *cols;
-//   const PetscScalar *vals;
-//   PetscInt idxm[1];
-//
-// //   DenseMatrixM KeM;    DenseVectorM FeM;                              // local  matrix+rhs
-// //   KeM.resize(el_mat_nrows,el_mat_ncols);    FeM.resize(el_mat_nrows); // resize  local  matrix+rhs
-//
-//   vector<double> x_loc[offset];
-//   solution->localize(*x_loc);
-//
-//   vector<double> b_loc[offset];
-//   rhs->localize(*b_loc);
-//
-//
-//   int nsm=2;
-//   for (int ismooth=0; ismooth<= nsm; ismooth++) {
-//     //element type loop
-//     const int  nel_e = _mgmesh._off_el[0][Level+_NoLevels*_iproc+1];
-//     const int  nel_b = _mgmesh._off_el[0][Level+_NoLevels*_iproc];
-//     for (int iel=0; iel < (nel_e - nel_b); iel++) {
-//
-//       /// b) Element  Loop over the volume (n_elem)
-//       // set to zero matrix and rhs
-// //     KeM.zero();         FeM.zero();
-//
-//       // geometry element quantities ---------------------------
-//       // Element connectivity  and coordinates (xx_qnds)
-//       _mgmesh.get_el_nod_conn(0,Level,iel,el_conn,xx_qnds);  // get connectivity and coord
-// //     _mgmesh.get_el_neighbor(el_sides,0,Level,iel,el_neigh);// get neighboring element
-// //       std::cout <<  " element nodes \n" ;
-//       for (int inode=0; inode <NDOF_FEM; inode++) {
-// //         std::cout << el_conn[inode] << " " ;
-//
-//
-//         idxm[0]=el_conn[inode];
-//         ierr=MatGetValues(matrix->mat(),1, idxm,1, idxm,v);
-//
-//         double sum= (*b_loc)[el_conn[inode]]+v[0]*(*x_loc)[el_conn[inode]];
-//         ierr=MatGetRow(matrix->mat(),el_conn[inode],&ncols,&cols,&vals);
-//         for (int i=0; i <ncols; i++)  sum -=vals[i]*(*x_loc)[cols[i]];
-//         sum /=v[0];
-//
-//         ierr=MatRestoreRow(matrix->mat(),el_conn[inode],&ncols,&cols,&vals);
-//         (*x_loc)[el_conn[inode]]=sum;
-// 	if(ismooth == nsm) {
-// // 	  std::cout << " sol " << sum << " node  " <<  el_conn[inode] << "  \n";
-// 	  (*x[Level]).set(el_conn[inode],sum);
-// 	}
-//       }  // inode
-//
-// //      std::cout <<  " matrix  val \n" ;
-//     }
-//   }
-//
-//
-//
-//
-//   return;
-// }
+// ========================================================
+void MGSolBase::Vanka_solve(
+  int Level,
+  SparseMatrixM&  matrix_in,
+  NumericVectorM& solution_in,
+  NumericVectorM& rhs_in,
+  const double tol,
+  const  int m_its
+) {
+
+//   START_LOG("solve()", "PetscLinearSolverM");
+  // Make sure the data passed in are really of Petsc types
+  PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
+  PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*>(&solution_in);
+  PetscVectorM* rhs      = libmeshM_cast_ptr<PetscVectorM*>(&rhs_in);
+//   this->init(matrix);
+//   int Level=0;
+  int its=0, max_its = static_cast<int>(m_its);
+  PetscReal final_resid=0.;
+  // Close the matrices and vectors in case this wasn't already done.
+  matrix->close();    solution->close(); rhs->close();
+
+  PetscErrorCode ierr;
+  PetscInt m=1;
+  PetscInt n=1;
+//   const PetscInt idxm[1]={9};
+//   const PetscInt idxn[1]={9};
+  PetscScalar v[1];
+
+
+  /// a) Set up
+  // geometry -----------------------------------------------------------------------------------
+  const int  ndim = DIMENSION;                                           //dimension
+  const int  offset = _mgmesh._NoNodes[0];                     // mesh nodes
+//   const int  el_sides= _mgmesh._GeomEl._n_sides[0];                      // element nodes
+  int        el_conn[NDOF_FEM], elb_conn[NDOF_FEMB];                     // element connectivity
+  int        el_neigh[NDOF_FEM];                                         // element connectivity
+  int        sur_toply[NDOF_FEMB];                                       // boundary topology
+  double     xx_qnds[DIMENSION*NDOF_FEM], xxb_qnds[DIMENSION*NDOF_FEMB]; // element node coords
+  double     normal[DIMENSION]; double    mu_m;                                          // normal to the boundary
+
+  // Gauss integration ---------------------------------------------------------------------------
+//   const int  el_ngauss = _fe[2]->_NoGauss1[ndim-1];                //elem gauss points
+//   const int  elb_ngauss = _fe[2]->_NoGauss1[DIMENSION-2];          //elem gauss points
+  double det[3],JxW_g[3],InvJac[3][DIMENSION*DIMENSION];           // Jac, Jac*w Jacobean
+  double dphijdx_g[3][DIMENSION];  double dphiidx_g[3][DIMENSION]; // global derivatives at g point
+
+  // Number of  element dof: constant[0]-linear[1]-quadratic[2] -----------------------------------
+
+  PetscInt ncols;
+  const PetscInt *cols;
+  const PetscScalar *vals;
+  PetscInt idxm[1];
+
+//   DenseMatrixM KeM;    DenseVectorM FeM;                              // local  matrix+rhs
+//   KeM.resize(el_mat_nrows,el_mat_ncols);    FeM.resize(el_mat_nrows); // resize  local  matrix+rhs
+
+  vector<double> x_loc[offset];
+  solution->localize(*x_loc);
+
+  vector<double> b_loc[offset];
+  rhs->localize(*b_loc);
+
+
+  int nsm=2;
+  for (int ismooth=0; ismooth<= nsm; ismooth++) {
+    //element type loop
+    const int  nel_e = _mgmesh._off_el[0][Level+_NoLevels*_iproc+1];
+    const int  nel_b = _mgmesh._off_el[0][Level+_NoLevels*_iproc];
+    for (int iel=0; iel < (nel_e - nel_b); iel++) {
+
+      /// b) Element  Loop over the volume (n_elem)
+      // set to zero matrix and rhs
+//     KeM.zero();         FeM.zero();
+
+      // geometry element quantities ---------------------------
+      // Element connectivity  and coordinates (xx_qnds)
+      _mgmesh.get_el_nod_conn(0,Level,iel,el_conn,xx_qnds);  // get connectivity and coord
+//     _mgmesh.get_el_neighbor(el_sides,0,Level,iel,el_neigh);// get neighboring element
+//       std::cout <<  " element nodes \n" ;
+      for (int inode=0; inode <NDOF_FEM; inode++) {
+//         std::cout << el_conn[inode] << " " ;
+
+
+        idxm[0]=el_conn[inode];
+        ierr=MatGetValues(matrix->mat(),1, idxm,1, idxm,v);
+
+        double sum= (*b_loc)[el_conn[inode]]+v[0]*(*x_loc)[el_conn[inode]];
+        ierr=MatGetRow(matrix->mat(),el_conn[inode],&ncols,&cols,&vals);
+        for (int i=0; i <ncols; i++)  sum -=vals[i]*(*x_loc)[cols[i]];
+        sum /=v[0];
+
+        ierr=MatRestoreRow(matrix->mat(),el_conn[inode],&ncols,&cols,&vals);
+        (*x_loc)[el_conn[inode]]=sum;
+	if(ismooth == nsm) {
+// 	  std::cout << " sol " << sum << " node  " <<  el_conn[inode] << "  \n";
+	  (*x[Level]).set(el_conn[inode],sum);
+	}
+      }  // inode
+
+//      std::cout <<  " matrix  val \n" ;
+    }
+  }
+
+
+
+
+  return;
+}

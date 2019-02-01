@@ -3,33 +3,9 @@
 #include <cstdlib>
 #include <sstream>
 
-// configuration files -------------------------
-#include   "Printinfo_conf.h"
-#include  "Solverlib_conf.h"  // Solver library options 
-// Petsc
-#ifdef HAVE_PETSCM
-#include "petsc.h" // for Petsc solver
-#endif
-// Mpi
-#ifdef HAVE_MPI
-#include <mpi.h>   //For MPI_COMM_WORLD
-#endif
-
 // include local class
-#include "MGFemusInit.h"
 #include "MGUtils.h"
-#include "MGSystem.h"
-#include "MGGeomEl.h"
-#include "MGMesh.h"
-#include "MGFEMap.h"
-#include "MGFE.h"
-#include "MGEquationsSystem.h"
-#include "MGTimeLoop.h"
 #include "FEMUS.h"
-#include "InterfaceProjection.h"
-
-#include "EquationsMap.h"
-// #include "MGSolverNS.h"
 
 
 int main ( int argc, char** argv ) {

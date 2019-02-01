@@ -247,7 +247,7 @@ resu_clean:
 
 src_clean:
 	@$(MAKE) clean
-	@rm -f $(FEMUS_DIR)/src/*.o $(FEMUS_DIR)/contrib/matrix/*.o $(FEMUS_DIR)/contrib/parallel/*.o
+	@rm -f $(FEMUS_DIR)/src/*.o $(FEMUS_DIR)/src/obj/*.o $(FEMUS_DIR)/contrib/matrix/*.o $(FEMUS_DIR)/contrib/parallel/*.o
 
 all_clean:
 	@$(MAKE) resu_clean
