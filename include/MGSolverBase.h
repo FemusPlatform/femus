@@ -494,20 +494,20 @@ void Vanka_solve(
   const double tol,
   const  int m_its
 );
-
+//
   double Vanka_test(
     int Level           // Level
   );
 //
-//   virtual double MGStep_Vanka(    ///< MultiGrid Step
-//     int       Level,       //  MG level <-
-//     double    Eps1,
-//     int       MaxIter,
-//     const int Gamma,
-//     const int Nc_pre,
-//     const int Nc_coarse,
-//     const int Nc_post
-//   );
+  virtual double MGStep_Vanka(    ///< MultiGrid Step
+    int       Level,       //  MG level <-
+    double    Eps1,
+    int       MaxIter,
+    const int Gamma,
+    const int Nc_pre,
+    const int Nc_coarse,
+    const int Nc_post
+  );
 
 // #endif // ****************************************************************
   };

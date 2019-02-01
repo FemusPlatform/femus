@@ -754,107 +754,108 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
 //
 // ====================================================================
 /// This function does one multigrid step
-// double MGSolBase::Vanka_test(int Level
-//                             ) {
-// // ====================================================================
-//   std::pair<int,double> rest(0,0.);
-//   if (Level == 0) {   // coarse level ----------------------------------
-//     Vanka_solve(Level,*A[Level],*x[Level],*b[Level],1.e-6,40);
-// // #ifdef PRINT_CONV
-// //     std::cout<<" Coarse res " << rest.second << " " << rest.first << std::endl;
-// // #endif
-//   } // --------------------------------------------------------------
-//   ;
-//   return  0;
-// }
+double MGSolBase::Vanka_test(int Level
+                            ) {
+// ====================================================================
+  std::pair<int,double> rest(0,0.);
+  if (Level == 0) {   // coarse level ----------------------------------
+    Vanka_solve(Level,*A[Level],*x[Level],*b[Level],1.e-6,40);
+#ifdef PRINT_CONV
+    std::cout<<" Coarse res " << rest.second << " " << rest.first << std::endl;
+#endif
+  } // --------------------------------------------------------------
+  ;
+  return  0;
+}
 
 // ====================================================================
 /// This function does one multigrid step with Vanka
-// double MGSolBase::MGStep_Vanka(
-//   int Level,            // Level
-//   double Eps1,          // Tolerance
-//   int MaxIter,          // n iterations
-//   const int Gamma,     // Control V W cycle
-//   const int Nc_pre,    // n pre-smoothing cycles
-//   const int Nc_coarse, // n coarse cycles
-//   const int Nc_post    // n post-smoothing cycles
-//   ) {
-// // ====================================================================
-//   std::pair<int,double> rest(0,0.);
-//   if (Level == 0) {   // coarse level ----------------------------------
-// //       b[Level]->close(); double bNorm=b[Level]->l2_norm();
-// //       x[Level]->close(); double xNorm=x[Level]->l2_norm();
-// //       A[Level]->close(); double aNorm=A[Level]->linfty_norm();
-//     // coarse solution
-// //    std::pair<int,double> rest1(0.,0);
-//     Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1,40);
-//     // coarse residual
-//     res[Level]->resid(*b[Level],*x[Level],*A[Level]);
-// #ifdef PRINT_CONV
-//     std::cout<<" Coarse res " << 200 << " " <<  res[Level]->l2_norm() << std::endl;
-// #endif
-//
-//   } // --------------------------------------------------------------
-//   else {// fine levels
-//
-//     // presmoothing (Nu1) ---------------------------------
-// #ifdef PRINT_TIME  //  TC +++++++++++++++
-//     std::clock_t start_time=std::clock();
-// #endif             //  TC +++++++++++++++
-//     int  Nc_pre1=Nc_pre;
-//     if (Level<_NoLevels-1) Nc_pre1 *=2;
-//     Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1, Nc_pre1);
-// #ifdef PRINT_CONV      //  CC +++++++++++++++
-//     std::cout<<" Pre Lev " << Level << " res " << rest.second << " " << rest.first;
-// #endif                 //  CC +++++++++++++++
-// #ifdef PRINT_TIME      //  TC +++++++++++++++
-//     std::clock_t end_time=std::clock();
-//     std::cout<< " time ="<< double(end_time- start_time) / CLOCKS_PER_SEC << std::endl;
-// #endif                //  TC +++++++++++++++
-//     // presmoothing residual
-//     res[Level]->resid(*b[Level],*x[Level],*A[Level]);
-//     // --------- end presmoothing (Nc_pre) ------------------------
-//
-//     // restriction
-//     b[Level-1]->matrix_mult(*res[Level],*Rst[Level-1]);
-//
-//     //  solving of system of equations for the residual on the coarser grid
-//     x[Level-1]->zero();
-//     for (int g=1; g <= Gamma; g++)
-//       MGStep_Vanka(Level-1,Eps1,MaxIter,Gamma,Nc_pre,Nc_coarse,Nc_post);
-//
-//     // interpolation of the solution from the coarser grid (projection)
-//     res[Level]->matrix_mult(*x[Level-1],*Prl[Level]);
-//     // adding the coarse solution
-//     x[Level]->add(*res[Level]);//  *x[Level] +=*res[Level];
-//
-//     // postsmooting (Nc_post) --------------------------------------------
-// #ifdef PRINT_TIME              //  TC +++++++++++++++
-//     start_time=std::clock();   //   initial set
-// #endif                         //  TC +++++++++++++++
-//     //  postsmooting
-//     int Nc_post1= Nc_post ;
-//     if (Level<_NoLevels-1) Nc_post1 *=2;
-//     Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1,Nc_post1);
-// #ifdef PRINT_CONV              //  CC +++++++++++++++
-//     std::cout<<" Post Lev " << Level << " res " << rest.second
-//              << " " << rest.first;
-// #endif                         //  CC +++++++++++++++
-// #ifdef PRINT_TIME              //  TC +++++++++++++++
-//     end_time=std::clock();
-//     std::cout<< " time ="<< double(end_time- start_time) / CLOCKS_PER_SEC << std::endl;
-// #endif                         //  TC +++++++++++++++
-//     //  postsmooting residual
-//     res[Level]->resid(*b[Level],*x[Level],*A[Level]);
-//     // ----------------  end postsmoothing ---------------------------
-//   }
-//   // end cycle -------------------------------------
-//   res[Level]->close();
-//    double norm2= res[Level]->l2_norm();
-// //    std::cout<< " True res l2norm (not prec) " << norm2<< std::endl;
-//   return   norm2;
-//
-// }
+double MGSolBase::MGStep_Vanka(
+  int Level,            // Level
+  double Eps1,          // Tolerance
+  int MaxIter,          // n iterations
+  const int Gamma,     // Control V W cycle
+  const int Nc_pre,    // n pre-smoothing cycles
+  const int Nc_coarse, // n coarse cycles
+  const int Nc_post    // n post-smoothing cycles
+  ) {
+// ====================================================================
+  std::pair<int,double> rest(0,0.);
+  if (Level == 0) {   // coarse level ----------------------------------
+//       b[Level]->close(); double bNorm=b[Level]->l2_norm();
+//       x[Level]->close(); double xNorm=x[Level]->l2_norm();
+//       A[Level]->close(); double aNorm=A[Level]->linfty_norm();
+    // coarse solution
+//    std::pair<int,double> rest1(0.,0);
+    Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1,40);
+    // coarse residual
+    res[Level]->resid(*b[Level],*x[Level],*A[Level]);
+#ifdef PRINT_CONV
+    std::cout<<" Coarse res " << 200 << " " <<  res[Level]->l2_norm() << std::endl;
+#endif
+
+  } // --------------------------------------------------------------
+  else {// fine levels
+
+    // presmoothing (Nu1) ---------------------------------
+#ifdef PRINT_TIME  //  TC +++++++++++++++
+    std::clock_t start_time=std::clock();
+#endif             //  TC +++++++++++++++
+    int  Nc_pre1=Nc_pre;
+    if (Level<_NoLevels-1) Nc_pre1 *=2;
+    Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1, Nc_pre1);
+#ifdef PRINT_CONV      //  CC +++++++++++++++
+    std::cout<<" Pre Lev " << Level << " res " << rest.second << " " << rest.first;
+#endif                 //  CC +++++++++++++++
+#ifdef PRINT_TIME      //  TC +++++++++++++++
+    std::clock_t end_time=std::clock();
+    std::cout<< " time ="<< double(end_time- start_time) / CLOCKS_PER_SEC << std::endl;
+#endif                //  TC +++++++++++++++
+    // presmoothing residual
+    res[Level]->resid(*b[Level],*x[Level],*A[Level]);
+    // --------- end presmoothing (Nc_pre) ------------------------
+
+    // restriction
+    b[Level-1]->matrix_mult(*res[Level],*Rst[Level-1]);
+
+    //  solving of system of equations for the residual on the coarser grid
+    x[Level-1]->close();
+    x[Level-1]->zero();
+    for (int g=1; g <= Gamma; g++)
+      MGStep_Vanka(Level-1,Eps1,MaxIter,Gamma,Nc_pre,Nc_coarse,Nc_post);
+
+    // interpolation of the solution from the coarser grid (projection)
+    res[Level]->matrix_mult(*x[Level-1],*Prl[Level]);
+    // adding the coarse solution
+    x[Level]->add(*res[Level]);//  *x[Level] +=*res[Level];
+
+    // postsmooting (Nc_post) --------------------------------------------
+#ifdef PRINT_TIME              //  TC +++++++++++++++
+    start_time=std::clock();   //   initial set
+#endif                         //  TC +++++++++++++++
+    //  postsmooting
+    int Nc_post1= Nc_post ;
+    if (Level<_NoLevels-1) Nc_post1 *=2;
+    Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1,Nc_post1);
+#ifdef PRINT_CONV              //  CC +++++++++++++++
+    std::cout<<" Post Lev " << Level << " res " << rest.second
+             << " " << rest.first;
+#endif                         //  CC +++++++++++++++
+#ifdef PRINT_TIME              //  TC +++++++++++++++
+    end_time=std::clock();
+    std::cout<< " time ="<< double(end_time- start_time) / CLOCKS_PER_SEC << std::endl;
+#endif                         //  TC +++++++++++++++
+    //  postsmooting residual
+    res[Level]->resid(*b[Level],*x[Level],*A[Level]);
+    // ----------------  end postsmoothing ---------------------------
+  }
+  // end cycle -------------------------------------
+  res[Level]->close();
+   double norm2= res[Level]->l2_norm();
+//    std::cout<< " True res l2norm (not prec) " << norm2<< std::endl;
+  return   norm2;
+
+}
 
 
 
@@ -921,7 +922,6 @@ void MGSolBase::Vanka_solve(
   vector<double> b_loc[offset];
   rhs->localize(*b_loc);
 
-
   int nsm=2;
   for (int ismooth=0; ismooth<= nsm; ismooth++) {
     //element type loop
@@ -961,9 +961,6 @@ void MGSolBase::Vanka_solve(
 //      std::cout <<  " matrix  val \n" ;
     }
   }
-
-
-
 
   return;
 }
