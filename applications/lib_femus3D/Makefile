@@ -97,9 +97,11 @@ SRC_CONTRIB += $(wildcard $(FEMUS_CONTRIB)/parallel/*.C)
 SRC_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC))
 CONTRIB_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_CONTRIB))
 # finally define the executable file name 
-MAIN = $(FEMUS_DIR)/lib/libfemus_3d.so
+MAIN = $(FEMUS_DIR)/lib/libfemus_2d.so
 
-
+LIB_SRC_APP_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/src/*.C )))
+LIB_SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(LIB_SRC_APP_FILES))
+LIB_SRC_FEMUS_OBJS = $(addprefix $(FEMUS_DIR)/src/obj/, $(LIB_SRC_APP_OBJS))
 
 # --------------------------------------------------------
 # -------------- MAKE COMMANDS ---------------------------
@@ -114,7 +116,7 @@ all:    $(MAIN)
 # this is the rule for linking the objects to obtain the executable file.
 # There are two groups of objects, the SRC and the CONTRIB objects, which
 # are recompiled in different cases
-$(MAIN): $(SRC_OBJS) $(CONTRIB_OBJS)
+$(MAIN): $(LIB_SRC_FEMUS_OBJS) $(CONTRIB_OBJS)
 	@echo 
 	@echo "Linking "$@"..."
 	@echo 
@@ -133,10 +135,19 @@ $(MAIN): $(SRC_OBJS) $(CONTRIB_OBJS)
 # INCLUDES_SRC files change, while the CONTRIB_OBJS are recompiled if the
 # INCLUDES_CONTRIB files change.
 $(SRC_OBJS): $(INCLUDES_SRC)
+$(LIB_SRC_FEMUS_OBJS): $(INCLUDES_SRC)
 $(CONTRIB_OBJS): $(INCLUDES_CONTRIB)
 %-$(METHOD).o : %.C
 	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
 	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+# RULE FOR LIBRARY FILES
+$(FEMUS_DIR)/src/obj/%-$(METHOD).o : %.C
+	@mkdir -p $(dir $@)
+	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
+	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@		
+	
+vpath %.C $(FEMUS_DIR)/src/
 
 # Remark 1 
 # In this rule the automatic variables $< and $@ are used.

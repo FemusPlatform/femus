@@ -1,5 +1,5 @@
-#include "MMed.h"
-
+#include "MedUtils.h"
+#include "MGFE.h"
 #ifdef HAVE_MED
 
 #include <set>
@@ -25,14 +25,8 @@
 #endif
 #include "numeric_vectorM.h"
 
-// // #define USE_FEMUS (1)   uncomment to use
-
-#if USE_FEMUS==1
-#include "InterfaceFunctionM.h"
-#include "MGFEMap.h"
-#include "EquationSystemsExtendedM.h"
-#endif
-
+#include "Solverlib_conf.h"
+#include "MGFE_conf.h"
 
 #ifdef HAVE_MED
 
@@ -56,11 +50,11 @@ class MEDCouplingFieldDouble;
 #endif
 
 #ifdef HAVE_MED
-MMed::MMed() {
+MedUtils::MedUtils() {
   _proc=0;
 }
 
-MMed::MMed(
+MedUtils::MedUtils(
   const MEDCoupling::MEDCouplingUMesh * SourceMesh,
   const MEDCoupling::MEDCouplingUMesh * TargetMesh,
   int DomainType
@@ -68,7 +62,7 @@ MMed::MMed(
   _proc=0;
 }
 
-MMed::~MMed() {
+MedUtils::~MedUtils() {
   delete _fe[2];
   delete _fe[1];
   delete _fe[0];
@@ -76,125 +70,26 @@ MMed::~MMed() {
 
 //**********************************************************
 // Print a vector containing med fields in a unique med file
-void MMed::PrintMed(std::vector<MEDCoupling::MEDCouplingFieldDouble *>f, std::string FileName) {
+void MedUtils::PrintMed(std::vector<MEDCoupling::MEDCouplingFieldDouble *>f, std::string FileName) {
   for(int j=0; j<f.size(); j++) { PrintMed(f[j],FileName,j); }
   return;
 }
 //**********************************************************
 /// This function prints a single med field MEDCoupling::MEDCouplingFieldDouble *f  in a med file std::string FileName
 /// on a new file if  int n !=0
-void MMed::PrintMed(MEDCoupling::MEDCouplingFieldDouble *f, std::string FileName, int n) {
+void MedUtils::PrintMed(MEDCoupling::MEDCouplingFieldDouble *f, std::string FileName, int n) {
   bool WriteFromScratch = (n>0.5) ?false:true;
   MEDCoupling::WriteField("RESU_MED/"+FileName+".med",f,WriteFromScratch);
   return;
 }
 
-#if USE_FEMUS==1
-//**********************************************************
-// For each FEMus problem stored in the vector it prints
-// a med file containing all the fields of the FEMus problem
-void MMed::PrintMed(std::vector<FEMUS *>PFem) {
-  for(int j=0; j<PFem.size(); j++) { PrintMed(PFem[j],j); }
-  return;
-}
 
-//**********************************************************
-/// This function prints all the fields of a FEMus problem in a unique med file
-void MMed::PrintMed(FEMUS *PFem,int nDom) {
-  std::vector<std::string> FieldsNames;
-  PFem->get_MGExtSystem().getEqsNames(FieldsNames);
-  int NumOfComp = 1;
-  int FirstComp = 0;
-  int Dim = PFem->get_MGMesh()._dim;
-  string MeshDir = PFem->GetMeshDir();
-  const std::string QuadFieldsFileName = "RESU_MED/SourceField" + std::to_string(nDom) + ".med";
-
-  CreateInterfaces(PFem);
-
-  if(PFem->get_proc() ==0) { MEDCoupling::WriteUMeshDep(QuadFieldsFileName,PFem->getUMesh(22),true); }
-
-  for(int i=0; i<FieldsNames.size(); i++) {
-    if(FieldsNames[i] != "NSP" && FieldsNames[i] != "NS2P") {
-      if(FieldsNames[i]=="NS0" || FieldsNames[i]=="FSI0" || FieldsNames[i]=="FSIA0"||FieldsNames[i]=="NSA0") {NumOfComp = Dim + 1;}
-
-      const MEDCoupling::MEDCouplingFieldDouble *TrgField=PFem->getValuesOnInterface(22,FieldsNames[i],NumOfComp,FirstComp);
-      TrgField->checkConsistencyLight();
-
-      if(PFem->get_proc() ==0) { MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(QuadFieldsFileName,TrgField); }
-
-      std::cout<<"\033[1;36m Field: "<<FieldsNames[i]<<" copied in ";
-      std::cout<<"\t in "<<QuadFieldsFileName<<"\033[0m\n";
-      std::cout<<"----------------------------------------------------------------\n";
-      NumOfComp =1;
-    }
-    if(FieldsNames[i] == "NSP" || FieldsNames[i] == "NS2P") {
-      const MEDCoupling::MEDCouplingFieldDouble *TrgField= PFem->getValuesOnInterface(11,FieldsNames[i],NumOfComp ,FirstComp);
-      TrgField->checkConsistencyLight();
-      if(PFem->get_proc() ==0) { MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(QuadFieldsFileName,TrgField); }
-      std::cout<<"\033[1;36m Field: "<<FieldsNames[i]<<" copied in ";
-      std::cout<<"\t in "<<QuadFieldsFileName<<"\033[0m\n";
-      std::cout<<"----------------------------------------------------------------\n";
-    }
-  }
-  FieldsNames.clear();
-
-  return;
-}
-
-//**********************************************************
-// This function creates two volume interfaces for the PFem FEMUS problem,
-// in order to print both quadratic and linear fields
-void MMed::CreateInterfaces(
-  FEMUS* PFem   // FEMUs problem
-) {
-  string MeshDir =  PFem->get_MGExtSystem().getMeshMG()->_mgutils._app_dir +  "/MESH/";
-  std::vector<std::string> meshNames = MEDCoupling::GetMeshNames(MeshDir + PFem->getMeshName());
-  std::vector<std::string> GroupNames = MEDCoupling::GetMeshGroupsNames(MeshDir + PFem->getMeshName(), meshNames[0]);
-
-  int posP            = PFem->getMeshName().find(".");
-  std::string MeshFileName_Gen = PFem->getMeshName().substr(0,posP) + "_MedToMg.med" ;
-  int nGroups0 = GroupNames.size();
-
-//     if ( nGroups0>0 )
-//         {
-//         std::vector<int> NumericGroupNames;
-//         for ( int i=0; i< nGroups0; i++ ) NumericGroupNames.push_back ( std::stoi ( GroupNames[i] ) );
-//         sort ( NumericGroupNames.begin(), NumericGroupNames.end() );
-//         bool VolumeGroup = ( (NumericGroupNames[0]<10&&NumericGroupNames[0]!=0) ? true:false );
-//
-//         if ( !VolumeGroup )
-//             {
-//             std::cout<<"\033[1;36m Creating interfaces for mesh without volume groups \033[0m\n";
-//             PFem->init_interface ( 22,2,MeshFileName_Gen );
-//             PFem->init_interface ( 11,1,MeshFileName_Gen );
-//             }
-//
-//         if ( VolumeGroup )
-//             {
-//             PFem->init_interface ( 22,NumericGroupNames[0],2,MeshFileName_Gen );
-//             PFem->init_interface ( 11,NumericGroupNames[0],1,MeshFileName_Gen );
-//             }
-//         }
-//     else
-//         {
-  std::cout<<"\033[1;36m Creating interfaces for mesh without groups \033[0m\n";
-  PFem->init_interface(22,2,MeshFileName_Gen);
-  PFem->init_interface(11,1,MeshFileName_Gen);
-//         }
-
-  meshNames.clear();
-  GroupNames.clear();
-
-  return;
-}
-#endif
-
-MEDCoupling::MEDCouplingFieldDouble* MMed::InterpolatedField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int order) {
+MEDCoupling::MEDCouplingFieldDouble* MedUtils::InterpolatedField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int order) {
   MEDCoupling::MEDCouplingFieldDouble* f;
   return f;
 }
 
-void MMed::FillParameters(const MEDCoupling::MEDCouplingUMesh* SourceMesh, const MEDCoupling::MEDCouplingUMesh* TargetMesh, int DomainType) {
+void MedUtils::FillParameters(const MEDCoupling::MEDCouplingUMesh* SourceMesh, const MEDCoupling::MEDCouplingUMesh* TargetMesh, int DomainType) {
   return;
 }
 
@@ -206,7 +101,7 @@ void MMed::FillParameters(const MEDCoupling::MEDCouplingUMesh* SourceMesh, const
 
 /// This function integrates the field const MEDCoupling::MEDCouplingFieldDouble* $Field
 /// with method \$method (mean,Aximean,bulk, axibulk,area,l2norm)
-double MMed::Integrate(
+double MedUtils::Integrate(
   const MEDCoupling::MEDCouplingFieldDouble* Field, ///< solution field      (in)
   int   order,                                     ///< interpolation order (in)
   int   n_cmp,                                     ///< Number of variables (in)
@@ -220,10 +115,10 @@ double MMed::Integrate(
 
   // Axisym and AxyBulk are not valid with 3D geometries
   if(method == AxiMean && DIMENSION == 3) {
-    std::cout<<"\033[1;31m +++++++++ Attention! Axisym not valid with 3D geometry! Method converted to Normal ++++++++++ \033[0m" <<endl; rad = 0;
+    std::cout<<"\033[1;31m +++++++++ Attention! Axisym not valid with 3D geometry! Method converted to Normal ++++++++++ \033[0m" <<std::endl; rad = 0;
   }
   if(method == AxiBulk && DIMENSION == 3) {
-    std::cout<<"\033[1;31m +++++++++ Attention! AxiBulk not valid with 3D geometry! Method converted to Bulk ++++++++++ \033[0m" <<endl;
+    std::cout<<"\033[1;31m +++++++++ Attention! AxiBulk not valid with 3D geometry! Method converted to Bulk ++++++++++ \033[0m" <<std::endl;
     rad = 2;
   }
   bool BulkMedium=_BulkMedium;
@@ -289,7 +184,7 @@ double MMed::Integrate(
 
 
 
-void MMed::BuildCanonicalElementNodesMap(int NodesPerCell, std::map<int,int> &MedLibmesh) {
+void MedUtils::BuildCanonicalElementNodesMap(int NodesPerCell, std::map<int,int> &MedLibmesh) {
 
   switch(NodesPerCell) {
   case(3):
@@ -346,7 +241,7 @@ void MMed::BuildCanonicalElementNodesMap(int NodesPerCell, std::map<int,int> &Me
 }
 
 // ================================================================================================================================
-void MMed::IntCoefficients(int rad) {
+void MedUtils::IntCoefficients(int rad) {
   _CylCoord   = (1- ((rad&4) >>2)) * (rad%2) + ((rad&8) >>3);
   _BulkMedium = (1- ((rad&4) >>2)) * ((rad&2) >>1);
   _AreaCalc   = ((rad&4) >>2) * (1- (rad%2)) + ((rad&8) >>3);
@@ -354,7 +249,7 @@ void MMed::IntCoefficients(int rad) {
   _L2Norm     = ((rad&16) >>4);
   return;
 }
-void MMed::FieldNodes(
+void MedUtils::FieldNodes(
   const int NodesPerCell,
   int &Fcc,
   int order
@@ -375,7 +270,7 @@ void MMed::FieldNodes(
   }
   return;
 }
-void MMed::InitFe() {
+void MedUtils::InitFe() {
   _fe[0] = new MGFE(0,ELTYPE);
   _fe[0]->init_pie();  ///> Lagrange piecewise constant
   _fe[1] = new MGFE(1,ELTYPE);
@@ -385,7 +280,7 @@ void MMed::InitFe() {
   return;
 }
 
-double MMed::GetIntResult(int method) {
+double MedUtils::GetIntResult(int method) {
   double value_fin;
   switch(method) {
   case(Mean) :
@@ -417,139 +312,14 @@ double MMed::GetIntResult(int method) {
 }
 
 
-#if USE_FEMUS==1
-
-/// This function integrates (in $method)  the field with components $n_cmp starting from  $first_cmp
-double MMed::Integrate(FEMUS *PFemus,
-                       int id,                            /**< Interface name      (in)   */
-                       const char *system_name,           /**< Equation name       (in)   */
-                       int         n_cmp,                 /**< Number of variables (in)   */
-                       int         first_cmp,             /**< First component     (in)   */
-                       int         method                 /**< Method  #method (in) */
-                      ) {
-  std::clock_t IntegrationBegin = std::clock();
-
-  int rad = method;
-
-  // Axisym and AxyBulk are not valid with 3D geometries
-  if(method == AxiMean && DIMENSION == 3) {
-    std::cout<<"\033[1;31m +++++++++ Attention! Axisym not valid with 3D geometry! Method converted to Normal ++++++++++ \033[0m" <<endl;
-    rad = 0;
-
-  }
-  if(method == AxiBulk && DIMENSION == 3) {
-    std::cout<<"\033[1;31m +++++++++ Attention! AxiBulk not valid with 3D geometry! Method converted to Bulk ++++++++++ \033[0m" <<endl;
-    rad = 2;
-  }
-
-  IntCoefficients(rad);
-
-  bool BulkMedium = _BulkMedium;
-
-  const double pi = 2.*acos(0);    //3.1415;
-
-//   const int Level = PFemus->get_MGMesh().;
-  const int Level= PFemus->get_MGMesh()._NoLevels - 1;
-  const int offset= PFemus->get_MGMesh()._NoNodes[Level];
-  const int dim   = PFemus->get_MGMesh()._dim;
-
-  MGSolBase *mgsyst=PFemus->get_MGExtSystem().get_eqs(system_name);                               // Field of the variable
-
-  // from LibMesh function fct
-  InterfaceFunctionM *fct = PFemus->get_MGExtSystem().get_interface_fun(id);
-  if(fct == NULL) { return NULL; }
-  const int nElem_med   = fct -> getSupport() ->getNumberOfCells();
-  const int nNodes_med  = fct -> getSupport() ->getNumberOfNodes();
-  int Dim = fct->getSupport()->getSpaceDimension();
-  const double DimRelToMax = fct -> getSupport()->getSpaceDimension()-fct -> getSupport()->getMeshDimension();
-
-  int *map_mg_nodes  = fct -> get_map_mg();
-  int *map_med_nodes = fct -> get_map_med();
-  const int order = fct->get_order();
-// //   if(system_name=="NSP") order =1;
-
-  const int NodesPerCell = fct->getSupport()->getNumberOfNodesInCell(0);
-  // Number of nodes for the interpolation of the field on the gauss point
-  int FieldNodesPerCell;
-  FieldNodes(NodesPerCell, FieldNodesPerCell, order);
-
-  const int FOrd = order; // Order of the integrated field
-  const int VOrd = 2;     // Order of the velocity field
-  const int XOrd = 2;     // Order of the coordinates
-
-  std::map <int, int> MedMg;                                    // From med numbering to mg numbering
-  for(int nMed = 0; nMed < nNodes_med; nMed++) {
-    const int MedNumber = map_med_nodes[nMed];
-    const int MgNumber  = map_mg_nodes[nMed];
-    MedMg[MedNumber] = MgNumber;
-  }
-
-  double phi_g[3][NDOF_FEM];
-  _AREA = _INTEGRAL = _VELOCITY = 0.;
-  double value_fin;
-  const int WeightDim = ((DimRelToMax==0) ? dim-1:dim-2);
-  const int QPoints = ((DimRelToMax==0) ? _fe[XOrd]->_NoGauss1[WeightDim]:_fe[XOrd]->_NoGauss1[WeightDim]);
-
-  std::vector< int > conn;
-  std::vector< double > coord, NodeVar, NodeVel, PointsCoords;
-
-  PointsCoords.resize(NodesPerCell*dim);
-  NodeVar.resize(FieldNodesPerCell);
-  NodeVel.resize(NodesPerCell*dim);
-
-  std::map<int,int> MedLibmesh;
-  BuildCanonicalElementNodesMap(NodesPerCell,MedLibmesh);
-
-  MEDCoupling::MEDCouplingFieldDouble *VelField=NULL;
-  // The function is called only when a velocity field is available
-  if(PFemus->IsVelFieldActive() == 1 && BulkMedium) { VelField=GetVelocityField(PFemus,id,1); }
 
 
-  for(int i_mg=0; i_mg < nElem_med; i_mg++) {                     // Loop over the boundary elements
-
-    fct -> getSupport() -> getNodeIdsOfCell(i_mg,conn);           // Med numbering of element nodes
-
-    for(int i_node=0; i_node < NodesPerCell; i_node++) {
-      fct -> getSupport() -> getCoordinatesOfNode(conn[MedLibmesh[i_node]],coord);
-      for(int j =0; j<dim; j++) { PointsCoords[i_node + j*NodesPerCell] = coord[j]; }
-      coord.clear();
-    }
-
-    // Loop for the calculation of the velocity component normal to the boundary, bulk term
-    if(BulkMedium) {
-      for(int i_node = 0; i_node<NodesPerCell; i_node ++) {
-        VelField->getMesh()->getCoordinatesOfNode(conn[MedLibmesh[i_node]],coord);
-        for(int i=0; i<Dim; i++) {
-          NodeVel[i_node + NodesPerCell*i] = VelField->getIJ(conn[MedLibmesh[i_node]],i);
-        }
-        coord.clear();
-      }
-    }
-
-    for(int i_node = 0; i_node<FieldNodesPerCell; i_node ++) {
-      const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[MedLibmesh[i_node]]] + first_cmp*offset];
-      NodeVar[i_node]      = (* (mgsyst->x_old[Level]))(kdof_top);
-    }
-
-    GaussLoop(NodeVar,NodeVel,BulkMedium,dim,DimRelToMax,XOrd,FOrd,VOrd,NodesPerCell,PointsCoords,FieldNodesPerCell);
-
-    conn.clear();
-  }
-
-  value_fin = GetIntResult(method);
-
-  std::clock_t IntegrationEnd = std::clock();
-  std::cout<<"\033[1;35m  Time for integration  "<<  double(IntegrationEnd-IntegrationBegin) /CLOCKS_PER_SEC <<"\033[0m"<< std::endl;
-  return value_fin;
-}
-#endif
-#endif
 
 
 //====================================================================================================================
-void MMed::GaussLoop(
-  vector< double > NodeVar,  ///< field values on cell nodes
-  vector< double > Velocity, ///< velocity values on cell nodes
+void MedUtils::GaussLoop(
+  std::vector< double > NodeVar,  ///< field values on cell nodes
+  std::vector< double > Velocity, ///< velocity values on cell nodes
   bool BulkMedium,           ///< flag for bulk integration
   const int dim,             ///< space dimension
   const int DimRelToMax,     ///< volume or surface integration
@@ -605,57 +375,8 @@ void MMed::GaussLoop(
   return;
 }
 
-#if USE_FEMUS==1
-// ======================================================================================
-MEDCoupling::MEDCouplingFieldDouble *MMed::GetVelocityField(
-  FEMUS *PFem,
-  int InterfaceId,
-  int IsVelCoupled
-) {// ===================================================================================
-  MEDCoupling::MEDCouplingFieldDouble *f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-  InterfaceFunctionM *Interface = PFem->get_MGExtSystem().get_interface_fun(InterfaceId);
-  f->setMesh(Interface->getSupport());
 
-  // IsVelCoupled: 0-> no  1-> yes
-
-  const int Dim = Interface->getSupport()->getSpaceDimension();
-  const int NNodes = Interface->getSupport()->getNumberOfNodes();
-
-  MEDCoupling::DataArrayDouble *VelArray = MEDCoupling::DataArrayDouble::New();
-  MEDCoupling::DataArrayDouble *newv= MEDCoupling::DataArrayDouble::New();
-
-  newv->alloc(NNodes,Dim);
-
-  if(!IsVelCoupled) { //Splitted System
-    std::vector<string> VelNames;
-    VelNames.push_back("NS0X");
-    VelNames.push_back("NS0Y");
-    if(Dim==3) { VelNames.push_back("NS0Z"); }
-
-    std::vector<const MEDCoupling::DataArrayDouble *> ArrayVec;
-    for(int i=0; i<Dim; i++) {
-      MEDCoupling::MEDCouplingFieldDouble *TempField = PFem->getValuesOnInterface(InterfaceId,VelNames[i],1,0);
-      MEDCoupling::DataArrayDouble *TempArray = TempField->getArray();
-      ArrayVec.push_back(TempArray);
-    }
-    newv = VelArray->Meld(ArrayVec);
-    VelNames.clear();
-  }
-  if(IsVelCoupled) { //Coupled System
-    MEDCoupling::MEDCouplingFieldDouble *TempField = PFem->getValuesOnInterface(InterfaceId,"NS0",Dim,0);
-    newv = TempField->getArray();
-  }
-
-  f->setName("Velocity");
-  f->setArray(newv);
-  newv->decrRef();
-  VelArray->decrRef();
-  return f;
-}
-
-#endif
-
-MEDCoupling::MEDCouplingFieldDouble* MMed::GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int ConversionMode){
+MEDCoupling::MEDCouplingFieldDouble* MedUtils::GetCellField(const MEDCoupling::MEDCouplingFieldDouble* SourceField, int ConversionMode){
   MEDCoupling::MEDCouplingFieldDouble* f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
   const MEDCoupling::MEDCouplingMesh *SourceMesh = SourceField->getMesh();
   f->setMesh(SourceMesh);
@@ -716,7 +437,7 @@ MEDCoupling::MEDCouplingFieldDouble* MMed::GetCellField(const MEDCoupling::MEDCo
   CellArray->decrRef();
   return f;
 }
-
+#endif
 #endif
 
 // kate: indent-mode cstyle; indent-width 2; replace-tabs on; 

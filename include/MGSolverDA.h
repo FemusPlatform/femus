@@ -1,8 +1,6 @@
 #ifndef __mgsolverda_h__
 #define __mgsolverda_h__
 
-#include "Equations_conf.h"
-// #ifdef DA_EQUATIONS
 
 // conf includes
 #include "MGFE_conf.h"

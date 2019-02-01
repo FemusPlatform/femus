@@ -7,8 +7,6 @@
 #include "MeshExtended.h"
 #include "MGGeomEl.h"
 #include "MGUtils.h"
-#include "Equations_conf.h"  // equation conf file 
-
 
 #ifdef HAVE_MED
 #include "MEDCouplingUMesh.hxx"

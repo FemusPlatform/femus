@@ -8,7 +8,6 @@
 // conf includes ------------------
 #include "Solverlib_conf.h"  // petsc conf
 #include "MGFE_conf.h"        // FEM conf
-#include "Equations_conf.h"  // equation conf file 
 #include "Printinfo_conf.h"  // print config file
 
 // class includes ---------------------

@@ -33,7 +33,8 @@
     natural_kh = 10,
     logarithmic_kh = 11,
     natural_omegah = 20,
-    logarithmic_omegah = 21
+    logarithmic_omegah = 21,
+    kays = 30,
   };
 
 
@@ -49,6 +50,7 @@
     {"nagano_keT"  ,     nagano_keT  },
     {"nagano_kwT"  ,     nagano_kwT  },
     {"nagano_logT" ,     nagano_logT },
+    {"kays"        ,     kays        },
     {"default"     ,     default_therm}
   };
 

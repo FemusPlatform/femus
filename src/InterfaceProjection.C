@@ -4,50 +4,39 @@
 #include "InterfaceProjection.h"
 // #include<map>
 
+#include "Solverlib_conf.h"
+#include "MGFE_conf.h"
+#include "MGFE.h"
 
 #ifdef HAVE_MED
-namespace MEDCoupling {
-class MEDLoader;
-class MEDCouplingUMesh;
-class MEDCouplingFieldDouble;
-}
 
-#include "InterfaceFunctionM.h"
 #include "MEDCouplingUMesh.hxx"
 #include "MEDCouplingFieldDouble.hxx"
-#include "MEDCouplingRemapper.hxx"
-#include "MEDCouplingFieldDiscretization.hxx"
-#include "MEDCouplingPointSet.hxx"
 #include "MEDLoader.hxx"
-#include "BoundingBox.hxx"
-#include "InterpKernelGeo2DNode.hxx"
-
-
-
 
 // ================================================================================================
-BoundInterp::BoundInterp() : MMed() {
+InterfaceProjection::InterfaceProjection() : MedUtils() {
   __Filled=0;
 }
 
 
 // ================================================================================================
-BoundInterp::BoundInterp (
+InterfaceProjection::InterfaceProjection (
     const MEDCoupling::MEDCouplingUMesh * SourceMesh,
     const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     DomainType vol_sur
-) : MMed() {
+) : MedUtils() {
     __Filled=0;
     _AlreadyInitialized=0;
     FillParameters ( SourceMesh,TargetMesh,vol_sur);
 }
 
-BoundInterp::BoundInterp (
+InterfaceProjection::InterfaceProjection (
     const MEDCoupling::MEDCouplingUMesh * SourceMesh,
     const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     int procId,
     DomainType   vol_sur 
-) : MMed() {
+) : MedUtils() {
 
    __Filled=0;
     _AlreadyInitialized=0;
@@ -56,7 +45,7 @@ BoundInterp::BoundInterp (
 }
 
 // ================================================================================================
-void BoundInterp::FillParameters (
+void InterfaceProjection::FillParameters (
     const MEDCoupling::MEDCouplingUMesh * SourceMesh,
     const MEDCoupling::MEDCouplingUMesh * TargetMesh,
     int DomainType,
@@ -84,7 +73,7 @@ void BoundInterp::FillParameters (
     
     __Filled = 1;
     
-    string name = SourceMesh->getName();
+    std::string name = SourceMesh->getName();
     _SrcCellNodes        = __InMesh->getNumberOfNodesInCell ( 0 );
     _SrcCoordInterpNodes = InterpCoordNodes[_SrcCellNodes];
     _SrcCells = __InMesh -> getNumberOfCells();
@@ -126,26 +115,6 @@ void BoundInterp::FillParameters (
     pointB[0] = Bbox[0] - 1.e4*width;
     pointB[1] = Bbox[3] + 1.e4*height;
 
-    MEDCoupling::DataArrayDouble *DDA = MEDCoupling::DataArrayDouble::New();
-    DDA -> alloc ( _SrcCells,4 ); //  4 ????????????
-
-//   MEDCoupling::DataArrayDouble *DDB = MEDCoupling::DataArrayDouble::New();
-//   DDB -> alloc(_SrcCells,2);
-//   std::vector<double> DDAM;   std::vector<double> DDAm; std::vector<double> DDBM;  std::vector<double> DDBm;
-
-    const double coeffA = height/width;
-    const double coeffB = -height/width;
-    double coeffAm = ( Bbox[2] - pointA[1] ) / ( Bbox[1]-pointA[0] );
-    double coeffAM = ( Bbox[3] - pointA[1] ) / ( Bbox[0]-pointA[0] );
-    double coeffBm = ( Bbox[2] - pointB[1] ) / ( Bbox[0]-pointB[0] );
-    double coeffBM = ( Bbox[3] - pointB[1] ) / ( Bbox[1]-pointB[0] );
-    double deltaAm = ( coeffA - coeffAm ) /3.;
-    double deltaAM = ( coeffAM - coeffA ) /3.;
-    double deltaBm = fabs ( coeffA - coeffAm ) /3.;
-    double deltaBM = fabs ( coeffAM - coeffA ) /3.;
-
-//   std::cout<< "deltaAm " << deltaAm << " deltaAM " << deltaAM <<std::endl;
-//   std::cout<< "deltaBm " << deltaAm << " deltaBM " << deltaAM <<std::endl;
 
     int SecMatrix[_SrcCells][4];
 
@@ -157,11 +126,6 @@ void BoundInterp::FillParameters (
     MEDCoupling::DataArrayDouble *CellBelonging = MEDCoupling::DataArrayDouble::New();
     CellBelonging -> alloc ( _TrgNodes,1 );
     CellBelonging -> fillWithValue ( -1 );
-//   DataArrayInt * BoundingNodes1 = DataArrayInt::New();
-//   DataArrayDouble * XiEta1 = DataArrayDouble::New();
-//
-//   XiEta1->alloc(_TrgNodes,_MeshDim);
-//   BoundingNodes1->alloc(_TrgNodes,_SrcCellNodes);
 
     //***************************************************************
     // definizioni
@@ -263,8 +227,6 @@ void BoundInterp::FillParameters (
                 XYZ->decrRef();
             }
 
-
-
             // Determination of source mesh cell containing the target mesh node
             int IdSrcCell;
             double NodeCoord[DIMENSION];     // Vector containing target mesh node coordinates
@@ -295,8 +257,6 @@ void BoundInterp::FillParameters (
                         }
                     }
                     int numberOfCell = CellIds.size();
-
-
 
                     std::vector< int > SrcNodesConn;    // connectivity to be filled from getNodeIdsOfCell med function
                     for ( int direction = 0; direction<_SpaceDim; direction++ ) {
@@ -414,12 +374,6 @@ void BoundInterp::FillParameters (
             for (int i = 0; i < SrcIntCells; ++i)   delete [] ExtrCoord[i];
             delete [] ExtrCoord;
         } // end loop
-
-//     MEDCouplingFieldDouble * CellBelonging = MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-//     CellBelonging->setMesh(__OutMesh);
-//     CellBelonging->setArray(CellBelonging);
-//     CellBelonging->setName("CellID");
-
 
         break;
         // end case Boundary
@@ -547,7 +501,6 @@ void BoundInterp::FillParameters (
     delete [] PointsCoords;
    
     targetArray->decrRef(); 
-    DDA->decrRef(); 
 
     MEDCoupling::MEDCouplingFieldDouble * CanonicalPosition = MEDCoupling::MEDCouplingFieldDouble::New ( MEDCoupling::ON_NODES );
     CanonicalPosition->setMesh ( __OutMesh );
@@ -559,7 +512,7 @@ void BoundInterp::FillParameters (
     CellS->setArray ( CellBelonging );
     CellS->setName ( "CellID" );
 
-    string FileName="S"+__InMesh->getName() +"_T"+__OutMesh->getName() +"_MeshCoupling.med";
+    std::string FileName="S"+__InMesh->getName() +"_T"+__OutMesh->getName() +"_MeshCoupling.med";
 
     if(_proc==0){
       MEDCoupling::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,true );
@@ -582,7 +535,7 @@ void BoundInterp::FillParameters (
     return;
 }
 // ================================================================================================
-BoundInterp::~BoundInterp() {
+InterfaceProjection::~InterfaceProjection() {
     __InMesh->decrRef();
     __OutMesh->decrRef();
     _XiEta->decrRef();
@@ -591,7 +544,7 @@ BoundInterp::~BoundInterp() {
 
 
 // ================================================================================================
-void BoundInterp::CheckBelonging ( bool &found ) {
+void InterfaceProjection::CheckBelonging ( bool &found ) {
     const double toll = 1.e-20;
     const double xmedium = ( _CoordMatrix[0] + _CoordMatrix[2] + _CoordMatrix[4] + _CoordMatrix[6] ) /4.;
     const double ymedium = ( _CoordMatrix[1] + _CoordMatrix[3] + _CoordMatrix[5] + _CoordMatrix[7] ) /4.;
@@ -629,154 +582,16 @@ void BoundInterp::CheckBelonging ( bool &found ) {
 }
 
 
-// ================================================================================================
-void BoundInterp::SetSubSector ( int sector, int iCell ) {
-    if ( _subsecAM != _subsecAm ) {
-        if ( _subsecBM != _subsecBm ) {
-
-            * ( _Scount[sector]+_subsecAm+_subsecBm ) +=  1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAm+_subsecBm ) ) *9+_subsecAm+_subsecBm ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            }
-#endif
-
-            * ( _Scount[sector]+_subsecAM+_subsecBm ) +=1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAM+_subsecBm ) ) *9+_subsecAM+_subsecBm ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            }
-#endif
-
-            * ( _Scount[sector]+_subsecAm+_subsecBM ) +=1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAm+_subsecBM ) ) *9+_subsecAm+_subsecBM ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            }
-#endif
-
-            * ( _Scount[sector]+_subsecAM+_subsecBM ) +=1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAM+_subsecBM ) ) *9+_subsecAM+_subsecBM ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAM+_subsecBM,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAM+_subsecBM,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAM+_subsecBM,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAM+_subsecBM,1 );
-            }
-#endif
-
-        } else {
-            * ( _Scount[sector]+_subsecAm+_subsecBm ) +=  1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAm+_subsecBm ) ) *9+_subsecAm+_subsecBm ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            }
-#endif
-
-            * ( _Scount[sector]+_subsecAM+_subsecBm ) +=1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAM+_subsecBm ) ) *9+_subsecAM+_subsecBm ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAM+_subsecBm,1 );
-            }
-#endif
-        }
-    } else {
-        if ( _subsecBM != _subsecBm ) {
-            * ( _Scount[sector]+_subsecAm+_subsecBm ) +=  1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAm+_subsecBm ) ) *9+_subsecAm+_subsecBm ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            }
-#endif
-
-            * ( _Scount[sector]+_subsecAm+_subsecBM ) +=1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAm+_subsecBM ) ) *9+_subsecAm+_subsecBM ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAm+_subsecBM,1 );
-            }
-#endif
-
-        } else {
-            * ( _Scount[sector]+_subsecAm+_subsecBm ) +=  1;
-            * ( _SubSec[sector]+ ( * ( _Scount[sector]+_subsecAm+_subsecBm ) ) *9+_subsecAm+_subsecBm ) = iCell;
-#ifdef VERIFY_INTERP
-            if ( sector==0 ) {
-                _sec0->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==1 ) {
-                _sec1->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==2 ) {
-                _sec2->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            } else if ( sector==3 ) {
-                _sec3->setIJ ( iCell,_subsecAm+_subsecBm,1 );
-            }
-#endif
-        }
-    }
-    return;
-}
 
 // ===================================================================================
-void BoundInterp::GetXiEta ( int node, std::vector<double> &XiEtabound ) {
+void InterfaceProjection::GetXiEta ( int node, std::vector<double> &XiEtabound ) {
     for ( int dim=0; dim<_MeshDim; dim++ ) {
         XiEtabound.push_back ( _XiEta->getIJ ( node,dim ) );
     }
     return;
 }
 // ===================================================================================
-void BoundInterp::GetXiEtaChi ( int node, std::vector<double> &XiEtaChi ) {
+void InterfaceProjection::GetXiEtaChi ( int node, std::vector<double> &XiEtaChi ) {
     for ( int dim=0; dim<_MeshDim; dim++ ) {
         XiEtaChi.push_back ( _XiEta->getIJ ( node,dim ) );
     }
@@ -785,7 +600,7 @@ void BoundInterp::GetXiEtaChi ( int node, std::vector<double> &XiEtaChi ) {
 
 
 // ===================================================================================
-void BoundInterp::GetInterNodes ( int node, std::vector<int> &VectorContainingNodes ) {
+void InterfaceProjection::GetInterNodes ( int node, std::vector<int> &VectorContainingNodes ) {
     const int SourceNodes = _BoundingNodes->getNumberOfComponents();
     for ( int i = 0; i<SourceNodes; i++ ) {
         VectorContainingNodes.push_back ( _BoundingNodes->getIJ ( node,i ) );
@@ -795,18 +610,18 @@ void BoundInterp::GetInterNodes ( int node, std::vector<int> &VectorContainingNo
 
 
 // ===================================================================================
-int BoundInterp::GetBoundNodesPerCell() {
+int InterfaceProjection::GetBoundNodesPerCell() {
     return __BoundNodesPerCell;
 }
 
 
 // ===================================================================================
-int BoundInterp::GetDomainType() {
+int InterfaceProjection::GetDomainType() {
     return __Domain;
 }
 
 // ===============================================================================================
-void BoundInterp::XiEtaCalc_2D (
+void InterfaceProjection::XiEtaCalc_2D (
     double NodePos[],                // physical coord (in)
     std::vector<double> &XiEtaBound,  // reference coord (out)
     const int  Quad4[],                   // point coordinates for quad4 (x0,y0,x1,y1...)
@@ -895,42 +710,13 @@ void BoundInterp::XiEtaCalc_2D (
         XiEtaBound.push_back ( xieta[dim] );
     }
 
-//       if( delta_0<1.e-20){ std::cout << " !!!!!!!!!!!!!!!  error delta "<< std::endl;}
-//       xieta[1]=(-beta_0+sqrt(delta_0))/(2*alpha_0);
-//      if( fabs( xieta[1])< 1.001){
-//          xieta[0]=-(-XYZs[id1]+Co[2+3*id1]*xieta[1])/(Co[1+3*id1]+Co[0+3*id1]*xieta[1]);
-//            std::cout<<" Fisrt x1 "<< xieta[0] << " " << xieta[1] <<std::endl;
-//         if( fabs( xieta[0])< 1.001){for(int dim=0; dim<_MeshDim; dim++) XiEtaBound.push_back(xieta[dim]);   }
-//      }
-//        xieta[1]=-(beta_0+sqrt(delta_0))/(2*alpha_0);
-//       if( fabs( xieta[1])< 1.001){
-//          xieta[0]=-(-XYZs[id1]+Co[2+3*id1]*xieta[1])/(Co[1+3*id1]+Co[0+3*id1]*xieta[1]);
-//            std::cout<<" second x1 "<< xieta[0] << " " << xieta[1] <<std::endl;
-//         if( fabs( xieta[0])< 1.001){for(int dim=0; dim<_MeshDim; dim++) XiEtaBound.push_back(xieta[dim]);   }
-//      }
-
-//     double A = XYZs[0]-XYZs[1]*Co[0]/(Co[3]);
-//     double D = XYZs[0]-XYZs[2]*Co[0]/(Co[6]);
-//     double B = Co[1]-Co[4]*Co[0]/(Co[3]);
-//     double C = Co[2]-Co[5]*Co[0]/(Co[3]);
-//     double E = Co[1]-Co[7]*Co[0]/(Co[6]);
-//     double F = Co[2]-Co[8]*Co[0]/(Co[6]);
-//
-// //     xieta[0]  = (A*F-C*D)/(B*F-C*E);    xieta[1] = (B*D-E*A)/(B*F-C*E);
-//     double xieta0  = (A*F-C*D)/(B*F-C*E);  double   xieta1 = (B*D-E*A)/(B*F-C*E);
-//     if(fabs(B*F-C*E)<1.e-20) { std::cout<<"determinante bob "<<B*F-C*E<<std::endl; }
-// //     for(int dim=0; dim<_MeshDim; dim++) { XiEtaBound.push_back(xieta[dim]); }
-//     std::cout<<" bob calculated xi: "<<xieta0<<" eta: "<<xieta1<<" against xi: "<<xieta[0]<<" eta: "<<xieta[1]<<std::endl;
-
-
-
     return;
 }
 
 
 
 // ===============================================================================================
-void BoundInterp::XiEtaCalc_1D (
+void InterfaceProjection::XiEtaCalc_1D (
     double NodePos[],                // physical coord (in)
     std::vector<double> &XiEtaBound,  // reference coord (out)
     int  npt_el
@@ -945,7 +731,7 @@ void BoundInterp::XiEtaCalc_1D (
     return;
 };
 
-int BoundInterp::IsNodeContained() {
+int InterfaceProjection::IsNodeContained() {
     int Verify=1;
     double toll = 1.e-3;
     if ( _FamilyType==1 ) {
@@ -963,7 +749,7 @@ int BoundInterp::IsNodeContained() {
 }
 
 
-void BoundInterp::XiEtaChiCalc ( double NodePos[] ) {
+void InterfaceProjection::XiEtaChiCalc ( double NodePos[] ) {
     double XiEtaChi[_MeshDim];
     for ( int dim=0; dim<_MeshDim; dim++ ) {
         XiEtaChi[dim] = 0.;
@@ -1068,7 +854,7 @@ void BoundInterp::XiEtaChiCalc ( double NodePos[] ) {
 };
 
 // First derivatives of linear 3D test functions
-double BoundInterp::FirstDer ( double XiEtaChi[],int node,int dir ) {
+double InterfaceProjection::FirstDer ( double XiEtaChi[],int node,int dir ) {
 //   _CoordHex27
     double value ;
     if ( _FamilyType==1 ) {
@@ -1089,13 +875,13 @@ double BoundInterp::FirstDer ( double XiEtaChi[],int node,int dir ) {
 }
 
 // Second derivatives of linear 3D test functions
-double BoundInterp::SecondDer ( double XiEtaChi[],int node ) {
+double InterfaceProjection::SecondDer ( double XiEtaChi[],int node ) {
     double value;
     // In 2D 0<= node <4 and offset = 4  ->  the eta coordinates are taken from node + 8, so node+_VertCoordOff
     value  = 0.25*_XiEtaChiVert[node]*_XiEtaChiVert[node+_VertCoordOff]; // direction 0
     return value;
 }
-double BoundInterp::SecondDer ( double XiEtaChi[],int node, int row, int col ) {
+double InterfaceProjection::SecondDer ( double XiEtaChi[],int node, int row, int col ) {
 
     double value;
     if ( _FamilyType==1 ) {
@@ -1116,7 +902,7 @@ double BoundInterp::SecondDer ( double XiEtaChi[],int node, int row, int col ) {
 }
 
 
-double BoundInterp::LinPhi ( int node, double XiEtaChi[] ) {
+double InterfaceProjection::LinPhi ( int node, double XiEtaChi[] ) {
     double N = 1.;
     if ( _FamilyType==1 ) {
         for ( int dir=0; dir<_MeshDim; dir++ ) {
@@ -1137,7 +923,7 @@ double BoundInterp::LinPhi ( int node, double XiEtaChi[] ) {
 // (xp,yp,zp) are the coordinates of the point of interest P and (xi,yi,zi) are the one calculated with (xi,eta,chi)
 // Refer to "Exact and efficient interpolation using finite elements shape functions" (here the formula is correct)
 // ************************ F ******************************
-double BoundInterp::CalcF ( double NodePos[], double XiEtaChi[] ) {
+double InterfaceProjection::CalcF ( double NodePos[], double XiEtaChi[] ) {
     double f=0.;
 
     for ( int i = 0; i<_SpaceDim; i++ ) {
@@ -1151,7 +937,7 @@ double BoundInterp::CalcF ( double NodePos[], double XiEtaChi[] ) {
 }
 
 // *********************** dF ******************************
-void BoundInterp::FirstDerF ( double NodePos[], double XiEtaChi[] ) {
+void InterfaceProjection::FirstDerF ( double NodePos[], double XiEtaChi[] ) {
     // Function for the calculation of first order derivatives of squared error function
     double Error[_SpaceDim];
 
@@ -1180,7 +966,7 @@ void BoundInterp::FirstDerF ( double NodePos[], double XiEtaChi[] ) {
 };
 
 // *********************** d2F *****************************
-void BoundInterp::SecondDerF ( double NodePos[], double XiEtaChi[] ) {
+void InterfaceProjection::SecondDerF ( double NodePos[], double XiEtaChi[] ) {
 
     // Function for the calculation of second order derivatives of squared error function
     // Vector _d2F contains the Hessian matrix of  F
@@ -1225,7 +1011,7 @@ void BoundInterp::SecondDerF ( double NodePos[], double XiEtaChi[] ) {
 }
 
 MEDCoupling::MEDCouplingFieldDouble *
-BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, const int order ) {
+InterfaceProjection::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, const int order ) {
 
     const int NComp = SourceField->getNumberOfComponents();
     int order1 = order;
@@ -1346,7 +1132,7 @@ BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* Sour
 //Modifica a InterpolatedField
 
 MEDCoupling::MEDCouplingFieldDouble *
-BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, const MEDCoupling::MEDCouplingFieldDouble* TargetField, const int order ) {
+InterfaceProjection::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, const MEDCoupling::MEDCouplingFieldDouble* TargetField, const int order ) {
 
     const int NComp = SourceField->getNumberOfComponents();
 
@@ -1479,7 +1265,7 @@ BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* Sour
 }
 
 MEDCoupling::MEDCouplingFieldDouble *
-BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, double DefaultValue, const int order ) {
+InterfaceProjection::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* SourceField, double DefaultValue, const int order ) {
 
     const int NComp = SourceField->getNumberOfComponents();
 
@@ -1521,7 +1307,7 @@ BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* Sour
 //           double phi = QuadPhi(phin, CanPos);
 //           TrgValue +=  val*phi;
 //         }
-                if ( ( ( EqName=="NS0" || EqName=="FSI0" ||EqName=="FSIA0"||EqName=="NSA0" ) && iComp == _SpaceDim ) ||order==1 ) {
+               if ( ( ( EqName=="NS0" || EqName=="FSI0" ||EqName=="FSIA0"||EqName=="NSA0" ) && iComp == _SpaceDim ) ||order==1 ) {
 //             TrgValue = 0.;
                     for ( int phin = 0; phin< pow ( 2,_MeshDim ); phin ++ ) { /// only edge quad and hex
                         const double val = SourceField->getIJ ( BoundingNodes[phin], iComp );
@@ -1611,7 +1397,7 @@ BoundInterp::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDouble* Sour
 
 
 
-double BoundInterp::QuadPhi ( int N, double GPoint[] ) {
+double InterfaceProjection::QuadPhi ( int N, double GPoint[] ) {
     double value;
 
     // General formula for test function: N_i = (1-0.5*|xi_i|)*((2|xi_i|-1)*xi*xi + xi_i*xi + (1-|xi_i|)) for xi, eta, chi

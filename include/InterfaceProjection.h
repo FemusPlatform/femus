@@ -1,11 +1,13 @@
-#ifndef __BoundInterp__
-#define __BoundInterp__
+#ifndef __InterfaceProjection__
+#define __InterfaceProjection__
 
 #include <vector>
-#include "MMed.h"
+#include "MedUtils.h"
 #include "Solverlib_conf.h"
 #include<map>
+
 #ifdef HAVE_MED
+
 namespace MEDCoupling {
 class MEDCouplingUMesh;
 class MEDCouplingFieldDouble;
@@ -13,15 +15,6 @@ class DataArrayInt;
 class DataArrayDouble;
 }
 
-//! Method for the integration function #getMediumValuesOnBoundary_elem
-// enum method{
-//    Mean=0,    /**< Mean integral value */
-//    AxiMean=1, /**< Mean integral value with axisymmetry */
-//    Bulk=2,    /**< Mean integral value weighted on velocity component normal to surface */
-//    AxiBulk=3, /**< Mean integral value weighted on velocity component normal to surface and axisymmetry */
-//    Area=4,    /**< Area of the integration surface */
-//    Integral=5 /**< Integral value */
-// };  
 
 //! Domain type of mesh group
 /*!
@@ -32,26 +25,26 @@ class DataArrayDouble;
 //  enum DomainType{Boundary=0, Volume=1};
 
 /// Class for the interpolation of a solution from a source mesh to a target mesh 
-class BoundInterp : public MMed {  
+class InterfaceProjection : public MedUtils {  
 public:
 
-   BoundInterp ();
+   InterfaceProjection ();
    
-   //! Constructor of the BoundInterp Class
-   BoundInterp  (
+   //! Constructor of the InterfaceProjection Class
+   InterfaceProjection  (
            const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
 	       DomainType bdd= Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
-   BoundInterp  (
+   InterfaceProjection  (
            const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
            int procId,
             DomainType bdd = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
 
-   //! Destructor of the BoundInterp Class
-  ~BoundInterp();
+   //! Destructor of the InterfaceProjection Class
+  ~InterfaceProjection();
    void terminate();
    void setMesh();
    
@@ -348,20 +341,7 @@ int  npt_el=2
   
   /// Offset for reading the generic node coordinates inside the _CoordQuad9 array
   const int _Quad9Off = 9;  
-  
-  
-  int _subsecAm;
-  int _subsecAM;
-  int _subsecBm;
-  int _subsecBM;
-  void SetSubSector(int sector, int iCell);
-  short int* _Scount[4];
-  short int* _SubSec[4];
-  
- MEDCoupling::DataArrayDouble* _sec0;// = MEDCoupling::DataArrayDouble::New();
- MEDCoupling::DataArrayDouble* _sec2;// = MEDCoupling::DataArrayDouble::New();
- MEDCoupling::DataArrayDouble* _sec1;// = MEDCoupling::DataArrayDouble::New();
- MEDCoupling::DataArrayDouble* _sec3;// = MEDCoupling::DataArrayDouble::New();
+
   
  std::vector<double> _coord; 
  void CheckBelonging(bool &found);
@@ -383,4 +363,4 @@ private:
 //   MEDCoupling::DataArrayDouble * XiEta; 
 };
 #endif
- #endif
+#endif

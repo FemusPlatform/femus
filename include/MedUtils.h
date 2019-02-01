@@ -1,40 +1,15 @@
-#ifndef __MMedg_h__
-#define __MMedg_h__
+#ifndef __MedUtilsg_h__
+#define __MedUtilsg_h__
 
 
 #include "Solverlib_conf.h"
+#include <vector>
+#include <map>
 
-#define USE_FEMUS (1)
+class MGFE;
 
 #ifdef HAVE_MED
-
-#include <vector>
-#include<map>
-
-// include local class
-
-
-#if USE_FEMUS==1 
-#include "MGFemusInit.h"
-#include "MGUtils.h"
-#include "MGEquationsSystem.h"
-#include "FEMUS.h"
-#include "MGSolverBase.h"
-#include "MeshExtended.h"
-#include "MGTimeLoop.h"
-#include "MGEquationsSystem.h"
-#include "MGSystem.h"
-#include "Equations_conf.h"
-#include "MGGeomEl.h"
-#include "MGFE_conf.h"
-#endif
-
-
-#include "MGFE.h"
-
-
-
-// // // // // // // // // // // // // // // // // // // // // // // // // // // //
+#include "MEDCouplingFieldDouble.hxx"
 
 namespace MEDCoupling
 {
@@ -44,7 +19,6 @@ namespace MEDCoupling
   class DataArrayDouble;
 }
 
-// class FEMUS;
 //! Method for the integration function #getMediumValuesOnBoundary_elem
 enum method
 {
@@ -76,7 +50,7 @@ enum ConversionMode
 { MeanValue = 0, MidPoint = 1 };
 
 /// Class for the interpolation of a solution from a source mesh to a target mesh
-class MMed
+class MedUtils
 {
 
 public:
@@ -84,26 +58,23 @@ public:
  int _proc;
 
 
-  MMed ();
+  MedUtils ();
 
-  //! Constructor of the MMed Class
-  MMed (const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
+  //! Constructor of the MedUtils Class
+  MedUtils (const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
 	int DomainType = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
     );
-  //! Destructor of the MMed Class
-//   ~MMed();
-    virtual ~ MMed ();
+  //! Destructor of the MedUtils Class
+//   ~MedUtils();
+    virtual ~ MedUtils ();
 
   // PRINT FUNCTION
   void PrintMed (const MEDCoupling::MEDCouplingUMesh * SourceV_update,
 		 std::vector < MEDCoupling::MEDCouplingFieldDouble * >f);
-#if USE_FEMUS==1
-  void PrintMed (FEMUS * PFemus, int n = 0);
-  void PrintMed (std::vector < FEMUS * >PFemus);
-  void PrintMed (std::vector < MEDCoupling::MEDCouplingFieldDouble * >f,
-		 std::string FileName);
-#endif
+
+  void PrintMed (std::vector < MEDCoupling::MEDCouplingFieldDouble * >f, std::string FileName);
+
   void PrintMed (MEDCoupling::MEDCouplingFieldDouble * f,
 		 std::string FileName, int n = 1);
 
@@ -116,22 +87,7 @@ public:
 		    int first_cmp = 0,			     /**< First component     (in)   */
 		    int method = 0,   /**< Method  #method (in) */
 		    const MEDCoupling::MEDCouplingFieldDouble * VelField =  NULL);
-#if USE_FEMUS==1
-  virtual double Integrate (FEMUS * PFemus,         /**< FEMus problem           (in)*/
-			    int id,	             /**< Interface name      (in)   */
-			    const char *system_name, /**< Equation name       (in)   */
-			    int n_cmp,	             /**< Number of variables (in)   */
-			    int first_cmp = 0,       /**< First component     (in)   */
-			    int method = 0           /**< Method  #method (in) */
-    );
-#endif
-#if USE_FEMUS==1
-  virtual MEDCoupling::MEDCouplingFieldDouble * GetVelocityField (
-    FEMUS * PFem,	///[in] Pointer to FEMuS problem
-    int InterfaceId,	///[in] Interface ID from where we get the velocity field
-     int IsVelCoupled	///[in] Flag (1 or 0) to say if the velocity field is calculated with coupled (1) or uncoupled (0) system
-    );
-#endif
+
   virtual void GaussLoop (
       std::vector < double >NodeVar,
 			  std::vector < double >Velocity,
@@ -174,16 +130,8 @@ public:
       const MEDCoupling::MEDCouplingUMesh * TargetMesh, //< Mesh support of the target geometry 
       int DomainType = Boundary                         //< Domain type of the mesh group (Boundary of Volume) 
     );
-  
-  
-  #if USE_FEMUS==1
-  void CreateInterfaces (FEMUS * PFemus);
-#endif
+
 };
-
-
-
-
 
 #endif
 #endif
