@@ -422,7 +422,7 @@ public:
     void setUpExtFieldData();
     void ActivateVectField (int Order, int Field, std::string SystemFieldName, int &n_index, int coupled );
     void ActivateScalar    (int Order, int Field, std::string SystemFieldName, int &n_index);
-    void ActivateControl   (int Order, int Field, std::string SystemFieldName, int &n_index);
+    void ActivateControl   (int Order, int Field, std::string SystemFieldName, int &n_index, int vector, int dimension );
     void ActivateCoupled   (int Order, int Field, std::string SystemFieldName, std::string SystemFieldName2, int &n_index);
     void ActivateEquation  (int Order, int Field, std::string SystemFieldName, int &n_index);
 ///@}  double _xxg[DIMENSION];

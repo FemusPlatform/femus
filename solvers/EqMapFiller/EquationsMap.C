@@ -78,22 +78,20 @@
 
 
 /// EquationsMap standard constructor
-EquationsMap::EquationsMap()
-{
+EquationsMap::EquationsMap() {
     Fill_FIELD_map();
     ReadEquationsToAdd();
     Fill_pbName();
-}
+    }
 
 
 /// Function that handles #EquationsMap::_myproblemP vector filling
-void EquationsMap:: Fill_pbName ( )
-{
+void EquationsMap:: Fill_pbName ( ) {
     _myproblemP.clear();
     int i=0;
     std::cout<<"------------------------------------------------------------------------------ \n";
     std::cout<<" EquationMap::Fill_pbName() \n";
-    
+
     for ( std::map<std::string,int>::iterator it=_EquationsToAdd.begin(); it!=_EquationsToAdd.end(); ++it ) {
         if ( ( it->first ).compare ( 0,3,"MG_" ) == 0 ) {
             if ( it->second !=0 ) {
@@ -101,7 +99,7 @@ void EquationsMap:: Fill_pbName ( )
                 _myproblemP.push_back ( ff );
                 std::cout<<" Adding field "<<it->first<<" with Equation tab number "<<_myproblemP[i]<<"\n";
                 i++;
-                if ( it->first == "MG_DynamicalTurbulence" ) {                    
+                if ( it->first == "MG_DynamicalTurbulence" ) {
                     _myproblemP.push_back ( DIST );
                     std::cout<<" Adding wall distance field with Equation tab number "<<_myproblemP[i]<<"\n";
                     i++;
@@ -114,20 +112,19 @@ void EquationsMap:: Fill_pbName ( )
                     std::cout<<" Adding thermal turbulence with Equation tab number "<<_myproblemP[i]<<"\n";
                     i++;
                 }
+                }
             }
         }
-    }
     std::cout<<" ------------------------------------------------------------------------------ \n";
 
     return;
-}
+    }
 
 // =============================================================================
 /// This function adds equations to #FEMUS::_mg_equations_map
 void EquationsMap::FillEquationMap (
     EquationSystemsExtendedM & EqMap
-)   // ==========================================================================
-{
+) { // ==========================================================================
 
     int n_equations=_myproblemP.size();
 
@@ -138,55 +135,54 @@ void EquationsMap::FillEquationMap (
 
         if ( _myproblemP[iname]== NS_F  || _myproblemP[iname]==NSX_F || _myproblemP[iname]==NSY_F || _myproblemP[iname]==NSZ_F ) {
             initNavierStokes ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== FS_F ) {
             initFluidStructure ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== SDS_F ) {
             initDisplacements ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== T_F ) {
             initTemperature ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== K_F   ||  _myproblemP[iname]==EW_F ) {
             initDynamicTurbulence ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== KTT_F ||  _myproblemP[iname]==EWTT_F ) {
             initThermalTurbulence ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== CO_F ) {
             initColor ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== NSA_F  || _myproblemP[iname]==NSAX_F || _myproblemP[iname]==NSAY_F || _myproblemP[iname]==NSAZ_F ) {
             initAdjointNavierStokes ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== FSA_F ) {
             initAdjointFSI ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== TA_F ) {
             initAdjointTemperature ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== KA_F   ||  _myproblemP[iname]==EWA_F ) {
             initAdjointDynamicTurbulence ( EqMap );
-        }
+            }
         if ( _myproblemP[iname]== CTRL_F ) {
             initControlTemperature ( EqMap );
+            }
         }
-    }
 
     // This Function calls the MGSolDA::init_ext_fields()
     for ( auto eqn=EqMap._equations.begin(); eqn != EqMap._equations.end(); eqn++ ) {
         MGSolBase* mgsol = eqn->second;// get the pointer
         mgsol -> setUpExtFieldData();
         setProblems ( mgsol );
-    }
+        }
 
     return;
-}
+    }
 
 // ================================== NS_EQUATIONS ================================
-void EquationsMap::initNavierStokes ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initNavierStokes ( EquationSystemsExtendedM & EqMap ) {
 #ifdef NS_EQUATIONS
     _nvars[2]= ( ( NS_EQUATIONS==2 ) ?1:DIMENSION );    // quadratic(2) approx
     _nvars[0]=0;
@@ -194,7 +190,7 @@ void EquationsMap::initNavierStokes ( EquationSystemsExtendedM & EqMap )
     if ( NDOF_K>0 ) {
         _nvars[0]=1;      // konstant(0) approx
         _nvars[1]=0;
-    }
+        }
 
 #if NS_EQUATIONS==2     // - NS_EQUATIONS==2 -
     EqMap.AddSolver<MGSolNS> ( "NS0X", NS_F,    _nvars[0],_nvars[1],_nvars[2],"u" );
@@ -222,10 +218,9 @@ void EquationsMap::initNavierStokes ( EquationSystemsExtendedM & EqMap )
 
 #endif
     return;
-}
+    }
 // ================================== FSI_EQUATIONS ================================
-void EquationsMap::initFluidStructure ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initFluidStructure ( EquationSystemsExtendedM & EqMap ) {
 #ifdef FSI_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=FSI_EQUATIONS%2;
@@ -233,7 +228,7 @@ void EquationsMap::initFluidStructure ( EquationSystemsExtendedM & EqMap )
     if ( NDOF_K>0 ) {
         _nvars[0]=1;
         _nvars[1]=0;
-    }
+        }
 #if FSI_EQUATIONS!=2
     EqMap.AddSolver<MGSolFSI> ( "FSI0", FS_F, _nvars[0],_nvars[1],_nvars[2],"u" );
 #else
@@ -255,10 +250,9 @@ void EquationsMap::initFluidStructure ( EquationSystemsExtendedM & EqMap )
 #endif
 
     return;
-}
+    }
 // ================================== DS_EQUATIONS ================================
-void EquationsMap::initDisplacements ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initDisplacements ( EquationSystemsExtendedM & EqMap ) {
 #ifdef DS_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;
@@ -271,11 +265,10 @@ void EquationsMap::initDisplacements ( EquationSystemsExtendedM & EqMap )
 #endif
 
     return;
-}
+    }
 
 // ================================== T_EQUATIONS ================================
-void EquationsMap::initTemperature ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initTemperature ( EquationSystemsExtendedM & EqMap ) {
 #ifdef T_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;
@@ -283,11 +276,10 @@ void EquationsMap::initTemperature ( EquationSystemsExtendedM & EqMap )
     EqMap.AddSolver<MGSolT> ( "T", T_F, _nvars[0],_nvars[1],_nvars[2],"T" );
 #endif
     return;
-}
+    }
 
 // ================================== TBK_EQUATIONS ================================
-void EquationsMap::initDynamicTurbulence ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initDynamicTurbulence ( EquationSystemsExtendedM & EqMap ) {
 #ifdef TBK_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;
@@ -307,11 +299,10 @@ void EquationsMap::initDynamicTurbulence ( EquationSystemsExtendedM & EqMap )
     EqMap.AddSolver<MGSolTURB> ( "MU_T", MU_T, _nvars[0],_nvars[1],_nvars[2],"muT" );
 #endif
     return;
-}
+    }
 
 // ================================== TTBK_EQUATIONS ================================
-void EquationsMap::initThermalTurbulence ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initThermalTurbulence ( EquationSystemsExtendedM & EqMap ) {
 #ifdef TTBK_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;
@@ -330,11 +321,10 @@ void EquationsMap::initThermalTurbulence ( EquationSystemsExtendedM & EqMap )
     EqMap.AddSolver<MGSolTURB> ( "ALPHA_T", ALPHA_T, _nvars[0],_nvars[1],_nvars[2],"alphaT" );
 #endif
     return;
-}
+    }
 
 // ================================== COLOR_EQUATIONS ================================
-void EquationsMap::initColor ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initColor ( EquationSystemsExtendedM & EqMap ) {
 // COLOR EQUATION
 #ifdef COLOR_EQUATIONS
     _nvars[0]=0;
@@ -344,11 +334,10 @@ void EquationsMap::initColor ( EquationSystemsExtendedM & EqMap )
     EqMap.AddSolver<MGSolCOL> ( "CK", CO_F + 1, _nvars[0],_nvars[1],_nvars[2],"k" );
 #endif
     return;
-}
+    }
 
 
-void EquationsMap::initAdjointFSI ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initAdjointFSI ( EquationSystemsExtendedM & EqMap ) {
 #ifdef FSIA_EQUATIONS //    FLUID-STRUCTURE adjoint---  
 // ====================================================================
 
@@ -358,7 +347,7 @@ void EquationsMap::initAdjointFSI ( EquationSystemsExtendedM & EqMap )
     if ( NDOF_K>0 ) {
         _nvars[0]=1;      // konstant(0) approx
         _nvars[1]=0;
-    }
+        }
 
 #if FSIA_EQUATIONS!=2
     EqMap.AddSolver<MGSolFSIA> ( "FSIA0", FSA_F, _nvars[0],_nvars[1],_nvars[2],"ua" );
@@ -387,10 +376,9 @@ void EquationsMap::initAdjointFSI ( EquationSystemsExtendedM & EqMap )
 // #endif
 #endif // ----------------  end  Disp adjoint ---------------------------------  
     return;
-}
+    }
 // ================================== NSA_EQUATIONS ================================
-void EquationsMap::initAdjointNavierStokes ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initAdjointNavierStokes ( EquationSystemsExtendedM & EqMap ) {
 #ifdef NSA_EQUATIONS
     _nvars[2]= ( ( NSA_EQUATIONS==2 ) ?1:DIMENSION );    // quadratic(2) approx
     _nvars[0]=0;
@@ -398,7 +386,7 @@ void EquationsMap::initAdjointNavierStokes ( EquationSystemsExtendedM & EqMap )
     if ( NDOF_K>0 ) {
         _nvars[0]=1;      // konstant(0) approx
         _nvars[1]=0;
-    }
+        }
 
 #if NSA_EQUATIONS==2     // - NS_EQUATIONS==2 -
     EqMap.AddSolver<MGSolNSA> ( "NSA0X", NSA_F, _nvars[0],_nvars[1],_nvars[2],"ua" );
@@ -419,10 +407,9 @@ void EquationsMap::initAdjointNavierStokes ( EquationSystemsExtendedM & EqMap )
 #endif
 #endif
     return;
-}
+    }
 // ================================== TA_EQUATIONS ================================
-void EquationsMap::initAdjointTemperature ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initAdjointTemperature ( EquationSystemsExtendedM & EqMap ) {
 #ifdef TA_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;
@@ -430,10 +417,9 @@ void EquationsMap::initAdjointTemperature ( EquationSystemsExtendedM & EqMap )
     EqMap.AddSolver<MGSolTA> ( "TA", TA_F, _nvars[0],_nvars[1],_nvars[2],"TA" );
 #endif
     return;
-}
+    }
 // ================================== TBKA_EQUATIONS ================================
-void EquationsMap::initAdjointDynamicTurbulence ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initAdjointDynamicTurbulence ( EquationSystemsExtendedM & EqMap ) {
 #ifdef TBKA_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;
@@ -450,24 +436,23 @@ void EquationsMap::initAdjointDynamicTurbulence ( EquationSystemsExtendedM & EqM
 #endif
 #endif
     return;
-}
+    }
 // ================================== CTRL_EQUATIONS ================================
-void EquationsMap::initControlTemperature ( EquationSystemsExtendedM & EqMap )
-{
+void EquationsMap::initControlTemperature ( EquationSystemsExtendedM & EqMap ) {
 #ifdef CTRL_EQUATIONS
     _nvars[0]=0;
     _nvars[1]=0;   // Costant(1)  Linear(0)
     _nvars[2]=1;                // quadratic(2) Approximation
 
     EqMap.AddSolver<MGSolCTRL> ( "CTRLX", CTRLX_F, _nvars[0],_nvars[1],_nvars[2],"cx" );
-#if CTRL_EQUATIONS!=1
-    EqMap.AddSolver<MGSolCTRL> ( "CTRLY", CTRLX_F + 1, _nvars[0],_nvars[1],_nvars[2],"cy" );
+
+    if ( _EquationsToAdd["MG_ControlTemperature"]==2 ) {
+        EqMap.AddSolver<MGSolCTRL> ( "CTRLY", CTRLX_F + 1, _nvars[0],_nvars[1],_nvars[2],"cy" );
 
 #if (DIMENSION==3)
-    EqMap.AddSolver<MGSolCTRL> ( "CTRLZ", CTRLX_F + 2, _nvars[0],_nvars[1],_nvars[2],"cz" );
+        EqMap.AddSolver<MGSolCTRL> ( "CTRLZ", CTRLX_F + 2, _nvars[0],_nvars[1],_nvars[2],"cz" );
 #endif
-
-#endif
+    }
 #endif
     return;
 }
@@ -475,8 +460,7 @@ void EquationsMap::initControlTemperature ( EquationSystemsExtendedM & EqMap )
 
 /// This function fills #EquationsMap::_map_str2field map
 void EquationsMap::Fill_FIELD_map (
-)   // map equation   map_str2field
-{
+) { // map equation   map_str2field
 
     _map_str2field["MG_NavierStokes"] = NS_F;
     _map_str2field["NS_F"] = NS_F;   // [0] -> Navier-Stokes or FSI or SM (quadratic (2);NS_EQUATIONS)
@@ -539,11 +523,10 @@ void EquationsMap::Fill_FIELD_map (
     _map_str2field["CTRLZ_F"]  = CTRLZ_F;   // [16]-> Color function for FSI
     _map_str2field["MG_ImmersedBoundary"]  = IB_F;    // [16]-> Color function for FSI
     return;
-}
+    }
 
 /// Solution sharing between activated equations
-void EquationsMap::setProblems ( MGSolBase* & ProbObj )
-{
+void EquationsMap::setProblems ( MGSolBase* & ProbObj ) {
     _PieceEq = _LinearEq = _QuadEq = 0;
 
     std::cout<<"\n------------------------------------------------\n";
@@ -564,15 +547,16 @@ void EquationsMap::setProblems ( MGSolBase* & ProbObj )
                     if ( coupled == 0 ) {
                         if ( NDOF_K==1 ) {
                             ProbObj->ActivateScalar ( 0, P_F, "NS2P", _PieceEq );
-                        } else {
+                            }
+                        else {
                             ProbObj->ActivateScalar ( 1, P_F, "NS2P", _LinearEq );
+                            }
                         }
                     }
-                }
                 if ( EqnLabel==3 ) {
                     ProbObj->ActivateScalar ( 2, NS_F, "NS0", _QuadEq );
+                    }
                 }
-            }
 
             // ADJOINT NAVIER STOKES
             if ( EqnName == "MG_AdjointNavierStokes" ) {
@@ -581,9 +565,9 @@ void EquationsMap::setProblems ( MGSolBase* & ProbObj )
                     ProbObj->ActivateVectField ( 2, NSA_F, "NSA0", _QuadEq, coupled );
                     if ( coupled == 0 ) {
                         ProbObj->ActivateScalar ( 1, P_F, "NSAP", _LinearEq );
+                        }
                     }
                 }
-            }
 
             // FLUID STRUCTURE
             if ( EqnName == "MG_FluidStructure" ) {
@@ -592,9 +576,9 @@ void EquationsMap::setProblems ( MGSolBase* & ProbObj )
                     ProbObj->ActivateVectField ( 2, FS_F, "FSI0", _QuadEq, coupled );
                     if ( coupled == 0 ) {
                         ProbObj->ActivateScalar ( 1, P_F, "FSIP", _LinearEq );
+                        }
                     }
                 }
-            }
 
             // ADJOINT FLUID STRUCTURE
             if ( EqnName == "MG_AdjointFluidStructure" ) {
@@ -603,82 +587,83 @@ void EquationsMap::setProblems ( MGSolBase* & ProbObj )
                     ProbObj->ActivateVectField ( 2, NSA_F, "FSIA0", _QuadEq, coupled );
                     if ( coupled == 0 ) {
                         ProbObj->ActivateScalar ( 1, P_F, "FSIAP", _LinearEq );
+                        }
                     }
                 }
-            }
 
             // STRUCTURAL MECHANICS
             if ( EqnName == "MG_StructuralMechanics" ) {
                 if ( EqnLabel <=2 ) {
                     int coupled = ( EqnLabel==1 ) ? 1:0;
                     ProbObj->ActivateVectField ( 2, SM_F, "SM0", _QuadEq, coupled );
+                    }
                 }
-            }
 
             // SOLID DISPLACEMENTS
             if ( EqnName == "MG_Displacement" ) {
                 if ( EqnLabel <=2 ) {
                     int coupled = ( EqnLabel==1 ) ? 1:0;
                     ProbObj->ActivateVectField ( 2, SDS_F, "SDS", _QuadEq, coupled );
+                    }
                 }
-            }
 
             // TEMPERATURE
             if ( EqnName == "MG_Temperature" ) {
                 ProbObj->ActivateScalar ( 2, T_F, "T", _QuadEq );
-            }
-            
+                }
+
             // CONTROL TEMPERATURE
             if ( EqnName == "MG_ControlTemperature" ) {
-                ProbObj->ActivateControl ( 2, CTRL_F, "CTRL", _QuadEq );
-            }
+                int vector;
+                vector = ( _EquationsToAdd["MG_ControlTemperature"]==2 ) ? 1:0;
+                ProbObj->ActivateControl ( 2, CTRL_F, "CTRL", _QuadEq , vector, DIMENSION );
+                }
 
             // ADJOINT TEMPERATURE
             if ( EqnName == "MG_AdjointTemperature" ) {
                 ProbObj->ActivateScalar ( 2, TA_F, "TA", _QuadEq );
-            }
+                }
 
             // DYNAMICAL TURBULENCE
             if ( EqnName == "MG_DynamicalTurbulence" ) {
                 ProbObj->ActivateCoupled ( 2, K_F, "K2K", "K1W", _QuadEq );
-                ProbObj->ActivateScalar ( 2, DIST, "DIST", _QuadEq );
-                ProbObj->ActivateScalar ( 2, MU_T, "MU_T", _QuadEq );
-            }
+//                 ProbObj->ActivateScalar ( 2, DIST, "DIST", _QuadEq );
+//                 ProbObj->ActivateScalar ( 2, MU_T, "MU_T", _QuadEq );
+                }
 
             // THERMAL TURBULENCE
             if ( EqnName == "MG_ThermalTurbulence" ) {
                 ProbObj->ActivateCoupled ( 2, KTT_F, "TK", "TK2", _QuadEq );
-                ProbObj->ActivateScalar ( 2, ALPHA_T, "ALPHA_T", _QuadEq );
-            }
+//                 ProbObj->ActivateScalar ( 2, ALPHA_T, "ALPHA_T", _QuadEq );
+                }
 
             // COLOR FUNCTION
             if ( EqnName == "MG_ColorFunction" ) {
                 ProbObj->ActivateCoupled ( 2, CO_F, "C", "CK", _QuadEq );
-            }
+                }
 
             // IMMERSED BOUNDARY
             if ( EqnName == "MG_ImmersedBoundary" ) {
                 ProbObj->ActivateCoupled ( 2, IB_F, "IB1", "IB2", _QuadEq );
-            }
+                }
 
             // ADJOINT TURBULENCE
             if ( EqnName == "MG_AdjointTurbulence" ) {
                 ProbObj->ActivateCoupled ( 2, KA_F, "K2KA", "K1WA", _QuadEq );
-            }
+                }
 
             // DA
             if ( EqnName == "MG_DA" ) {
                 ProbObj->ActivateScalar ( 2, DA_F, "DA", _QuadEq );
+                }
             }
+
         }
 
+    return;
     }
 
-    return;
-}
-
-void EquationsMap::ReadEquationsToAdd()
-{
+void EquationsMap::ReadEquationsToAdd() {
     std::ostringstream filename;
     filename << getenv ( "APP_PATH" ) << "/DATA/Equations.in";
     std::ifstream fin;
@@ -690,19 +675,20 @@ void EquationsMap::ReadEquationsToAdd()
     if ( fin.is_open() ) { // -------------------------------------------------------------
         while ( buf != "/" ) {
             fin >> buf;    // find "/" file start
-        }
+            }
         fin >> buf;
         while ( buf != "/" ) {
             if ( buf == "#" ) {
                 getline ( fin, buf );    // comment line
-            } else {
+                }
+            else {
                 fin >> value;
                 _EquationsToAdd.insert ( std::pair<std::string, int> ( buf, value ) );
-            }
+                }
             fin >> buf;
-        }
-    } // --------------------------------------------------------------------------------------
+            }
+        } // --------------------------------------------------------------------------------------
 
     return;
-}
+    }
 

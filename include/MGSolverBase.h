@@ -471,7 +471,7 @@ class MGSolBase
     // ==================================================
 //   virtual void set_ext_fields(const std::vector<FIELDS> & pbName)=0;   ///< set external fields
     virtual void setUpExtFieldData() = 0;
-    virtual void ActivateControl   ( int Order, int Field, std::string SystemFieldName, int & n_index ) = 0;
+    virtual void ActivateControl   ( int Order, int Field, std::string SystemFieldName, int & n_index, int vector, int dimension ) = 0;
     virtual void ActivateEquation  ( int Order, int Field, std::string SystemFieldName, int & n_index ) = 0;
     virtual void ActivateVectField ( int Order, int Field, std::string SystemFieldName, int & n_index, int coupled ) = 0; // quad vector
     virtual void ActivateScalar    ( int Order, int Field, std::string SystemFieldName, int & n_index ) = 0; // quad scalar
