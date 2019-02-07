@@ -751,7 +751,7 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
 #include "petsc_preconditionerM.h"
 #include "petsc_vectorM.h"
 #include "petsc_matrixM.h"
-// #include <gsl/gsl_linalg.h>
+#include <gsl/gsl_linalg.h>
 //
 // ====================================================================
 /// This function does one multigrid step
