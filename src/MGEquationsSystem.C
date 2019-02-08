@@ -185,15 +185,15 @@ void MGEquationsSystem::set_uooold(
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines for control problem
 void MGEquationsSystem::eqnmap_timestep_loop_control(
-   const int     &nmax_step,       ///< number max of steps
-   const double  &it,              ///< tolerance
-   const double  delta_t_step_in,  //   (in)  
+   const int     &nmax_step,       ///< number max of steps                                (in)
+   const int     &it,              ///< tolerance                                          (in)
+   const double  &delta_t_step_in, ///< delta t timestep                                   (in)
    const int     &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
    const int     &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
-   bool          &converged        ///< check if the solution converged (1->converged)
+   bool          &converged        ///< check if the solution converged (1->converged)     (in)
 ) {
 
-    // Loop for time steps
+  // Loop for time steps
   int NoLevels=0;
   double norm_new=1.e-20; double norm_old=1.e-20; double diff_norm=1.e-20;
   double diff_norm_old=10000.; double toll=1.e-5;
@@ -254,14 +254,14 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
 }
 /// This function performes all the MGSystem time step routines for control problem
 void MGEquationsSystem::eqnmap_timestep_loop_control(
-   const int           &nmax_step,       ///< number max of steps
-   const double        &it,              ///< tolerance
-   const double        delta_t_step_in,  //   (in)  
+   const int           &nmax_step,       ///< number max of steps                                (in)
+   const int           &it,              ///< tolerance                                          (in)
+   const double        &delta_t_step_in, ///< delta t timestep                                   (in)
    const int           &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
    const int           &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
    std::vector<double> controlled_eq,    ///< vector whose compontents are the flags of the equations that have to converge     
-   bool                &converged,       ///< check if the solution converged (1->converged)
-   const double        &toll             ///< tolerance
+   bool                &converged,       ///< check if the solution converged (1->converged)     (in)
+   const double        &toll             ///< tolerance                                          (in)
 ) {
   int conv_dim=controlled_eq.size();
     // Loop for time steps
@@ -278,7 +278,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
       NoLevels=mgsol->_NoLevels;
       //norm_old[_num_equations[eqn->first]]+= mgsol ->x_old[NoLevels-1]->l2_norm();
       for(int i=0; i<conv_dim;i++) 
-       if (_num_equations[eqn->first]==controlled_eq[i]) norm_old[i] += mgsol ->x_old[NoLevels-1]->l2_norm();
+       if (_num_equations[eqn->first]==controlled_eq[i]) {mgsol ->x_old[NoLevels - 1]->close(); norm_old[i] += mgsol ->x_old[NoLevels-1]->l2_norm();}
       // mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
   }
@@ -1188,4 +1188,5 @@ void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
 
 
 // kate: indent-mode cstyle; indent-width 2; replace-tabs on; 
+
 
