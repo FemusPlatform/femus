@@ -60,23 +60,24 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
     _iproc=0;                      // 1 CPU
 #endif
 
-    //allocation of dynamic system ---------------
-    _Dim =new int[_NoLevels];                          // matrix and vect  dim
-    A.resize (_NoLevels);
-    x.resize (_NoLevels);    // matrix vect sol
-    x_old.resize (_NoLevels);
-    x_oold.resize (_NoLevels); // old solution
-    x_nonl.resize (_NoLevels); // non linear solution
-    disp.resize (_NoLevels); // displacement for mesh
-    disp_old.resize (_NoLevels); // displacement for mesh
-    disp_oold.resize (_NoLevels); // displacement for mesh
-    x_ooold.resize (_NoLevels); // vector for multiple uses
-    b.resize (_NoLevels);
-    res.resize (_NoLevels);  // rhs
-
-    // restr and prol operators -----------------
-    Rst.resize (_NoLevels);
-    Prl.resize (_NoLevels);   // Projector and restrictor
+  //allocation of dynamic system ---------------
+  _Dim =new int[_NoLevels];                          // matrix and vect  dim
+  A.resize (_NoLevels);
+  x.resize (_NoLevels);    // matrix vect sol
+  x_old.resize (_NoLevels);
+  x_oold.resize (_NoLevels); // old solution
+  x_nonl.resize (_NoLevels); // non linear solution
+  disp.resize (_NoLevels); // displacement for mesh
+  disp_old.resize (_NoLevels); // displacement for mesh
+  disp_oold.resize (_NoLevels); // displacement for mesh
+  x_ooold.resize (_NoLevels); // vector for multiple uses
+  x_oooold.resize (_NoLevels); // vector for multiple uses
+  b.resize (_NoLevels);
+  res.resize (_NoLevels);  // rhs
+  disp_ooold.resize(_NoLevels);
+  // restr and prol operators -----------------
+  Rst.resize (_NoLevels);
+  Prl.resize (_NoLevels);   // Projector and restrictor
 
     // dof info ---------------
     _node_dof= new int*[_NoLevels+1];  // dof (+1)
@@ -108,20 +109,23 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
 MGSolBase::~MGSolBase (
 ) {
 // ===================================================
-    // clear substructrures
-    clear();
-    A.clear();
-    x.clear();        //  A and x
-    x_old.clear();
-    x_oold.clear();  //  old solutions
-    x_nonl.clear(); // nonlinear solution tmp
-    disp.clear(); // displacement for mesh
-    disp_old.clear(); // displacement for mesh
-    disp_oold.clear(); // displacement for mesh
-    b.clear();
-    res.clear();      //  rhs and residual vector
-    Rst.clear();
-    Prl.clear();    // Restrictor and projector
+  // clear substructrures
+   clear(); 
+  A.clear();
+  x.clear();        //  A and x
+  x_old.clear();
+  x_oold.clear();  //  old solutions
+  x_ooold.clear();  //  ooold solutions
+  x_ooold.clear();  //  oooold solutions
+  x_nonl.clear(); // nonlinear solution tmp
+  disp.clear(); // displacement for mesh
+  disp_old.clear(); // displacement for mesh
+  disp_oold.clear(); // displacement for mesh
+  disp_ooold.clear();
+  b.clear();
+  res.clear();      //  rhs and residual vector
+  Rst.clear();
+  Prl.clear();    // Restrictor and projector
 //   _attrib.clear();                // Cell properties
     delete [] _Dim;                 // dimension system Ax=b
     delete[] bc[0];
@@ -138,18 +142,20 @@ void MGSolBase::clear (
 ) {
 // ==============================================================
 
-    for (int Level =0; Level<_NoLevels; Level++) {
-        delete A[Level];
-        delete x[Level];             //  A and x  at Level
-        delete b[Level];
-        delete res[Level];             //  old solutions  at Level
-        delete x_old[Level];
-        delete x_oold[Level];
-        delete x_ooold[Level];
-        delete x_nonl[Level];    //  rhs and residual vector
-        delete disp[Level];
-        delete disp_old[Level];
-        delete disp_oold[Level];
+  for (int Level =0; Level<_NoLevels; Level++) {
+    delete A[Level];
+    delete x[Level];             //  A and x  at Level
+    delete b[Level];
+    delete res[Level];             //  old solutions  at Level
+    delete x_old[Level];
+    delete x_oold[Level];
+    delete x_ooold[Level];
+    delete x_oooold[Level];
+    delete x_nonl[Level];    //  rhs and residual vector
+    delete disp[Level];
+    delete disp_old[Level];
+    delete disp_oold[Level];
+    delete disp_ooold[Level];
 //     delete _attrib[Level];                         // Cell properties  at Level
         delete [] _node_dof[ Level];                   // dof distribution at Level
         delete _solver[Level];                         //delete solver  at Level
@@ -527,6 +533,25 @@ void  MGSolBase::get_el_oooldsol (
     }
     return;
 }
+void  MGSolBase::get_el_ooooldsol (
+  const int ivar0,      // initial variable  <-
+  const int nvars,      // # of variables to get  <-
+  const int el_nds,     // # of element nodes for this variable  <-
+  const int el_conn[],  // connectivity <-
+  const int offset,     // offset for connectivity <-
+  const int kvar0,      // offset  variable for  uold <-
+  double  uold[]            // element node values ->
+)  const { // ==============================================================
+  for (int id=0; id<el_nds; id++)    {
+    // quadratic -------------------------------------------------
+    for (int
+         ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
+      const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
+      uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_oooold[_NoLevels-1]) (kdof_top)); // element sol
+    } // end quadratic ------------------------------------------------
+  }
+  return;
+}
 // ==========================================================================================
 /// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
 /// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
@@ -571,6 +596,26 @@ void  MGSolBase::get_el_oold_disp(
     }
     return;
 }
+void  MGSolBase::get_el_ooold_disp(
+  const int ivar0,      // initial variable  <-
+  const int nvars,      // # of variables to get  <-
+  const int el_nds,     // # of element nodes for this variable  <-
+  const int el_conn[],  // connectivity <-
+  const int offset,     // offset for connectivity <-
+  const int kvar0,      // offset  variable for  uold <-
+  double  uold[]            // element node values ->
+)  const { // ==============================================================
+  for (int id=0; id<el_nds; id++)    {
+    // quadratic -------------------------------------------------
+    for (int
+         ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
+      const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+(ivar+ivar0)*offset]; // dof from top level
+      uold[ id +(kvar0+ivar)*NDOF_FEM]= ((*disp_ooold[_NoLevels-1])(kdof_top));     // element sol
+    } // end quadratic ------------------------------------------------
+  }
+  return;
+}
+
 
 /// ======================================================
 /// This function controls the time step operations:

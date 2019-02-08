@@ -186,8 +186,12 @@ void MGSolDA::init ( const int Level ) {
     disp_old[Level]->init ( n_glob,false, SERIALM );
     disp_oold[Level] = NumericVectorM::build ( comm1 ).release();
     disp_oold[Level]->init ( n_glob,false, SERIALM );
+    disp_ooold[Level] = NumericVectorM::build ( comm1 ).release();
+    disp_ooold[Level]->init ( n_glob,false, SERIALM );
     x_ooold[Level] = NumericVectorM::build ( comm1 ).release();
     x_ooold[Level]->init ( n_glob,false, SERIALM );
+    x_oooold[Level] = NumericVectorM::build ( comm1 ).release();
+    x_oooold[Level]->init ( n_glob,false, SERIALM );
 
 
     if ( Level < _NoLevels - 1 ) { // Restrictor
@@ -1439,7 +1443,12 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
                             case 7:
                                 value= ( *disp_oold[Level] ) ( _node_dof[_NoLevels-1][k+ivar*offset] );
                                 break;
-
+                            case 8:
+                                value= ( *disp_ooold[Level] ) ( _node_dof[_NoLevels-1][k+ivar*offset] );
+                                break;
+                             case 9:
+                                value= ( *x_oooold[Level] ) ( _node_dof[_NoLevels-1][k+ivar*offset] );
+                                break;    
                             default:
                                 cout<<"Incorrect vec_from number in set_uoold function"<<endl;
                                 break;
@@ -1472,7 +1481,12 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
                             case 7:
                                 disp_oold[Level]->set ( _node_dof[_NoLevels-1][k+ivar*offset], value ); // set the field
                                 break;
-
+                            case 8:
+                                disp_ooold[Level]->set ( _node_dof[_NoLevels-1][k+ivar*offset], value ); // set the field
+                                break;
+                            case 9:
+                                x_oooold[Level]->set ( _node_dof[_NoLevels-1][k+ivar*offset], value ); // set the field
+                                break;    
                             default:
                                 cout<<"Incorrect vec_to number in set_uoold function"<<endl;
                                 break;
