@@ -298,6 +298,7 @@ double MGSolBase::MGStep (int Level,           // Level
         // restriction
         b[Level-1]->matrix_mult (*res[Level],*Rst[Level-1]);
         //  solving of system of equations for the residual on the coarser grid
+        x[Level-1]->close();
         x[Level-1]->zero();
         double coarser_rest;
         for (int g=1; g <= Gamma; g++)

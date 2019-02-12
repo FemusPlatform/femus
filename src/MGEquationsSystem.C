@@ -203,7 +203,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
    
     if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
       NoLevels=mgsol->_NoLevels;
-      if (_num_equations[eqn->first]==0) norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();
+      if (_num_equations[eqn->first]==0) {mgsol ->x_old[NoLevels - 1]->close(); norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();}
 //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
   }
