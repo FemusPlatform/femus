@@ -60,24 +60,24 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
     _iproc=0;                      // 1 CPU
 #endif
 
-  //allocation of dynamic system ---------------
-  _Dim =new int[_NoLevels];                          // matrix and vect  dim
-  A.resize (_NoLevels);
-  x.resize (_NoLevels);    // matrix vect sol
-  x_old.resize (_NoLevels);
-  x_oold.resize (_NoLevels); // old solution
-  x_nonl.resize (_NoLevels); // non linear solution
-  disp.resize (_NoLevels); // displacement for mesh
-  disp_old.resize (_NoLevels); // displacement for mesh
-  disp_oold.resize (_NoLevels); // displacement for mesh
-  x_ooold.resize (_NoLevels); // vector for multiple uses
-  x_oooold.resize (_NoLevels); // vector for multiple uses
-  b.resize (_NoLevels);
-  res.resize (_NoLevels);  // rhs
-  disp_ooold.resize(_NoLevels);
-  // restr and prol operators -----------------
-  Rst.resize (_NoLevels);
-  Prl.resize (_NoLevels);   // Projector and restrictor
+    //allocation of dynamic system ---------------
+    _Dim =new int[_NoLevels];                          // matrix and vect  dim
+    A.resize (_NoLevels);
+    x.resize (_NoLevels);    // matrix vect sol
+    x_old.resize (_NoLevels);
+    x_oold.resize (_NoLevels); // old solution
+    x_nonl.resize (_NoLevels); // non linear solution
+    disp.resize (_NoLevels); // displacement for mesh
+    disp_old.resize (_NoLevels); // displacement for mesh
+    disp_oold.resize (_NoLevels); // displacement for mesh
+    x_ooold.resize (_NoLevels); // vector for multiple uses
+    x_oooold.resize (_NoLevels); // vector for multiple uses
+    b.resize (_NoLevels);
+    res.resize (_NoLevels);  // rhs
+    disp_ooold.resize(_NoLevels);
+    // restr and prol operators -----------------
+    Rst.resize (_NoLevels);
+    Prl.resize (_NoLevels);   // Projector and restrictor
 
     // dof info ---------------
     _node_dof= new int*[_NoLevels+1];  // dof (+1)
@@ -109,23 +109,23 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
 MGSolBase::~MGSolBase (
 ) {
 // ===================================================
-  // clear substructrures
-   clear(); 
-  A.clear();
-  x.clear();        //  A and x
-  x_old.clear();
-  x_oold.clear();  //  old solutions
-  x_ooold.clear();  //  ooold solutions
-  x_ooold.clear();  //  oooold solutions
-  x_nonl.clear(); // nonlinear solution tmp
-  disp.clear(); // displacement for mesh
-  disp_old.clear(); // displacement for mesh
-  disp_oold.clear(); // displacement for mesh
-  disp_ooold.clear();
-  b.clear();
-  res.clear();      //  rhs and residual vector
-  Rst.clear();
-  Prl.clear();    // Restrictor and projector
+    // clear substructrures
+    clear();
+    A.clear();
+    x.clear();        //  A and x
+    x_old.clear();
+    x_oold.clear();  //  old solutions
+    x_ooold.clear();  //  ooold solutions
+    x_ooold.clear();  //  oooold solutions
+    x_nonl.clear(); // nonlinear solution tmp
+    disp.clear(); // displacement for mesh
+    disp_old.clear(); // displacement for mesh
+    disp_oold.clear(); // displacement for mesh
+    disp_ooold.clear();
+    b.clear();
+    res.clear();      //  rhs and residual vector
+    Rst.clear();
+    Prl.clear();    // Restrictor and projector
 //   _attrib.clear();                // Cell properties
     delete [] _Dim;                 // dimension system Ax=b
     delete[] bc[0];
@@ -142,20 +142,20 @@ void MGSolBase::clear (
 ) {
 // ==============================================================
 
-  for (int Level =0; Level<_NoLevels; Level++) {
-    delete A[Level];
-    delete x[Level];             //  A and x  at Level
-    delete b[Level];
-    delete res[Level];             //  old solutions  at Level
-    delete x_old[Level];
-    delete x_oold[Level];
-    delete x_ooold[Level];
-    delete x_oooold[Level];
-    delete x_nonl[Level];    //  rhs and residual vector
-    delete disp[Level];
-    delete disp_old[Level];
-    delete disp_oold[Level];
-    delete disp_ooold[Level];
+    for (int Level =0; Level<_NoLevels; Level++) {
+        delete A[Level];
+        delete x[Level];             //  A and x  at Level
+        delete b[Level];
+        delete res[Level];             //  old solutions  at Level
+        delete x_old[Level];
+        delete x_oold[Level];
+        delete x_ooold[Level];
+        delete x_oooold[Level];
+        delete x_nonl[Level];    //  rhs and residual vector
+        delete disp[Level];
+        delete disp_old[Level];
+        delete disp_oold[Level];
+        delete disp_ooold[Level];
 //     delete _attrib[Level];                         // Cell properties  at Level
         delete [] _node_dof[ Level];                   // dof distribution at Level
         delete _solver[Level];                         //delete solver  at Level
@@ -534,23 +534,23 @@ void  MGSolBase::get_el_oooldsol (
     return;
 }
 void  MGSolBase::get_el_ooooldsol (
-  const int ivar0,      // initial variable  <-
-  const int nvars,      // # of variables to get  <-
-  const int el_nds,     // # of element nodes for this variable  <-
-  const int el_conn[],  // connectivity <-
-  const int offset,     // offset for connectivity <-
-  const int kvar0,      // offset  variable for  uold <-
-  double  uold[]            // element node values ->
+    const int ivar0,      // initial variable  <-
+    const int nvars,      // # of variables to get  <-
+    const int el_nds,     // # of element nodes for this variable  <-
+    const int el_conn[],  // connectivity <-
+    const int offset,     // offset for connectivity <-
+    const int kvar0,      // offset  variable for  uold <-
+    double  uold[]            // element node values ->
 )  const { // ==============================================================
-  for (int id=0; id<el_nds; id++)    {
-    // quadratic -------------------------------------------------
-    for (int
-         ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
-      const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
-      uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_oooold[_NoLevels-1]) (kdof_top)); // element sol
-    } // end quadratic ------------------------------------------------
-  }
-  return;
+    for (int id=0; id<el_nds; id++)    {
+        // quadratic -------------------------------------------------
+        for (int
+                ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
+            const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
+            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_oooold[_NoLevels-1]) (kdof_top)); // element sol
+        } // end quadratic ------------------------------------------------
+    }
+    return;
 }
 // ==========================================================================================
 /// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
@@ -597,23 +597,23 @@ void  MGSolBase::get_el_oold_disp(
     return;
 }
 void  MGSolBase::get_el_ooold_disp(
-  const int ivar0,      // initial variable  <-
-  const int nvars,      // # of variables to get  <-
-  const int el_nds,     // # of element nodes for this variable  <-
-  const int el_conn[],  // connectivity <-
-  const int offset,     // offset for connectivity <-
-  const int kvar0,      // offset  variable for  uold <-
-  double  uold[]            // element node values ->
+    const int ivar0,      // initial variable  <-
+    const int nvars,      // # of variables to get  <-
+    const int el_nds,     // # of element nodes for this variable  <-
+    const int el_conn[],  // connectivity <-
+    const int offset,     // offset for connectivity <-
+    const int kvar0,      // offset  variable for  uold <-
+    double  uold[]            // element node values ->
 )  const { // ==============================================================
-  for (int id=0; id<el_nds; id++)    {
-    // quadratic -------------------------------------------------
-    for (int
-         ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
-      const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+(ivar+ivar0)*offset]; // dof from top level
-      uold[ id +(kvar0+ivar)*NDOF_FEM]= ((*disp_ooold[_NoLevels-1])(kdof_top));     // element sol
-    } // end quadratic ------------------------------------------------
-  }
-  return;
+    for (int id=0; id<el_nds; id++)    {
+        // quadratic -------------------------------------------------
+        for (int
+                ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
+            const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+(ivar+ivar0)*offset]; // dof from top level
+            uold[ id +(kvar0+ivar)*NDOF_FEM]= ((*disp_ooold[_NoLevels-1])(kdof_top));     // element sol
+        } // end quadratic ------------------------------------------------
+    }
+    return;
 }
 
 
@@ -921,7 +921,7 @@ void MGSolBase::Vanka_solve(
     const int system_size=el_dof[2]*_nvars[2]+el_dof[1]*_nvars[1]+el_dof[0]*_nvars[0];    //ndofs of linear system
     double a_data[system_size*system_size] ;  //local matrix
     double b_data[system_size];   //local rhs
-    std::vector<int> el_dof_indices (system_size );               // element dof vector
+    std::map<int,std::vector<int>> el_dof_indices;               // element dof vector
 
     // Make sure the data passed in are really of Petsc types
     PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
@@ -958,45 +958,48 @@ void MGSolBase::Vanka_solve(
     const int  nel_e = _mgmesh._off_el[0][Level+_NoLevels*_iproc+1];
     const int  nel_b = _mgmesh._off_el[0][Level+_NoLevels*_iproc];
 
+    //====== Get el_dof_indices map for all elements===============================
+    for (int iel=0; iel < (nel_e - nel_b); iel++) {
+        el_dof_indices[iel].resize(system_size);
+    }
+
+    for (int iel=0; iel < (nel_e - nel_b); iel++) {
+        _mgmesh.get_el_nod_conn(0,Level,iel,el_conn,xx_qnds);  // get connectivity and coord
+        for ( int id=0; id<NDOF_FEM; id++ )  {
+            // quadratic -------------------------------------------------
+            if ( id <el_dof[2] )  for ( int  ivar=0; ivar<_nvars[2]; ivar++ ) { //ivarq is like idim
+                    const int indx_loc_ql = id +ivar*el_dof[2];
+                    const int indx_glob= el_conn[id]+ivar*total_offset;
+
+                    el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
+                } // end quadratic ------------------------------------------------
+
+//     // linear -----------------------------
+            if ( id <el_dof[1] )    for ( int ivar=0; ivar<_nvars[1]; ivar++ ) { //ivarq is like idim
+                    const int indx_loc_ql = id +ivar*el_dof[1]+_nvars[2]*el_dof[2];
+                    const int indx_glob= el_conn[id]+ ( ivar+_nvars[2] ) *total_offset;
+
+                    el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
+                } // end quadratic ------------------------------------------------
+
+            //     // piecewise -----------------------------
+            if ( id <el_dof[0] )    for ( int ivar=0; ivar<_nvars[0]; ivar++ ) { //ivarq is like idim
+                    const int indx_loc_ql = id +ivar*el_dof[0]+_nvars[2]*el_dof[2]+_nvars[1]*el_dof[1];
+                    const int indx_glob= id+iel*el_dof[0]+ ( ivar+_nvars[2]+_nvars[1] ) *total_offset;
+
+                    el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
+                } // end piecewise ------------------------------------------------
+        }
+    }
+    //======End Get el_dof_indices map for all elements===============================
     int nsm=m_its;
     for (int ismooth=0; ismooth<= nsm; ismooth++) {
         //element loop
-        for (int iel=0; iel < (nel_e - nel_b); iel++) {
-
-//             cout<<iel<<endl;
-            // geometry element quantities ---------------------------
-            // Element connectivity  and coordinates (xx_qnds)
-            _mgmesh.get_el_nod_conn(0,Level,iel,el_conn,xx_qnds);  // get connectivity and coord
-
-            for ( int id=0; id<NDOF_FEM; id++ )  {
-                // quadratic -------------------------------------------------
-                if ( id <el_dof[2] )  for ( int  ivar=0; ivar<_nvars[2]; ivar++ ) { //ivarq is like idim
-                        const int indx_loc_ql = id +ivar*el_dof[2];
-                        const int indx_glob= el_conn[id]+ivar*total_offset;
-
-                        el_dof_indices[indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                    } // end quadratic ------------------------------------------------
-
-//     // linear -----------------------------
-                if ( id <el_dof[1] )    for ( int ivar=0; ivar<_nvars[1]; ivar++ ) { //ivarq is like idim
-                        const int indx_loc_ql = id +ivar*el_dof[1]+_nvars[2]*el_dof[2];
-                        const int indx_glob= el_conn[id]+ ( ivar+_nvars[2] ) *total_offset;
-
-                        el_dof_indices[indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                    } // end quadratic ------------------------------------------------
-
-                //     // piecewise -----------------------------
-                if ( id <el_dof[0] )    for ( int ivar=0; ivar<_nvars[0]; ivar++ ) { //ivarq is like idim
-                        const int indx_loc_ql = id +ivar*el_dof[0]+_nvars[2]*el_dof[2]+_nvars[1]*el_dof[1];
-                        const int indx_glob= id+iel*el_dof[0]+ ( ivar+_nvars[2]+_nvars[1] ) *total_offset;
-
-                        el_dof_indices[indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                    } // end piecewise ------------------------------------------------
-            }
-
+        for (int iel_order=0; iel_order < (nel_e - nel_b); iel_order++) {
+            int iel=iel_order; 
             double b[system_size]= {0}; //local rhs
             for (int i=0; i<system_size; i++) {
-                idx[i]=el_dof_indices[i];
+                idx[i]=el_dof_indices[iel][i];
             }
             ierr=MatGetValues(matrix->mat(),system_size, idx,system_size, idx,matr);
 
