@@ -76,6 +76,8 @@ function femus_application_configure () {
    export path_len=${#app_pre}
    FM_MYAPP=${APP_PATH:$((path_len +1))}
    
+   export HDF5_USE_FILE_LOCKING="FALSE"
+   
    # Final print ===================================
    echo "Application path is " $APP_PATH 
    echo "Application name is "$FM_MYAPP
