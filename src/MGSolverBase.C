@@ -557,6 +557,29 @@ void  MGSolBase::get_el_ooooldsol (
 /// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
 /// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
 void  MGSolBase::get_el_new_disp(
+    const int Level,      // Level  <-
+    const int ivar0,      // initial variable  <-
+    const int nvars,      // # of variables to get  <-
+    const int el_nds,     // # of element nodes for this variable  <-
+    const int el_conn[],  // connectivity <-
+    const int offset,     // offset for connectivity <-
+    const int kvar0,      // offset  variable for  uold <-
+    double  uold[]            // element node values ->
+)  const { // ==============================================================
+    for (int id=0; id<el_nds; id++)    {
+        // quadratic -------------------------------------------------
+        for (int
+                ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
+            const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+(ivar+ivar0)*offset]; // dof from top level
+            uold[ id +(kvar0+ivar)*NDOF_FEM]= ((*disp[Level])(kdof_top));     // element sol
+        } // end quadratic ------------------------------------------------
+    }
+    return;
+}
+// ==========================================================================================
+/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
+/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
+void  MGSolBase::get_el_new_disp(
     const int ivar0,      // initial variable  <-
     const int nvars,      // # of variables to get  <-
     const int el_nds,     // # of element nodes for this variable  <-
@@ -575,6 +598,7 @@ void  MGSolBase::get_el_new_disp(
     }
     return;
 }
+
 // ==========================================================================================
 /// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
 /// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
