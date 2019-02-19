@@ -141,6 +141,7 @@ function femus_gencase_compile_lib {
 function femus_FEMuS_compile_lib {
 
   OLD_METHOD=$METHOD
+  export ACTUAL_DIR=$PWD
   echo "Compiling femus library for 2D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
   femus_application_configure opt
@@ -161,8 +162,10 @@ function femus_FEMuS_compile_lib {
   
   # cleaning after lib building
   make src_clean
-  export METHOD=$OLD_METHOD
   
+  cd $ACTUAL_DIR
+  export METHOD=$OLD_METHOD
+  femus_application_configure $METHOD
 }
 
 # ==================================================================================
