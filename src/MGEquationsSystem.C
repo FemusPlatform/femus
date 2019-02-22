@@ -551,9 +551,9 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,int /*n
 //   printining cell attributes
   if(_n_data[0]+_n_data[1]>0) { print_xml_attrib(out,n_elements,n_nodes,attr_file.str()); }
 
-#ifdef FSI_EQUATIONS
-  print_xml_mat(out,n_nodes,n_elements*NSUBDOM,casefilename.str());
-#endif
+  if (_mgutils._sim_config["MG_FluidStructure"]!="")
+    if(stoi(_mgutils._sim_config["MG_FluidStructure"])!=0)
+       print_xml_mat(out,n_nodes,n_elements*NSUBDOM,casefilename.str());
   // #ifdef TWO_PHASE
 //   // print of CC
 //   print_xmfCC(out,t_step,n_lines,n_cells);
