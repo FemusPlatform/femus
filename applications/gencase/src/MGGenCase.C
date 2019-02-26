@@ -413,7 +413,7 @@ MGGenCase::printMesh(BoundaryMesh & bd_msht,	// boundary mesh
         n_nodes_el = elem->n_nodes();
 //     int a= NDOF_FEM;
         for (int inode = 0; inode < n_nodes_el; inode++) {
-            int knode = elem->node(inode);
+            int knode = elem->node_id(inode);
             elem_sto[count_e][1 + inode] = knode;
             // coordinates storage
             for (int idim = 0; idim < DIMENSION; idim++) {
@@ -437,7 +437,7 @@ MGGenCase::printMesh(BoundaryMesh & bd_msht,	// boundary mesh
             elem_sto[count_e][NDOF_FEM + 4] = n_childs;
             // children in the element
             for (int i_ch = 0; i_ch < n_childs; i_ch++) {
-                Elem *child = (*it_tr)->child(i_ch);
+                Elem *child = (*it_tr)->child_ptr(i_ch);
                 elem_sto[count_e][NDOF_FEM + 5 + i_ch] = child->id();
                 }
             }
@@ -445,21 +445,21 @@ MGGenCase::printMesh(BoundaryMesh & bd_msht,	// boundary mesh
         //  boundary ------------------------------------------
         for (int s = 0; s < (int) elem->n_sides(); s++) {
 
-            if (elem->neighbor(s) == NULL) {
+            if (elem->neighbor_ptr(s) == NULL) {
                 bd_elem_sto[count_eb][0] = count_eb;
                 bd_elem_sto[count_eb][NDOF_FEMB + 1] = elem->id();
                 bd_elem_sto[count_eb][NDOF_FEMB + 2] = lev;
                 n_elements_lev[lev + _n_levels]++;
                 bd_elem_sto[count_eb][NDOF_FEMB + 3] = s;
-                UniquePtr < Elem > side(elem->build_side(s));
+                UniquePtr < Elem > side(elem->build_side_ptr(s));
                 bd_elem_sto[count_eb][NDOF_FEMB + 4] = (int) side->n_nodes();
                 for (int ns = 0; ns < (int) side->n_nodes(); ns++) {
-                    bd_elem_sto[count_eb][1 + ns] = side->node(ns);
+                    bd_elem_sto[count_eb][1 + ns] = side->node_id(ns);
                     }
                 count_eb++;
                 }
             else {
-                elem_conn[count_e][s + 1] = (elem->neighbor(s))->id();
+                elem_conn[count_e][s + 1] = (elem->neighbor_ptr(s))->id();
                 }
             }
         count_e++;
@@ -3213,7 +3213,7 @@ MGGenCase::print_med(int Level,	// Level
             map_elem[id_el] = elem->id();	// element id
             n_nodes_el = elem->n_nodes();	// number of element nodes
             for (int inode = 0; inode < n_nodes_el; inode++) {
-                int knode = elem->node(nodesinv[inode]);	// global node through map
+                int knode = elem->node_id(nodesinv[inode]);	// global node through map
                 conn[id_el * n_nodes_el + inode] = knode;	// connectivity
 
                 // coordinates storage
@@ -3227,14 +3227,14 @@ MGGenCase::print_med(int Level,	// Level
         //  mesh (boundary) ----------------------------------------
         if (lev == Level) {
             for (int s = 0; s < (int) elem->n_sides(); s++) {
-                if (elem->neighbor(s) == NULL) {
-                    UniquePtr < Elem > side(elem->build_side(s));	// face element
+                if (elem->neighbor_ptr(s) == NULL) {
+                    UniquePtr < Elem > side(elem->build_side_ptr(s));	// face element
                     bd_n_nodes_el = (int) side->n_nodes();	// face nodes
                     int min = 100000;
                     for (int ns = 0; ns < bd_n_nodes_el; ns++) {
 
                         conn_bd[count_eb * bd_n_nodes_el + ns] =
-                            side->node(nodesinvbd[ns]);
+                            side->node_id(nodesinvbd[ns]);
                         if (min >
                                 nod_flag[conn_bd[count_eb * bd_n_nodes_el + ns]]) {
                             min =
@@ -3533,7 +3533,7 @@ MGGenCase::print_MedToMg(int Level,	// Level
 
             // VOLUME
             for (int inode = 0; inode < n_nodes_el; inode++) {
-                int knode = elem->node(LibToMed[inode]);	// global node through map
+                int knode = elem->node_id(LibToMed[inode]);	// global node through map
                 conn[id_el * n_nodes_el + inode] = knode;	// element connectivity
                 Nodes.push_back(knode);
                 }
@@ -3542,13 +3542,13 @@ MGGenCase::print_MedToMg(int Level,	// Level
             // BOUNDARY
             for (int s = 0; s < (int) elem->n_sides(); s++) {
                 // loop over element sides
-                if (elem->neighbor(s) == NULL) {
-                    // if neighbor == null then the side is on boundary
-                    UniquePtr < Elem > side(elem->build_side(s));	// face element
+                if (elem->neighbor_ptr(s) == NULL) {
+                    // if neighbor_ptr == null then the side is on boundary
+                    UniquePtr < Elem > side(elem->build_side_ptr(s));	// face element
                     NumBdNodes = (int) side->n_nodes();	// face nodes
                     int min = 100000;
                     for (int ns = 0; ns < NumBdNodes; ns++) {
-                        conn_bd[count_eb * NumBdNodes + ns] = side->node(LibToMed_bd[ns]);	// connectivity of boundary elements
+                        conn_bd[count_eb * NumBdNodes + ns] = side->node_id(LibToMed_bd[ns]);	// connectivity of boundary elements
                         if (min > nod_flag[conn_bd[count_eb * NumBdNodes + ns]]) {
                             min = nod_flag[conn_bd[count_eb * NumBdNodes + ns]];	// we set the boundary flag of the node -> group id
                             }
