@@ -488,7 +488,8 @@ void MGSolFSI::matrixrhs_sol_vol(
               const double phij_g= _phi_g[2][j];
               KeM(indp,j+jvar*el_ndof2) += dtxJxWp_g* (1- jvar) *psii_g*phij_g/_xyzg[0];
             }
-            KeM(indp,j+jvar*el_ndof2) +=  dtxJxWp_g*psii_g*_dphi_g[2][j+jvar*el_ndof2];
+            KeM(indp,j+jvar*el_ndof2) +=  dtxJxWp_g*psii_g*_dphi_g[2][j+jvar*el_ndof2]*_dt;
+            FeM(indp)-=dtxJxWp_g*psii_g*_dphi_g[2][j+jvar*el_ndof2]*_data_eq[2].ub[_FF_idx[SDSX_F+jvar]*NDOF_FEM+j];
           }// jvar
         }// j end linear-quad --------------------------------------------
         // linear-linear Assemblying Matrix ------------------------------
