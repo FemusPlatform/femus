@@ -302,7 +302,9 @@ void SalomeIO::read(
   const elementDefinition& eletype = eletypes_imp[itype_vol];  // libmesh element type
   int Node_el=eletype.nnodes;                              // libmesh nodes for element
   std::cout << " Family element med ibmesh = " << itype_vol << std::endl;
-
+  if (eletype.dim!=DIMENSION){
+    std::cout << "\nWARNING!!! Mesh dimension is (from eletype) "<<eletype.dim<<" and DIMENSION "<<DIMENSION<<std::endl;
+    std::cout<<"WARNING!!! If you are running gencase as library check the DIMENSION\n";}
   // Coordinates -----------------------------------------------
   // Getting dataset xyz
   hid_t dtset = H5Dopen(file_id,COORD_NAME_DIR
@@ -835,12 +837,12 @@ int  SalomeIO::read_fem_type(
 
   // Get the element name from MESH_NAME_DIR in the file med (el_name)
   char **el_fem_type=new char*[n_fem_type];
-  int index_vol=0;  int index_bd=0;
+  int index_vol=-1;  int index_bd=-1;
   for(int i=0; i<(int)n_fem_type; i++) {
     el_fem_type[i]=new char[4];
     H5Lget_name_by_idx(file_id,MESH_NAME_DIR, H5_INDEX_NAME, H5_ITER_INC,i,el_fem_type[i],4, H5P_DEFAULT);
-    if(fem_type_vol[el_fem_type[i]]!=0) index_vol=i;
-    if(fem_type_bd[el_fem_type[i]]!=0) index_bd=i;
+    if(fem_type_vol[el_fem_type[i]]!=0 && index_vol==-1)  index_vol=i;
+    if(fem_type_bd[el_fem_type[i]]!=0 && index_bd==-1)  index_bd=i;
   }
 
   // LIBMESH volume fem type (itype_vol) and MEDfem (el_fem_type_vol-el_fem_type_bd)
