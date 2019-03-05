@@ -166,7 +166,7 @@ public:
   { DenseMatrixBaseM::condense (i, j, val, rhs); }
 
   /// Solve the system Ax=b given the input vector b.
-  void lu_solve (DenseVectorM& b,DenseVectorM& x,const bool partial_pivot = false);
+  void lu_solve (DenseVectorM& b,DenseVectorM& x);
   /// A Cholesky factorizationof A such that A = L L^T   
   void cholesky_solve(DenseVectorM& b,DenseVectorM& x);
 
@@ -180,9 +180,9 @@ public:
 private:
 
   /// Form the LU decomposition of the matrix.  
-  void _lu_decompose (const bool partial_pivot = false);
+  void _lu_decompose ();
   /// Solves the system Ax=b through back substitution.  
-  void _lu_back_substitute (DenseVectorM& b,DenseVectorM& x,const bool partial_pivot = false) const;
+  void _lu_back_substitute (DenseVectorM& b,DenseVectorM& x) const;
   
   ///Decomposes a symmetric positive definite matrix 
   void _cholesky_decompose();
@@ -205,7 +205,12 @@ private:
   void _multiply_blas(const DenseMatrixBaseM& other,
 		      _BLAS_Multiply_Flag flag);
 		      
-
+// #if (LIBMESH_HAVE_PETSC && LIBMESH_USE_REAL_NUMBERS)
+//   typedef PetscBLASInt pivot_index_t;
+// #else
+//   typedef int pivot_index_t;
+// #endif
+  std::vector<int> _pivots;
   
   
 };

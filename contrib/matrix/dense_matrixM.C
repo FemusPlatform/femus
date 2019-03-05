@@ -241,112 +241,216 @@ void DenseMatrixM::get_transpose (DenseMatrixM& dest) const
 
 
 // ===================================================
-void DenseMatrixM::lu_solve (DenseVectorM& b,
-                             DenseVectorM& x,
-                             const bool partial_pivot)
+void DenseMatrixM::lu_solve (DenseVectorM & b,
+                               DenseVectorM & x
+                            )
 {
-    // Check for a previous decomposition
-    switch (this->_decomposition_type)    {
-    case NONE:
-        this->_lu_decompose (partial_pivot);
-        break;
-    case LU:
-        // Already factored, just need to call back_substitute.
-        break;
-    default:
-        std::cerr << "Error! This matrix already has a "
-                  << "different decomposition..."
-                  << std::endl;
-        exit(0);
-    }
-    // Perform back substitution
-    this->_lu_back_substitute (b, x, partial_pivot);
-}
+  // Check to be sure that the matrix is square before attempting
+  // an LU-solve.  In general, one can compute the LU factorization of
+  // a non-square matrix, but:
+  //
+  // Overdetermined systems (m>n) have a solution only if enough of
+  // the equations are linearly-dependent.
+  //
+  // Underdetermined systems (m<n) typically have infinitely many
+  // solutions.
+  //
+  // We don't want to deal with either of these ambiguous cases here...
+  assert (this->m()==this->n());
 
-
-
-
-void DenseMatrixM::_lu_back_substitute (DenseVectorM& b,
-                                        DenseVectorM& x,
-                                        const bool ) const
-{
-    const int
-    n = this->n();
-    assert (this->m() == n);
-    assert (this->m() == (int)b.size());
-
-    x.resize (n);
-    // A convenient reference to *this
-    const DenseMatrixM& A = *this;
-
-    // Transform the RHS vector
-    for (int i=0; i<(n-1); i++) {
-        // Get the diagonal entry and take its inverse
-        const double diag = A(i,i);
-        assert (fabs(diag) < 1.e-20);
-        const double diag_inv = 1./diag;
-        // Get the entry b(i) and store it
-        const double bi = b(i);
-        for (int j=(i+1); j<n; j++) b(j) -= bi*A(j,i)*diag_inv;
-    }
-
-
-    // Perform back-substitution
+  switch(this->_decomposition_type)
     {
-        x(n-1) = b(n-1)/A(n-1,n-1);
-        for (int i=0; i<=(n-1); i++)  {
-            const int ib = (n-1)-i;
-            // Get the diagonal and take its inverse
-            const double diag = A(ib,ib);
-            assert (fabs(diag) < 1.e-20);
-            const double diag_inv = 1./diag;
+    case NONE:
+      {
+//         if (this->use_blas_lapack)
+//           this->_lu_decompose_lapack();
+//         else
+          this->_lu_decompose ();
+        break;
+      }
 
-            for (int j=(ib+1); j<n; j++)  {
-                b(ib) -= A(ib,j)*x(j);
-		x(ib)  = b(ib)*diag_inv;
-            }
-            
-        }
+//     case LU_BLAS_LAPACK:
+//       {
+//         // Already factored, just need to call back_substitute.
+// //         if (this->use_blas_lapack)
+//           break;
+//       }
+//       libmesh_fallthrough();
+
+//     case LU:
+//       {
+//         // Already factored, just need to call back_substitute.
+//         if (!(this->use_blas_lapack))
+//           break;
+//       }
+//       libmesh_fallthrough();
+// 
+//     default:
+//       libmesh_error_msg("Error! This matrix already has a different decomposition...");
     }
-    return;
+
+//   if (this->use_blas_lapack)
+//     this->_lu_back_substitute_lapack (b, x);
+//   else
+    this->_lu_back_substitute (b, x);
 }
 
 
-// ===========================================================
-void DenseMatrixM::_lu_decompose (const bool partial_pivot)
-{    // If this function was called, there better not be any
-    // previous decomposition of the matrix.
-    assert(this->_decomposition_type == NONE);
-    // Get the matrix size and make sure it is square
-    const int
-    m = this->m();   assert (m == this->n());
-    // A convenient reference to *this
-    DenseMatrixM& A = *this;
 
-    // Straight, vanilla LU factorization without pivoting
-    if (!partial_pivot){
-        // For each row in the matrix
-        for (int i=0; i<m; i++)  {
-            // Get the diagonal entry and take its inverse
-            const double diag = A(i,i);
-            assert (fabs(diag) < 1.e-20);
-            const double diag_inv = 1./diag;
 
-            // For each row in the submatrix
-            for (int j=i+1; j<m; j++)      {
-                // Get the scale factor for this row
-                const double fact = A(j,i)*diag_inv;
-                // For each column in the subrow scale it by the factor
-                for (int k=i+1; k<m; k++)  A(j,k) -= fact*A(i,k);
+void DenseMatrixM::_lu_back_substitute ( DenseVectorM & b,
+                                          DenseVectorM & x ) const
+{
+  const unsigned int
+    n_cols = this->n();
+
+  assert(this->m()== n_cols);
+  assert(this->m()== b.size());
+
+  x.resize (n_cols);
+
+  // A convenient reference to *this
+  const DenseMatrixM & A = *this;
+
+  // Temporary vector storage.  We use this instead of
+  // modifying the RHS.
+  DenseVectorM z = b;
+
+  // Lower-triangular "top to bottom" solve step, taking into account pivots
+  for (unsigned int i=0; i<n_cols; ++i)
+    {
+      // Swap
+      if (_pivots[i] != i)
+        std::swap( z(i), z(_pivots[i]) );
+
+      x(i) = z(i);
+
+      for (unsigned int j=0; j<i; ++j)
+        x(i) -= A(i,j)*x(j);
+
+      x(i) /= A(i,i);
+    }
+
+  // Upper-triangular "bottom to top" solve step
+  const unsigned int last_row = n_cols-1;
+
+  for (int i=last_row; i>=0; --i)
+    {
+      for (int j=i+1; j<static_cast<int>(n_cols); ++j)
+        x(i) -= A(i,j)*x(j);
+    }
+}
+
+
+// // ===========================================================
+// void DenseMatrixM::_lu_decompose (const bool partial_pivot)
+// {    // If this function was called, there better not be any
+//     // previous decomposition of the matrix.
+//     assert(this->_decomposition_type == NONE);
+//     // Get the matrix size and make sure it is square
+//     const int
+//     m = this->m();   assert (m == this->n());
+//     // A convenient reference to *this
+//     DenseMatrixM& A = *this;
+// 
+//     // Straight, vanilla LU factorization without pivoting
+//     if (!partial_pivot){
+//         // For each row in the matrix
+//         for (int i=0; i<m; i++)  {
+//             // Get the diagonal entry and take its inverse
+//             const double diag = A(i,i);
+//             assert (fabs(diag) < 1.e-20);
+//             const double diag_inv = 1./diag;
+// 
+//             // For each row in the submatrix
+//             for (int j=i+1; j<m; j++)      {
+//                 // Get the scale factor for this row
+//                 const double fact = A(j,i)*diag_inv;
+//                 // For each column in the subrow scale it by the factor
+//                 for (int k=i+1; k<m; k++)  A(j,k) -= fact*A(i,k);
+//             }
+//         }
+//     }
+//     else
+//     {   // Do partial pivoting.
+//         exit(0);  
+//     }
+//     // Set the flag for LU decomposition
+//     this->_decomposition_type = LU;
+// }
+void DenseMatrixM::_lu_decompose ()
+{
+  // If this function was called, there better not be any
+  // previous decomposition of the matrix.
+  assert(this->_decomposition_type== NONE);
+
+  // Get the matrix size and make sure it is square
+  const unsigned int
+    n_rows = this->m();
+
+  // A convenient reference to *this
+  DenseMatrixM & A = *this;
+
+  _pivots.resize(n_rows);
+
+  for (unsigned int i=0; i<n_rows; ++i)
+    {
+      // Find the pivot row by searching down the i'th column
+      _pivots[i] = i;
+
+      // std::abs(complex) must return a Real!
+      double the_max = std::abs( A(i,i) );
+      for (unsigned int j=i+1; j<n_rows; ++j)
+        {
+          double candidate_max = std::abs( A(j,i) );
+          if (the_max < candidate_max)
+            {
+              the_max = candidate_max;
+              _pivots[i] = j;
             }
         }
-    }
-    else
-    {   // Do partial pivoting.
-        exit(0);  
-    }
-    // Set the flag for LU decomposition
-    this->_decomposition_type = LU;
+
+      // libMesh::out << "the_max=" << the_max << " found at row " << _pivots[i] << std::endl;
+
+      // If the max was found in a different row, interchange rows.
+      // Here we interchange the *entire* row, in Gaussian elimination
+      // you would only interchange the subrows A(i,j) and A(p(i),j), for j>i
+      if (_pivots[i] != i)
+        {
+          for (unsigned int j=0; j<n_rows; ++j)
+            std::swap( A(i,j), A(_pivots[i], j) );
+        }
+
+
+      // If the max abs entry found is zero, the matrix is singular
+//       if (A(i,i) <1.e-20)
+//         libmesh_error_msg("Matrix A is singular!");
+
+      // Scale upper triangle entries of row i by the diagonal entry
+      // Note: don't scale the diagonal entry itself!
+      const double diag_inv = 1. / A(i,i);
+      for (unsigned int j=i+1; j<n_rows; ++j)
+        A(i,j) *= diag_inv;
+
+      // Update the remaining sub-matrix A[i+1:m][i+1:m]
+      // by subtracting off (the diagonal-scaled)
+      // upper-triangular part of row i, scaled by the
+      // i'th column entry of each row.  In terms of
+      // row operations, this is:
+      // for each r > i
+      //   SubRow(r) = SubRow(r) - A(r,i)*SubRow(i)
+      //
+      // If we were scaling the i'th column as well, like
+      // in Gaussian elimination, this would 'zero' the
+      // entry in the i'th column.
+      for (unsigned int row=i+1; row<n_rows; ++row)
+        for (unsigned int col=i+1; col<n_rows; ++col)
+          A(row,col) -= A(row,i) * A(i,col);
+
+    } // end i loop
+
+  // Set the flag for LU decomposition
+  this->_decomposition_type = LU;
 }
 
 // ========================================
@@ -356,7 +460,7 @@ double DenseMatrixM::det ()
     // Note that the lu_decompose routine will check to see if the
     // matrix is square so we don't worry about it.
     if (this->_decomposition_type == NONE)
-        this->_lu_decompose(false);
+        this->_lu_decompose();
     else if (this->_decomposition_type != LU)
     {
         std::cerr << "Error! Can't compute the determinant under "
