@@ -1,7 +1,7 @@
 // lib include ------------------
 #include <sstream>
 #include <limits>
-
+ 
 // configure file -------------
 #include "Solverlib_conf.h"
 #include "Printinfo_conf.h"
@@ -809,18 +809,10 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
 // ========================================================================
 // ****************** HERE STARTS VANKA SECTION ***************************
 // ========================================================================
-#include "numeric_vectorM.h"
-#include "sparse_matrixM.h"
-#include "sparse_MmatrixM.h"
-#include "dense_vectorM.h"
-#include "dense_matrixM.h"
-#include "petsc_matrixM.h"
-#include "petsc_macroM.h"
-#include "petsc_linear_solverM.h"
-#include "petsc_preconditionerM.h"
+#include "dense_vectorM.h"                          
+#include "dense_matrixM.h"                          
 #include "petsc_vectorM.h"
 #include "petsc_matrixM.h"
-#include <gsl/gsl_linalg.h>
 //
 // ====================================================================
 /// This function does one multigrid step
@@ -874,15 +866,16 @@ double MGSolBase::MGStep_Vanka(
         int  Nc_pre1=Nc_pre/4;
         if (Level<_NoLevels-1) Nc_pre1 *=2;
         Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1, Nc_pre1);
+        res[Level]->resid(*b[Level],*x[Level],*A[Level]);
 #ifdef PRINT_CONV      //  CC +++++++++++++++
-        std::cout<<" Pre Lev " << Level << " res " << rest.second << " " << rest.first;
+        std::cout<<" Pre Lev " << Level << " res " << res[Level]->l2_norm();
 #endif                 //  CC +++++++++++++++
 #ifdef PRINT_TIME      //  TC +++++++++++++++
         std::clock_t end_time=std::clock();
         std::cout<< " time ="<< double(end_time- start_time) / CLOCKS_PER_SEC << std::endl;
 #endif                //  TC +++++++++++++++
         // presmoothing residual
-        res[Level]->resid(*b[Level],*x[Level],*A[Level]);
+//         res[Level]->resid(*b[Level],*x[Level],*A[Level]);
         // --------- end presmoothing (Nc_pre) ------------------------
 
         // restriction
@@ -907,16 +900,16 @@ double MGSolBase::MGStep_Vanka(
         int Nc_post1= Nc_post/4 ;
         if (Level<_NoLevels-1) Nc_post1 *=2;
         Vanka_solve(Level,*A[Level],*x[Level],*b[Level],Eps1,Nc_post1);
+        res[Level]->resid(*b[Level],*x[Level],*A[Level]);
 #ifdef PRINT_CONV              //  CC +++++++++++++++
-        std::cout<<" Post Lev " << Level << " res " << rest.second
-                 << " " << rest.first;
+        std::cout<<" Post Lev " << Level << " res " << res[Level]->l2_norm();
 #endif                         //  CC +++++++++++++++
 #ifdef PRINT_TIME              //  TC +++++++++++++++
         end_time=std::clock();
         std::cout<< " time ="<< double(end_time- start_time) / CLOCKS_PER_SEC << std::endl;
 #endif                         //  TC +++++++++++++++
         //  postsmooting residual
-        res[Level]->resid(*b[Level],*x[Level],*A[Level]);
+//         res[Level]->resid(*b[Level],*x[Level],*A[Level]);
         // ----------------  end postsmoothing ---------------------------
     }
     // end cycle -------------------------------------
@@ -943,20 +936,27 @@ void MGSolBase::Vanka_solve(
     el_dof[1]= ( ( _nvars[1] >0 ) ? NDOF_P:0 );     //Lagrange piecewise linear variables
     el_dof[2]= ( ( _nvars[2] >0 ) ? NDOF_FEM:0 );   //Lagrange piecewise linear variables
     const int system_size=el_dof[2]*_nvars[2]+el_dof[1]*_nvars[1]+el_dof[0]*_nvars[0];    //ndofs of linear system
-    double a_data[system_size*system_size] ;  //local matrix
-    double b_data[system_size];   //local rhs
     std::map<int,std::vector<int>> el_dof_indices;               // element dof vector
 
-    // Make sure the data passed in are really of Petsc types
-    PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
-    PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*>(&solution_in);
-    PetscVectorM* rhs      = libmeshM_cast_ptr<PetscVectorM*>(&rhs_in);
+    //Matrix, solution and rhs init
+    DenseMatrixM Mat;
+    DenseVectorM sol,loc_rhs;
+    Mat.resize(system_size,system_size);
+    sol.resize(system_size);
+    loc_rhs.resize(system_size);
+    
+    //Petsc variables init
     PetscErrorCode ierr;
     PetscScalar matr[system_size*system_size];
     PetscInt ncols;
     const PetscInt *cols;
     const PetscScalar *vals;
     PetscInt idx[system_size];
+    
+    // Make sure the data passed in are really of Petsc types
+    PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
+    PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*>(&solution_in);
+    PetscVectorM* rhs      = libmeshM_cast_ptr<PetscVectorM*>(&rhs_in);
 
     // Close the matrices and vectors in case this wasn't already done.
     matrix->close();    solution->close();    rhs->close();
@@ -1021,7 +1021,6 @@ void MGSolBase::Vanka_solve(
         //element loop
         for (int iel_order=0; iel_order < (nel_e - nel_b); iel_order++) {
             int iel=iel_order; 
-            double b[system_size]= {0}; //local rhs
             for (int i=0; i<system_size; i++) {
                 idx[i]=el_dof_indices[iel][i];
             }
@@ -1031,44 +1030,32 @@ void MGSolBase::Vanka_solve(
 //         std::cout << el_conn[inode] << " " ;
                 ierr=MatGetRow(matrix->mat(),idx[inode],&ncols,&cols,&vals);
 
-                b[inode]=(*b_loc)[idx[inode]];  //RHS from assembly
+                loc_rhs(inode)=(*b_loc)[idx[inode]];  //RHS from assembly
                 for (int i=0; i<system_size; i++)
-                    b[inode]+=matr[i+system_size*inode]*(*x_loc)[idx[i]]; //sum diagonal values
+                    loc_rhs(inode)+=matr[i+system_size*inode]*(*x_loc)[idx[i]]; //sum diagonal values
                 for (int i=0; i <ncols; i++)
-                    b[inode] -=vals[i]*(*x_loc)[cols[i]];   //subtract all row values
+                    loc_rhs(inode) -=vals[i]*(*x_loc)[cols[i]];   //subtract all row values
 
                 ierr=MatRestoreRow(matrix->mat(),idx[inode],&ncols,&cols,&vals);
 
             }//end inode
 
-            //======== Solving the linear system with GNU scientific library LU =======
-            for (int i=0; i<system_size*system_size; i++)  a_data[i]=matr[i]; //passing mat to gsl data format
-            for (int i=0; i<system_size; i++)              b_data[i]=b[i];    //passing rhs to gsl data format
-            gsl_matrix_view m= gsl_matrix_view_array (a_data, system_size, system_size);
-            gsl_vector_view bb= gsl_vector_view_array (b_data, system_size);
-            gsl_vector *xx = gsl_vector_alloc (system_size);
-            int s;
-            gsl_permutation *p = gsl_permutation_alloc (system_size);
-            gsl_linalg_LU_decomp (&m.matrix, p, &s);
-            gsl_linalg_LU_solve (&m.matrix, p, &bb.vector, xx);
-            gsl_permutation_free (p);
-            //======== End solving the linear system with GNU scientific library LU ========
+            Mat.zero();
+            for (int j=0;j<system_size;j++)
+              for (int i=0;i<system_size;i++)
+                Mat(j,i)=matr[i+j*system_size];
+              
+            Mat.lu_solve(loc_rhs,sol);  
 
-            double res[system_size];
             for (int i=0; i<system_size; i++)
-                res[i]=gsl_vector_get(xx,i);
-
-            gsl_vector_free (xx);
-            for (int i=0; i<system_size; i++)
-                (*x_loc)[idx[i]]=res[i];
+                (*x_loc)[idx[i]]=sol(i)/*res[i]*/;
 
             if(ismooth == nsm) {
                 for (int i=0; i<system_size; i++)
-                    (*x[Level]).set(idx[i],res[i]);
+                    (*x[Level]).set(idx[i],sol(i)/*res[i]*/);
             }
         } //end iel
     }//end ismooth
-
     return;
 }
 #endif
