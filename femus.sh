@@ -114,7 +114,7 @@ function femus_gencase_compile_lib {
   cd gencase_2d
   femus_application_configure opt 
   make clean
-  make -j2
+  make $1
   if [ -f "$FEMUS_DIR/bin/gencase_2d" ]; then
     rm $FEMUS_DIR/bin/gencase_2d 
   fi
@@ -126,7 +126,7 @@ function femus_gencase_compile_lib {
   cd ../gencase_3d
   femus_application_configure opt 
   make clean
-  make -j2
+  make $1
   if [ -f "$FEMUS_DIR/bin/gencase_3d" ]; then
     rm $FEMUS_DIR/bin/gencase_3d 
   fi
@@ -149,7 +149,7 @@ function femus_FEMuS_compile_lib {
   make clean
   # removing object files from femus/src
   make src_clean
-  make 
+  make $1
   
   echo "Compiling femus library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
@@ -158,7 +158,7 @@ function femus_FEMuS_compile_lib {
   make clean
   # removing object files from femus/src
   make src_clean
-  make 
+  make $1
   
   # cleaning after lib building
   make src_clean
@@ -401,29 +401,38 @@ fi
 mkdir $TUTORIAL_RUN
 for class in $CLASSES; do
 
-    echo "==========================================================================================">> $TUTORIAL_LOG
-    echo "  NOW RUNNING $class CLASS TUTORIALS">> $TUTORIAL_LOG
-    echo "==========================================================================================">> $TUTORIAL_LOG
-
-    cd $TUTORIAL_RUN
-    mkdir $TUTORIAL_RUN/$class
-    unset CASES
-    export CASES=$(ls -l $TUTORIAL_HOME/$class | grep ^d | awk '{print $9}')
-    for tutorial in $CASES; do
-        echo "******************************************************************************************">> $TUTORIAL_LOG
-        echo "  NOW RUNNING $tutorial CASE ">> $TUTORIAL_LOG
-        echo "******************************************************************************************">> $TUTORIAL_LOG
-       unset tutorial_path
-       export tutorial_path=$TUTORIAL_RUN/$class/$tutorial
-       cp -r $TUTORIAL_HOME/$class/$tutorial $tutorial_path
-       cd $tutorial_path
-       femus_application_configure opt  >> $TUTORIAL_LOG
-       source runTest.sh 
-       cd $TUTORIAL_RUN/$class
+    EXEC_TEST=1
+    if [ "$class" == "DD_coupling" ]; then
+       if [ ! -d $PLAT_CODES_DIR/dragondonjon ]; then
+          EXEC_TEST=0
+       fi  
+    fi
+    
+    if [ "$EXEC_TEST" == "1" ]; then
+       echo "==========================================================================================">> $TUTORIAL_LOG
+       echo "  NOW RUNNING $class CLASS TUTORIALS">> $TUTORIAL_LOG
+       echo "==========================================================================================">> $TUTORIAL_LOG
+       
+       cd $TUTORIAL_RUN
+       mkdir $TUTORIAL_RUN/$class
+       unset CASES
+       export CASES=$(ls -l $TUTORIAL_HOME/$class | grep ^d | awk '{print $9}')
+       for tutorial in $CASES; do
+           echo "******************************************************************************************">> $TUTORIAL_LOG
+           echo "  NOW RUNNING $tutorial CASE ">> $TUTORIAL_LOG
+           echo "******************************************************************************************">> $TUTORIAL_LOG
+          unset tutorial_path
+          export tutorial_path=$TUTORIAL_RUN/$class/$tutorial
+          cp -r $TUTORIAL_HOME/$class/$tutorial $tutorial_path
+          cd $tutorial_path
+          femus_application_configure opt  >> $TUTORIAL_LOG
+          source runTest.sh 
+          cd $TUTORIAL_RUN/$class
+          echo >> $TUTORIAL_LOG
+       done    
        echo >> $TUTORIAL_LOG
-    done    
-    echo >> $TUTORIAL_LOG
-    echo >> $TUTORIAL_LOG
+       echo >> $TUTORIAL_LOG
+    fi
 done
 
 cd $TUTORIAL_RUN
