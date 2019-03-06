@@ -1,45 +1,9 @@
-
 #ifndef __userP_h__
 #define __userP_h__
 // ============================================================================
 #include "Equations_conf.h"
-#if NS_EQUATIONS%2==0
-
+#include "Solvertype_enum.h"
 // ============================================================================
-
-/*!  \defgroup T_param   Class Table:  energy equation parameters (T_param) */
-/// \ingroup P_param
-// ============================================================================
-/// Class P_parameter for Pressure equation
-/// (use only pressure-velocity splitting formulation) 
-class P_param
-{
-    //< This class defines the physical and numerical  energy equation parameters
-public:
-    int AXISYM  /**< axisymmetry  */;
-    // non linear -------------------------------------------------------------
-    int    NL_ITER;/**< NON LIN IT */    int    NL_ITER0;/**< INIT NON LIN IT */
-    double NL_TIME0; // initial time for  non linear regime
-
-public:
-    // constructor --------------------------------------------------------------
-    P_param() {
-        AXISYM=0;
-        // non linear ------------------------------------------------------------
-        NL_ITER=0;/**< NON LIN IT */ NL_ITER0=0;/**< INIT NON LIN IT */
-        NL_TIME0=-.0001;
-    }
-
-    inline void set_AXISYM ( int val ) {
-        AXISYM=val;
-    }
-
-};
-
-
-
-
-
 // P boundary conditions=======================================================
 /*!     \defgroup Boundary_conditions     Enum Table: Boundary conditions  */
 /// \ingroup Boundary_conditions
@@ -59,11 +23,54 @@ enum bound_cond_p {
 // Neuman
     vel_fix  =10,///< 10= Neuman homogeneus or simmetry \f$ \nabla p \cdot \widehat{n}= 0 \f$ (dp.n=0)
     interiorp=11 ///< 11= Neuman nonhomogeneus \f$ \nabla p \cdot \widehat{n}=\Delta p_0 \f$  (dp.n=dp0)
-
 };
 
 
-#endif
+class P_param
+{
+    //< This class defines the physical and numerical  energy equation parameters
+public:
+    std::vector<int>  _BoundaryGroupsIDs ;         /// Vector containing boundary group ids
+    std::map<int,  bound_cond_p>  _map_NSgroup;      /// Map containing boundary group ids and their relative boundary condition
+    std::map<std::string, bound_cond_p> _BoundMap;   /// Map that associates a bound_condT condition to the relative string
+    std::map<std::string,std::string> _FileMap;    /// String map containing Tproperties.in parameters
+    SolverTypeM _SolverType;             // for other solver types see Solvertype_enum.h
+    int _TimeDisc;
+    int _AssembleOnce;
+    int _NodeIDrefPressure;
+    P_param() {
+        _SolverType              =GMRESM;
+        _BoundMap["interior"]        = interiorp;
+        _BoundMap["nostress"]        = interiorp;
+        _BoundMap["outflow"]         = interiorp;
+        _BoundMap["pressure_outlet"] = outflowp;
+        _BoundMap["outflow_p"]       = outflowp;
+        _BoundMap["pressure_inlet"]  = outflowp0;
+        _BoundMap["slip"]            = vel_fix;
+        _BoundMap["wall"]            = vel_fix;
+        _BoundMap["penalty_turb"]    = vel_fix;
+        _BoundMap["velocity"]        = vel_fix;
+        _BoundMap["velocity_norm"]   = vel_fix;
+        _BoundMap["velocity_tang"]   = vel_fix; 
+        _BoundMap["accelerating_swirl"]     = vel_fix;
+        _BoundMap["decelerating_swirl"]     = vel_fix;
+        _BoundMap["accelerating_stress"]    = vel_fix;
+        _BoundMap["decelerating_stress"]    = vel_fix;
+        _BoundMap["stress"]                 = vel_fix;
+        _BoundMap["swirl"]                  = vel_fix;
+    }
+    
+   ~P_param(){
+        _BoundMap.clear();
+        _FileMap.clear();
+        _map_NSgroup.clear();
+        _BoundaryGroupsIDs.clear();
+    };
+    
+    void  read_param ( MGUtils &mgutils, int proc=0 ); /// This function sets all the T_param parameters
+    void  read_file();                     /// This function reads the parameters from Tproperties.in file
+    void  print_par();                     /// This function prints the parameters contained in Tproperties.in
+};
 
 
 

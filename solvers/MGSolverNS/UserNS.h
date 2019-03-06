@@ -61,7 +61,9 @@ public:
     double    _Tg1_stress;
     double    _Tg2_stress;
     double   _Threshold;
-    NS_param() {
+    int      _TimeDisc;
+    NS_param()
+    {
         _SolverType              =GMRESM;
         _SolveSteady             =0;
         _Supg                    =1;
@@ -77,7 +79,8 @@ public:
         _Penalty_tg              =0.;
         _Tg1_stress              =0.;
         _Tg2_stress              =0.;
-	_Threshold               =0.495;
+        _Threshold               =0.495;
+        _TimeDisc                =1;
         _BoundMap["interior"]        = interior;
         _BoundMap["nostress"]        = nostress;
         _BoundMap["outflow"]         = outflow;
@@ -98,14 +101,15 @@ public:
         _BoundMap["swirl"]    = swirl;
     }
 
-    ~NS_param() {
+    ~NS_param()
+    {
         _BoundMap.clear();
         _FileMap.clear();
         _map_NSgroup.clear();
         _BoundaryGroupsIDs.clear();
     };
 
-    void  read_param ( MGUtils &mgutils ); /// This function sets all the T_param parameters
+    void  read_param ( MGUtils & mgutils ); /// This function sets all the T_param parameters
     void  read_file();                     /// This function reads the parameters from Tproperties.in file
     void  print_par();                     /// This function prints the parameters contained in Tproperties.in
 };

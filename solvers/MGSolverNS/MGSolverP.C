@@ -23,7 +23,7 @@
 
 
 // ================================================================
-#if (NS_EQUATIONS%2)==0
+
 
 // ===============================================================
 // --------------   PRESSURE EQUATION [P_F] ------------------
@@ -60,6 +60,7 @@ MGSolP::MGSolP (
   _P_parameter.read_param ( _mgutils, _mgmesh._iproc );
   _AssembleOnce = _P_parameter._AssembleOnce;
   _AlreadyAssembled = 0;
+  _NodeIDrefPressure = _P_parameter._NodeIDrefPressure;
   return;
   }
 //
@@ -80,18 +81,10 @@ void  MGSolP::GenMatRhs (
   int        el_conn[NDOF_FEM], elb_conn[NDOF_FEMB];                          // element connectivity
   int        el_neigh[NDOF_FEM];                                              // element connectivity
 
-  /*----------------------------------- Gauss integration  --------------------------------------------*/
-
-  double det, JxW_g, InvJac[3][DIMENSION * DIMENSION];                          // Jac, Jac*w Jacobean
+  double det, JxW_g;                          // Jac, Jac*w Jacobean
   const int  el_ngauss = _fe[2]->_NoGauss1[ _nPdim - 1];                              //elem gauss points
 
-  double dphijdx_g[3][DIMENSION];
-  double dphiidx_g[3][DIMENSION];             // global derivatives at g point
-
-  double u_1ts[DIMENSION * NDOF_FEM], u_2ts[DIMENSION * NDOF_FEM], u_3ts[DIMENSION * NDOF_FEM], u_div[DIMENSION * NDOF_FEM];
-  double p_1ts[NDOF_P], p_2ts[NDOF_P], p_rhs[NDOF_P];
-
-  double vel_gdx[DIMENSION * DIMENSION], p_gdx[DIMENSION];
+  int sur_toply[NDOF_FEMB];
 
   // element dofs: costant[0]-linear[1]-quadratic[2]-------------------------------------------------
   int el_ndof[3];
@@ -121,10 +114,8 @@ void  MGSolP::GenMatRhs (
       b[Level]->zero();    // global matrix+rhs
       }
 
-  DenseMatrixM KeM;
-  DenseVectorM FeM;                // local  matrix+rhs
-  KeM.resize ( el_mat_nrows, el_mat_ncols );
-  FeM.resize ( el_mat_nrows );     // resize  local  matrix+rhs
+  _KeM.resize ( el_mat_nrows, el_mat_ncols );
+  _FeM.resize ( el_mat_nrows );     // resize  local  matrix+rhs
 
   int ndof_lev = 0;
 
@@ -136,25 +127,6 @@ void  MGSolP::GenMatRhs (
   const int  nel_e = _mgmesh._off_el[0][Level + _NoLevels * _iproc + 1]; // start element
   const int  nel_b = _mgmesh._off_el[0][Level + _NoLevels * _iproc]; // stop element
 
-  double div_1ts, div_2ts, div_3ts;
-  double pres_1ts, pres_2ts;
-
-  if ( _P_parameter._TimeDisc == 2 ) {
-      div_1ts = 3. / 2.;
-      div_2ts = -2.;
-      div_3ts = 1. / 2.;
-      pres_1ts = 2.;
-      pres_2ts = -1.;
-      }
-
-  if ( _P_parameter._TimeDisc == 1 ) {
-      div_1ts = 1.;
-      div_2ts = -1.;
-      div_3ts = 0.;
-      pres_1ts = 1.;
-      pres_2ts = 0.;
-      }
-
   for ( int iel = 0; iel < ( nel_e - nel_b ); iel++ ) {
 
       // ===================================================================================================
@@ -162,62 +134,58 @@ void  MGSolP::GenMatRhs (
       // ===================================================================================================
 
       // ------------------------ Set to zero matrix and rhs and center -----------------------------------
-      KeM.zero();
-      FeM.zero();
+      _KeM.zero();
+      _FeM.zero();
       // ------------------------ Geometry and element fields ---------------------------------------------
       // ------------------------ Element Connectivity (el_conn) and coordinates (xx_qnds) ----------------
       _mgmesh.get_el_nod_conn ( 0, Level, iel, el_conn, _xx_qnds );
       _mgmesh.get_el_neighbor ( el_sides, 0, Level, iel, el_neigh );
       get_el_dof_bc ( Level, iel + ndof_lev, _el_dof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
-
-      for ( int idim = 0; idim < _nPdim; idim++ ) {
-          _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts );
-          _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts );
-          _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oooldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_3ts );
-          }
-
-      _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_sol ( 0, 1, el_ndof[1], el_conn, offset, 0, p_1ts ); // dp pressure
-      _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_oldsol ( 0, 1, el_ndof[1], el_conn, offset, 0, p_2ts ); // dp pressure
-
-      for ( int dim = 0; dim < _nPdim; dim++ )
-        for ( int node = 0; node < el_ndof[2]; node++ )
-          u_div[node + dim * el_ndof[2]] = div_1ts * u_1ts[dim * NDOF_FEM + node] + div_2ts * u_2ts[dim * NDOF_FEM + node] + div_3ts * u_3ts[dim * NDOF_FEM + node];
-
-      for ( int node = 0; node < el_ndof[1]; node++ )
-        p_rhs[node] = pres_1ts * p_1ts[node] + pres_2ts * p_2ts[node];
-
+      get_el_data( el_ndof, el_conn, offset );
+      
+      
       for ( int  j = 0; j < el_ndof[1]; j++ ) {
           _bc_el[j] = _bc_vol[j] / 10;
           }
 
-            double linear_nodes[8*3];
-  for(int dim=0; dim<3; dim++)
-      for(int node=0; node<8; node++)
-          linear_nodes[node + 8*dim] = _xx_qnds[node + dim*NDOF_FEM];
+      for ( int  iside = 0; iside < el_sides; iside++ ) {
+          if ( el_neigh[iside] == -1 ) {
+              // setup boundary element  ----------------------------------------------------------------
+              for ( int  lbnode = 0; lbnode < NDOF_FEMB; lbnode++ ) { // quad quantities
+                  int lnode = _mgmesh._GeomEl._surf_top[lbnode + NDOF_FEMB * iside]; // local nodes
+                  sur_toply[lbnode] = lnode;        // lbnode -> lnode
+                  elb_conn[lbnode] = el_conn[lnode]; // connctivity el_conn->elb_conn
+
+                  for ( int idim = 0; idim < _nPdim; idim++ ) { // coordinates
+                      _xxb_qnds[idim * NDOF_FEMB + lbnode] = _xx_qnds[idim * el_ndof[2] + lnode];
+                      }
+
+                  const int kdof_top = _mgmesh._node_map[Level][elb_conn[lbnode]];
+                  const int BDgroup  =  _mgmesh._NodeBDgroup[kdof_top];
+
+                  if ( el_conn[lnode] == _NodeIDrefPressure ) {
+                      _KeM ( lnode, lnode ) = 1000000000.;
+                      }
+                  }
+              } // iside -1
+          }  // -----------------------------  End Boundary -------------------------------------
 
       // ===================================================================================================
       //                          C) Gaussian integration loop (n_gauss)
       // ===================================================================================================
       for ( int  qp = 0; qp < el_ngauss; qp++ ) {
           // ------------------------- Shape functions at gaussian points --------------------------------------
-      const double det2      = _fe[2]->Jac ( qp, _xx_qnds, _InvJac2 ); // quadratic Jacobian
-      JxW_g = det2 * _fe[2]->_weight1[ _nPdim - 1][qp]; // quadratic weight
-      _fe[2]->get_phi_gl_g ( _nPdim, qp, _phi_g[2] );                // quadratic shape function
-      _fe[2]->get_dphi_gl_g ( _nPdim, qp, _InvJac2, _dphi_g[2] );    // global coord deriv
-      
-      const double det1      = _fe[2]->Jac ( qp, _xx_qnds, _InvJac1 ); // quadratic Jacobian
-      _fe[1]->get_dphi_gl_g ( _nPdim, qp, _InvJac1, _dphi_g[1] );    // global coord deriv
-      _fe[1]->get_phi_gl_g ( _nPdim, qp, _phi_g[1] );    // global coord deriv
+          const double det2      = _fe[2]->Jac ( qp, _xx_qnds, _InvJac2 ); // quadratic Jacobian
+          JxW_g = det2 * _fe[2]->_weight1[ _nPdim - 1][qp]; // quadratic weight
+          _fe[2]->get_phi_gl_g ( _nPdim, qp, _phi_g[2] );                // quadratic shape function
+          _fe[2]->get_dphi_gl_g ( _nPdim, qp, _InvJac2, _dphi_g[2] );    // global coord deriv
+
+          _fe[1]->get_dphi_gl_g ( _nPdim, qp, _InvJac2, _dphi_g[1] );    // global coord deriv
+          _fe[1]->get_phi_gl_g ( _nPdim, qp, _phi_g[1] );    // global coord deriv
 
           double dtxJxW_g = JxW_g;
 
-          interp_el_gdx ( u_div, 0, _nPdim, _dphi_g[2], el_ndof[2], vel_gdx ); // derivatives  vel_gdx[DIM][DIM]
-          interp_el_gdx ( p_rhs, 0, 1, _dphi_g[1], el_ndof[1], p_gdx ); // derivatives  vel_gdx[DIM][DIM]
-
-          double Div_g = 0.;
-
-          for ( int dim = 0; dim < _nPdim; dim++ )
-            Div_g += vel_gdx[dim + dim * DIMENSION];
+          interp_el_gdx ( _p_rhs, 0, 1, _dphi_g[1], el_ndof[1], _p_gdx ); // derivatives  vel_gdx[DIM][DIM]
 
 
           // ===================================================================================================
@@ -229,11 +197,13 @@ void  MGSolP::GenMatRhs (
               if ( _bc_el[i] == 1 ) {
 
                   for ( int dim = 0; dim < _nPdim; dim++ )
-                    for ( int ll = 0; ll < NDOF_FEM; ll++ )
-                      FeM ( i ) -= dtxJxW_g * u_div[dim * NDOF_FEM + ll] * _dphi_g[2][ll + dim * el_ndof[2]] * phii_g / _dt;
+                    for ( int ll = 0; ll < NDOF_FEM; ll++ ) {
+                        _FeM ( i ) -= dtxJxW_g * _u_div[dim * NDOF_FEM + ll] * _dphi_g[2][ll + dim * el_ndof[2]] * phii_g / _dt;
+                        }
 
-                  for ( int dim = 0; dim < _nPdim; dim++ )
-                    FeM ( i ) += dtxJxW_g * p_gdx[dim] * _dphi_g[1][i + dim * el_ndof[1]] ;
+                  for ( int dim = 0; dim < _nPdim; dim++ ) {
+                      _FeM ( i ) += dtxJxW_g * _p_gdx[dim] * _dphi_g[1][i + dim * el_ndof[1]] ;
+                      }
 
                   // ------------------------- Matrix Assemblying  ----------------------------
                   for ( int  j = 0; j < el_ndof[1]; j++ ) {
@@ -248,23 +218,23 @@ void  MGSolP::GenMatRhs (
                           Lap += _dphi_g[1][j + idim * el_ndof[1]] * _dphi_g[1][i + idim * el_ndof[1]]; // Laplacian
                           }
 
-                      KeM ( i, j ) += dtxJxW_g * Lap;
+                      _KeM ( i, j ) += dtxJxW_g * Lap;
                       } // ---------------------------------------------
                   }
               else {
                   if ( _bc_vol[i] == 4 || _bc_vol[i] == 0 )  {
-                      FeM ( i ) += dtxJxW_g * p_1ts[i];
+                      _FeM ( i ) += dtxJxW_g * _p_1ts[i];
                       }
 
-                  KeM ( i, i ) += dtxJxW_g;
+                  _KeM ( i, i ) += dtxJxW_g;
                   }
               }
           } // end of the quadrature point qp-loop +++++++++++++++++++++++++
 
-      A[Level]->add_matrix ( KeM, el_dof_indices );              // global matrix
+      A[Level]->add_matrix ( _KeM, el_dof_indices );              // global matrix
 
       if ( mode == 1 ) {
-          b[Level]->add_vector ( FeM, el_dof_indices ); // global rhs
+          b[Level]->add_vector ( _FeM, el_dof_indices ); // global rhs
           }
       } // end of element loop
 
@@ -302,14 +272,6 @@ void  MGSolP::GenRhs (
   double det, JxW_g;                          // Jac, Jac*w Jacobean
   const int  el_ngauss = _fe[2]->_NoGauss1[ _nPdim - 1];                              //elem gauss points
 
-  double dphijdx_g[3][DIMENSION];
-  double dphiidx_g[3][DIMENSION];             // global derivatives at g point
-
-  double u_1ts[DIMENSION * NDOF_FEM], u_2ts[DIMENSION * NDOF_FEM], u_3ts[DIMENSION * NDOF_FEM], u_div[DIMENSION * NDOF_FEM];
-  double p_1ts[NDOF_P], p_2ts[NDOF_P], p_rhs[NDOF_P];
-
-  double vel_gdx[DIMENSION * DIMENSION], p_gdx[DIMENSION];
-
   // element dofs: costant[0]-linear[1]-quadratic[2]-------------------------------------------------
   int el_ndof[3];
   el_ndof[0] = 1;                // number of el dofs
@@ -335,8 +297,7 @@ void  MGSolP::GenRhs (
       b[Level]->zero();    // global matrix+rhs
       }
 
-  DenseVectorM FeM;                // local  matrix+rhs
-  FeM.resize ( el_mat_nrows );     // resize  local  matrix+rhs
+  _FeM.resize ( el_mat_nrows );     // resize  local  matrix+rhs
 
   int ndof_lev = 0;
 
@@ -348,25 +309,6 @@ void  MGSolP::GenRhs (
   const int  nel_e = _mgmesh._off_el[0][Level + _NoLevels * _iproc + 1]; // start element
   const int  nel_b = _mgmesh._off_el[0][Level + _NoLevels * _iproc]; // stop element
 
-  double div_1ts, div_2ts, div_3ts;
-  double pres_1ts, pres_2ts;
-
-  if ( _P_parameter._TimeDisc == 2 ) {
-      div_1ts = 3. / 2.;
-      div_2ts = -2.;
-      div_3ts = 1. / 2.;
-      pres_1ts = 2.;
-      pres_2ts = -1.;
-      }
-
-  if ( _P_parameter._TimeDisc == 1 ) {
-      div_1ts = 1.;
-      div_2ts = 0.;
-      div_3ts = 0.;
-      pres_1ts = 1.;
-      pres_2ts = 0.;
-      }
-      
   for ( int iel = 0; iel < ( nel_e - nel_b ); iel++ ) {
 
       // ===================================================================================================
@@ -374,81 +316,59 @@ void  MGSolP::GenRhs (
       // ===================================================================================================
 
       // ------------------------ Set to zero matrix and rhs and center -----------------------------------
-      FeM.zero();
-      // ------------------------ Geometry and element fields ---------------------------------------------
-      // ------------------------ Element Connectivity (el_conn) and coordinates (xx_qnds) ----------------
+      _FeM.zero();
+
       _mgmesh.get_el_nod_conn ( 0, Level, iel, el_conn, _xx_qnds );
       _mgmesh.get_el_neighbor ( el_sides, 0, Level, iel, el_neigh );
+      
       get_el_dof_bc ( Level, iel + ndof_lev, _el_dof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
-
-      for ( int idim = 0; idim < _nPdim; idim++ ) {
-          _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts );
-          _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts );
-          _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oooldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_3ts );
-          }
-
-      _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_sol ( 0, 1, el_ndof[1], el_conn, offset, 0, p_1ts ); // dp pressure
-      _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_oldsol ( 0, 1, el_ndof[1], el_conn, offset, 0, p_2ts ); // dp pressure
-
-      for ( int dim = 0; dim < _nPdim; dim++ )
-        for ( int node = 0; node < el_ndof[2]; node++ )
-          u_div[node + dim * el_ndof[2]] =   div_1ts * u_1ts[dim * NDOF_FEM + node]
-                                           + div_2ts * u_2ts[dim * NDOF_FEM + node] 
-                                           + div_3ts * u_3ts[dim * NDOF_FEM + node];
-
-      for ( int node = 0; node < el_ndof[1]; node++ )
-        p_rhs[node] = pres_1ts * p_1ts[node]
-                    + pres_2ts * p_2ts[node];
+      get_el_data ( el_ndof, el_conn, offset );
 
       for ( int  j = 0; j < el_ndof[1]; j++ ) {
           _bc_el[j] = _bc_vol[j] / 10;
           }
-          
+
       // ===================================================================================================
       //                          C) Gaussian integration loop (n_gauss)
       // ===================================================================================================
       for ( int  qp = 0; qp < el_ngauss; qp++ ) {
           // ------------------------- Shape functions at gaussian points --------------------------------------
-      const double det2      = _fe[2]->Jac ( qp, _xx_qnds, _InvJac2 ); // quadratic Jacobian
-      JxW_g = det2 * _fe[2]->_weight1[ _nPdim - 1][qp]; // quadratic weight
-      _fe[2]->get_phi_gl_g ( _nPdim, qp, _phi_g[2] );                // quadratic shape function
-      _fe[2]->get_dphi_gl_g ( _nPdim, qp, _InvJac2, _dphi_g[2] );    // global coord deriv
-      
-      const double det1      = _fe[2]->Jac ( qp, _xx_qnds, _InvJac1 ); // quadratic Jacobian
-      _fe[1]->get_dphi_gl_g ( _nPdim, qp, _InvJac1, _dphi_g[1] );    // global coord deriv
-      _fe[1]->get_phi_gl_g ( _nPdim, qp, _phi_g[1] );    // global coord deriv
+          const double det2      = _fe[2]->Jac ( qp, _xx_qnds, _InvJac2 ); // quadratic Jacobian
+          JxW_g = det2 * _fe[2]->_weight1[ _nPdim - 1][qp];                // quadratic weight
+          _fe[2]->get_dphi_gl_g ( _nPdim, qp, _InvJac2, _dphi_g[2] );      // global coord deriv
+          _fe[1]->get_dphi_gl_g ( _nPdim, qp, _InvJac2, _dphi_g[1] );      // global coord deriv
+          _fe[1]->get_phi_gl_g ( _nPdim, qp, _phi_g[1] );                  // global coord deriv
 
           double dtxJxW_g = JxW_g;
 
-          interp_el_gdx ( u_div, 0, _nPdim, _dphi_g[2], el_ndof[2], vel_gdx ); // derivatives  vel_gdx[DIM][DIM]
-          interp_el_gdx ( p_rhs, 0, 1, _dphi_g[1], el_ndof[1], p_gdx ); // derivatives  vel_gdx[DIM][DIM]
+          interp_el_gdx ( _p_rhs, 0, 1, _dphi_g[1], el_ndof[1], _p_gdx ); 
 
 
-          // ===================================================================================================
-          //                          D) Local (element) assemblying pressure equation
-          // ===================================================================================================
+          // RHS CALCULATION =============================================================
           for ( int  i = 0; i < el_ndof[1]; i++ )     {
               const double phii_g = _phi_g[1][i];
 
               if ( _bc_el[i] == 1 ) {
 
                   for ( int dim = 0; dim < _nPdim; dim++ )
-                    for ( int ll = 0; ll < NDOF_FEM; ll++ )
-                      FeM ( i ) -= dtxJxW_g * u_div[dim * NDOF_FEM + ll] * _dphi_g[2][ll + dim * el_ndof[2]] * phii_g / _dt;
+                    for ( int ll = 0; ll < el_ndof[2]; ll++ ) {
+                        _FeM ( i ) -= dtxJxW_g * _u_div[dim * el_ndof[2] + ll] * _dphi_g[2][ll + dim * el_ndof[2]] * phii_g / _dt;
+                        }
 
-                  for ( int dim = 0; dim < _nPdim; dim++ )
-                    FeM ( i ) += dtxJxW_g * p_gdx[dim] * _dphi_g[1][i + dim * el_ndof[1]] ;
+                  for ( int dim = 0; dim < _nPdim; dim++ ) {
+                      _FeM ( i ) += dtxJxW_g * _p_gdx[dim] * _dphi_g[1][i + dim * el_ndof[1]] ;
+                      }
                   }
               else {
                   if ( _bc_vol[i] == 4 || _bc_vol[i] == 0 )  {
-                      FeM ( i ) += dtxJxW_g * p_1ts[i];
+                      _FeM ( i ) += dtxJxW_g * _p_1ts[i];
                       }
                   }
               }
           } // end of the quadrature point qp-loop +++++++++++++++++++++++++
 
       if ( mode == 1 ) {
-          b[Level]->add_vector ( FeM, el_dof_indices ); // global rhs
+          b[Level]->add_vector ( _FeM, el_dof_indices ); // global rhs
           }
       } // end of element loop
 
@@ -511,8 +431,9 @@ void MGSolP::MGTimeStep_no_up (
           GenMatRhs ( time, Level, 0 ); // matrix
           }
 
-      if ( _AssembleOnce == 1 )
-        _AlreadyAssembled = 1;
+      if ( _AssembleOnce == 1 ) {
+          _AlreadyAssembled = 1;
+          }
       }
 
   if ( _AssembleOnce == 1 && _AlreadyAssembled == 1 ) {
@@ -547,7 +468,56 @@ void MGSolP::MGUpdateStep()
   return;
   } /******************************************************************************************************/
 
-#endif  //ENDIF NS_EQUATIONS%2==0
+
+void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
+  {
+
+  double u_1ts[DIMENSION * NDOF_FEM], u_2ts[DIMENSION * NDOF_FEM], u_3ts[DIMENSION * NDOF_FEM];
+  double p_2ts[NDOF_P];
+  double div_1ts, div_2ts, div_3ts;
+  double pres_1ts, pres_2ts;
+
+  if ( _P_parameter._TimeDisc == 2 ) {
+      div_1ts = 3. / 2.;
+      div_2ts = -2.;
+      div_3ts = 1. / 2.;
+      pres_1ts = 2.;
+      pres_2ts = -1.;
+      }
+
+  if ( _P_parameter._TimeDisc == 1 ) {
+      div_1ts = 1.;
+      div_2ts = -1.;
+      div_3ts = 0.;
+      pres_1ts = 1.;
+      pres_2ts = 0.;
+      }
+
+  for ( int idim = 0; idim < _nPdim; idim++ ) {
+      _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts );
+      _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts );
+      _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oooldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_3ts );
+      }
+
+  _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_sol ( 0, 1, el_ndof[1], el_conn, offset, 0, _p_1ts ); // dp pressure
+  _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_oldsol ( 0, 1, el_ndof[1], el_conn, offset, 0, p_2ts ); // dp pressure
+
+  for ( int dim = 0; dim < _nPdim; dim++ )
+    for ( int node = 0; node < el_ndof[2]; node++ )
+      _u_div[node + dim * el_ndof[2]] =   div_1ts * u_1ts[dim * NDOF_FEM + node]
+                                          + div_2ts * u_2ts[dim * NDOF_FEM + node]
+                                          + div_3ts * u_3ts[dim * NDOF_FEM + node];
+
+  for ( int node = 0; node < el_ndof[1]; node++ )
+    _p_rhs[node] = pres_1ts * _p_1ts[node]
+                   + pres_2ts * p_2ts[node];
+
+  return;
+  }
+
+
+
+
 #endif  //ENDIF NS_EQUATIONS
 // #endif  // NS_equation is personal
 

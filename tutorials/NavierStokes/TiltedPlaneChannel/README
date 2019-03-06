@@ -1,0 +1,7 @@
+NEW TEST FOR NAVIER-STOKES EQUATION
+
+  Monolithic and segregated solvers available
+  To switch between different solvers just change MG_NavierStokes option in Equations.in file
+   
+     MG_NavierStokes   1   -> Monolithic solver 
+     MG_NavierStokes   2   -> Segregated solver 

@@ -26,23 +26,6 @@
  # ---------------------------------------------------------------
  #    EQUATIONS TO SOLVE
  # standard
-   MG_DA                      0
-   MG_NavierStokes            1
-   MG_Temperature             0
-   MG_DynamicalTurbulence     0
-   MG_ThermalTurbulence       0
-   MG_FluidStructure          0
-   MG_StructuralMechanics     0
-   MG_Displacement            0
-   MG_ColorFunction           0
-   MG_Laplacian               0
-   MG_ControlTemperature      0
- # adjoint systems  
-   MG_AdjointNavierStokes     0
-   MG_AdjointTemperature      0
-   MG_AdjointTurbulence       0
-   MG_AdjointFluidStructure   0
-   MG_ImmersedBoundary        0
  # ---------------------------------------------------------------
    SolveNavierStokes           yes
    SolveTemperature            no

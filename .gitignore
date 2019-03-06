@@ -49,6 +49,7 @@ applications/gencase/gencase_2d/gencase_2d
 applications/gencase/gencase_3d/gencase_3d
 applications/gencase/gencase_2d/src
 applications/gencase/gencase_3d/src
+solvers/ln_solvers/*
 
 #Other
 *.log

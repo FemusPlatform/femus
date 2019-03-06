@@ -30,6 +30,9 @@
    Les            0
    WallFunctionApproach   0
    InterpolatedMuTurb     0
+   TimeDisc               1
+   AssembleOnce           1
+   NodeIDrefPressure      0
 # ---------------------------------------------------------------
 # INITIAL CONDITION
 # ---------------------------------------------------------------
@@ -57,14 +60,13 @@
 #  ! A condition for each group defined in SimulationConfiguration.in file must be specified !
 #
  #  plane bc
- #  NSgroup13          pressure_outlet
- #  NSgroup20          wall
- #  NSgroup21          slip
- #  NSgroup11          pressure_outlet
-   NSgroup20          stress
-   NSgroup11          wall
+   NSgroup15          wall
+   NSgroup14          wall
    NSgroup21          velocity_norm
-   NSgroup13          outflow
+   NSgroup12          outflow
+   NSgroup20          wall
+#   NSgroup13          pressure_outlet
+   NSgroup13          velocity_norm
 #
 / # ==============================================================
   

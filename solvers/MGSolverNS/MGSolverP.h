@@ -5,12 +5,10 @@
 // ===================================
 #ifdef NS_EQUATIONS
 // ==================================
-#if (NS_EQUATIONS%2==0)
 // config files ------------------
 
 #include "MGFE_conf.h"
 #include "MGSolverDA.h"
-
 #include "UserP.h"
 // Forward declarations ----------
 class MGEquationsSystem;
@@ -67,13 +65,17 @@ private:
     double _InvJac1[DIMENSION *DIMENSION];
     double  _ub_dxg[2*DIMENSION];     ///< external field derivative  (0-1-2 degree)
 
+    double _u_div[NDOF_FEM*DIMENSION];
+    double _p_rhs[NDOF_P], _p_1ts[NDOF_P], _p_gdx[DIMENSION];
+    
+    
     bool _AxiSym;
     bool _SolveP;
     double _factor;
     
     int _AssembleOnce;
     int _AlreadyAssembled;
-    
+    int _NodeIDrefPressure;
 public:
     // ==========================================================================
     // =========         Constructor - Destructor  ==============================
@@ -146,11 +148,10 @@ public:
         double /*starting_distance*/
     ) {}
 
+    void get_el_data(int el_ndof[], int el_conn[], int offset);
 
 };
 
-
-#endif //  NS_EQUATIONS%2=0
 
 #endif  // define NS_EQUATIONS
 #endif //__mgsolverP_h__

@@ -2,7 +2,7 @@
 // --------------   NAVIER-STOKES system [NS_F] -----------------------------------------
 // ======================================================================================
 #include "Equations_conf.h"
-#if (NS_EQUATIONS%2==0)
+
 // ======================================================================================
 // NS_EQUATIONS==1 coupled    solver (u,v,w,p)
 // NS_EQUATIONS==2 segregated solver (u,v,w) ( P in NSP_EQUATIONS)
@@ -149,10 +149,17 @@ void P_param::read_param (
       _AssembleOnce = 0;
       }
       
+    if ( _FileMap ["NodeIDrefPressure"] != "" ) {
+      _NodeIDrefPressure = stoi ( _FileMap["NodeIDrefPressure"] );
+      }
+  else {
+      _NodeIDrefPressure = 0;
+      }  
+      
       
     _FileMap.clear();
     return;
 }
 
-#endif // ENDIF NS_EQUATIONS==0
+
 

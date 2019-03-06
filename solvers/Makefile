@@ -44,6 +44,7 @@ INCLUDES += -I./SRC/
 INCLUDES += -I$(FEMUS_DIR)/include/
 INCLUDES += -I$(FEMUS_DIR)/src/
 INCLUDES += -I$(FEMUS_DIR)/solvers/EqMapFiller/
+INCLUDES += -I$(FEMUS_DIR)/solvers/ln_solvers/
 
 # FEMUS - CONTRIBS
 INCLUDES += -I$(FEMUS_CONTRIB)/matrix/
@@ -107,6 +108,11 @@ SRC_FILLER_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/solvers/EqMapFiller/*
 SRC_FILLER_OBJ = $(patsubst %.C, %-$(METHOD).o, $(SRC_FILLER_FILES))
 OBJ_FILLER = $(addprefix $(OBJ_DIR), $(SRC_FILLER_OBJ))
 
+# EQUATION MAP FILLER OBJECT FILE
+SRC_SOLVERS_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/solvers/ln_solvers/*.C )))
+SRC_SOLVERS_OBJ = $(patsubst %.C, %-$(METHOD).o, $(SRC_SOLVERS_FILES))
+OBJ_SOLVERS = $(addprefix $(OBJ_DIR), $(SRC_SOLVERS_OBJ))
+
 # LOCAL APP OBJECT FILES
 SRC_APP_FILES = $(sort $(notdir $(wildcard ./SRC/*.C )))
 SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_APP_FILES))
@@ -136,7 +142,7 @@ all:    $(MAIN)
 # this is the rule for linking the objects to obtain the executable file.
 # There are two groups of objects, the SRC and the CONTRIB objects, which
 # are recompiled in different cases
-$(MAIN): $(OBJS_APP)  $(LIB_SRC_FEMUS_OBJS) $(OBJ_FILLER) $(CONTRIB_OBJS)  
+$(MAIN): $(OBJS_APP)  $(LIB_SRC_FEMUS_OBJS) $(OBJ_FILLER) $(OBJ_SOLVERS) $(CONTRIB_OBJS)  
 	@echo 
 	@echo "Linking "$@"..."
 	@echo 
@@ -173,13 +179,13 @@ $(FEMUS_DIR)/src/obj/%-$(METHOD).o : %.C
 	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@	
 	
 # vpath SETTINGS - WHERE TO LOOK FOR SOURCE FILES
-vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
-vpath %.C $(FEMUS_DIR)/src/
 vpath %.C ./SRC/
-
+vpath %.C $(FEMUS_DIR)/src/
+vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
+vpath %.C $(FEMUS_DIR)/solvers/ln_solvers/
 
 # COMPILING WITH FEMUS LIBRARY
-withlib_2d: $(OBJS_APP) $(OBJ_FILLER)
+withlib_2d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
 	@echo " with femus library"
 	@echo "Linking "$@"..."
 	@echo 
@@ -192,7 +198,7 @@ withlib_2d: $(OBJS_APP) $(OBJ_FILLER)
 	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_2d $(LIBSAPP)
 
 # COMPILING WITH FEMUS LIBRARY
-withlib_3d: $(OBJS_APP) $(OBJ_FILLER)
+withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
 	@echo " with femus library"
 	@echo "Linking "$@"..."
 	@echo 
@@ -204,8 +210,9 @@ withlib_3d: $(OBJS_APP) $(OBJ_FILLER)
 	@echo 
 	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_3d $(LIBSAPP)	
 	
-vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
 vpath %.C ./SRC/
+vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
+vpath %.C $(FEMUS_DIR)/solvers/ln_solvers/
 	
 	
 clean:
