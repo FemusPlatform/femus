@@ -96,6 +96,9 @@ class EquationsMap {
     
     /// Map associating names and numbers of equation to be solved
     std::map<std::string, int> _EquationsToAdd;
+    
+    /// Map for turbulence model choice
+    std::map<std::string, std::string> _TurbulenceModel;
 
     /// Global amount of equations with piecewise solved variables
     int _PieceEq;
@@ -121,6 +124,10 @@ class EquationsMap {
      * equations that will be activated. Equations are read from Equations.in 
      * input file */
     void ReadEquationsToAdd();
+    
+    /*! This function fills #EquationsMap::_TurbulenceModel map with info read from
+     Turbulence.in input file*/
+    void ReadTurbulenceInfo();
 
     /*! This function fills #EquationsMap::_map_str2field map: equation names are 
      * associated to corresponding number of #FIELDS enumeration */
@@ -176,6 +183,8 @@ class EquationsMap {
     /// Initializaiton of Control temperature system
     void initControlTemperature ( EquationSystemsExtendedM & EqMap );
 
+    /// Initializaiton of Immersed Boundary system
+    void initImmersedBoundary ( EquationSystemsExtendedM & EqMap );
     
 
   };

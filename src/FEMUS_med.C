@@ -676,10 +676,35 @@ void FEMUS::SetPieceFieldOnYdist(
   double *CellArray = const_cast<double *>(CellMap->getArray()->getPointer());
 
   int Cells = Field->getMesh()->getNumberOfCells();
-  for(int i=0; i<Cells; i++) {
-    _mg_mesh->_VolFrac[i] = FieldVal[(int) CellArray[i]];
-  }
 
+    int offset =  _mg_mesh->_off_el[0][_mg_mesh->_NoLevels -1];
+
+    for(int i=0; i<Cells; i++) {
+      int Cell = (int) CellArray[i];
+      _mg_mesh->_VolFrac[offset + i] = FieldVal[Cell];
+    }
+    
+    if(_mg_mesh->_NoLevels>1){
+      
+      int ChildCells = pow(2, DIMENSION);
+      for(int Lev=_mg_mesh->_NoLevels -2; Lev>=0; Lev--){
+        
+        int ActualLevelOffset = _mg_mesh->_off_el[0][Lev];
+        int FinerLevelOffset  = _mg_mesh->_off_el[0][Lev+1];
+        
+        int ActCells = FinerLevelOffset - ActualLevelOffset;
+        for(int cell=0; cell<ActCells; cell++){
+          double val=0;
+          for(int child=0; child<ChildCells; child++)
+            val +=  _mg_mesh->_VolFrac[FinerLevelOffset + cell*ChildCells + child];
+
+           _mg_mesh->_VolFrac[ActualLevelOffset + cell] = val / ChildCells;
+          
+        }        
+      }
+    }
+
+  
   return;
 }
 
