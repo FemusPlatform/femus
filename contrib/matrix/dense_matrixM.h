@@ -37,7 +37,7 @@ private:
   std::vector<double> _val;
   
    ///The decomposition schemes above change the entries of the matrix
-  enum DecompositionType {LU=0, CHOLESKY=1, NONE};
+  enum DecompositionType {LU=0, CHOLESKY=1, LU_BLAS_LAPACK, NONE};
   /// This flag keeps track of which type of decomposition has been
   DecompositionType _decomposition_type;
 
@@ -175,6 +175,13 @@ public:
 
   /// Computes the inverse of the dense matrix (assuming it is invertible)
   // void inverse();
+  
+  /**
+   * Run-time selectable option to turn on/off BLAS support.
+   * This was primarily used for testing purposes, and could be
+   * removed...
+   */
+  bool use_blas_lapack=true;
 
 
 private:
@@ -184,6 +191,27 @@ private:
   /// Solves the system Ax=b through back substitution.  
   void _lu_back_substitute (DenseVectorM& b,DenseVectorM& x) const;
   
+    /**
+   * Computes an LU factorization of the matrix using the
+   * Lapack routine "getrf".  This routine should only be
+   * used by the "use_blas_lapack" branch of the lu_solve()
+   * function.  After the call to this function, the matrix
+   * is replaced by its factorized version, and the
+   * DecompositionType is set to LU_BLAS_LAPACK.
+   * [ Implementation in dense_matrix_blas_lapack.C ]
+   */
+  void _lu_decompose_lapack();
+    /**
+   * Companion function to _lu_decompose_lapack().  Do not use
+   * directly, called through the public lu_solve() interface.
+   * This function is logically const in that it does not modify
+   * the matrix, but since we are just calling LAPACK routines,
+   * it's less const_cast hassle to just declare the function
+   * non-const.
+   * [ Implementation in dense_matrix_blas_lapack.C ]
+   */
+  void _lu_back_substitute_lapack (const DenseVectorM & b,
+                                   DenseVectorM & x);
   ///Decomposes a symmetric positive definite matrix 
   void _cholesky_decompose();
   /// Solves the equation Ax=b for the unknown value x and rhs b based on the Cholesky factorization 

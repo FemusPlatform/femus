@@ -8,13 +8,13 @@
 #include "dense_vectorM.h"
 
 
-#ifdef MATRIX_HAVE_PETSC    //?
+// #ifdef MATRIX_HAVE_PETSC    //?
 #include "petsc_macroM.h"
 
-EXTERN_C_FOR_PETSC_BEGIN
+// EXTERN_C_FOR_PETSC_BEGIN
 #include <petscblaslapack.h>
-EXTERN_C_FOR_PETSC_END
-#endif
+// EXTERN_C_FOR_PETSC_END
+// #endif
 
 // ------------------------------------------------------------
 // Dense Matrix member functions
@@ -257,22 +257,22 @@ void DenseMatrixM::lu_solve (DenseVectorM & b,
   //
   // We don't want to deal with either of these ambiguous cases here...
   assert (this->m()==this->n());
-
-  switch(this->_decomposition_type)
-    {
-    case NONE:
-      {
+  this->_decomposition_type= NONE;
+//   switch(this->_decomposition_type)
+//     {
+//     case NONE:
+//       {
 //         if (this->use_blas_lapack)
-//           this->_lu_decompose_lapack();
+          this->_lu_decompose_lapack();
 //         else
-          this->_lu_decompose ();
-        break;
-      }
+//           this->_lu_decompose ();
+//         break;
+//       }
 
 //     case LU_BLAS_LAPACK:
 //       {
-//         // Already factored, just need to call back_substitute.
-// //         if (this->use_blas_lapack)
+        // Already factored, just need to call back_substitute.
+//         if (this->use_blas_lapack)
 //           break;
 //       }
 //       libmesh_fallthrough();
@@ -286,17 +286,70 @@ void DenseMatrixM::lu_solve (DenseVectorM & b,
 //       libmesh_fallthrough();
 // 
 //     default:
-//       libmesh_error_msg("Error! This matrix already has a different decomposition...");
-    }
+//       std::cout<<"Error! This matrix already has a different decomposition..."<<std::endl;
+//     }
 
 //   if (this->use_blas_lapack)
-//     this->_lu_back_substitute_lapack (b, x);
+    this->_lu_back_substitute_lapack (b, x);
 //   else
-    this->_lu_back_substitute (b, x);
+//     this->_lu_back_substitute (b, x);
 }
 
 
+void DenseMatrixM::_lu_decompose_lapack ()
+{
+  // If this function was called, there better not be any
+  // previous decomposition of the matrix.
+  assert(this->_decomposition_type== NONE);
 
+  // The calling sequence for dgetrf is:
+  // dgetrf(M, N, A, lda, ipiv, info)
+
+  // M (input)
+  //   The number of rows of the matrix A.  M >= 0.
+  // In C/C++, pass the number of *cols* of A
+  PetscBLASInt M = this->n();
+
+  // N (input)
+  //   The number of columns of the matrix A.  N >= 0.
+  // In C/C++, pass the number of *rows* of A
+  PetscBLASInt N = this->m();
+
+  // A (input/output) double precision array, dimension (LDA,N)
+  //   On entry, the M-by-N matrix to be factored.
+  //   On exit, the factors L and U from the factorization
+  //   A = P*L*U; the unit diagonal elements of L are not stored.
+  // Here, we pass &(_val[0]).
+
+  // LDA (input)
+  //     The leading dimension of the array A.  LDA >= max(1,M).
+  PetscBLASInt LDA = M;
+
+  // ipiv (output) integer array, dimension (min(m,n))
+  //      The pivot indices; for 1 <= i <= min(m,n), row i of the
+  //      matrix was interchanged with row IPIV(i).
+  // Here, we pass &(_pivots[0]), a private class member used to store pivots
+  this->_pivots.resize( std::min(M,N) );
+
+  // info (output)
+  //      = 0:  successful exit
+  //      < 0:  if INFO = -i, the i-th argument had an illegal value
+  //      > 0:  if INFO = i, U(i,i) is exactly zero. The factorization
+  //            has been completed, but the factor U is exactly
+  //            singular, and division by zero will occur if it is used
+  //            to solve a system of equations.
+  PetscBLASInt INFO = 0;
+
+  // Ready to call the actual factorization routine through PETSc's interface
+  LAPACKgetrf_(&M, &N, &(this->_val[0]), &LDA, &(_pivots[0]), &INFO);
+
+  // Check return value for errors
+  if (INFO != 0)
+    std::cout<<"Error during Lapack LU factorization!"<<std::endl;
+
+  // Set the flag for LU decomposition
+  this->_decomposition_type = LU_BLAS_LAPACK;
+}
 
 void DenseMatrixM::_lu_back_substitute ( DenseVectorM & b,
                                           DenseVectorM & x ) const
@@ -378,6 +431,80 @@ void DenseMatrixM::_lu_back_substitute ( DenseVectorM & b,
 //     // Set the flag for LU decomposition
 //     this->_decomposition_type = LU;
 // }
+
+void DenseMatrixM::_lu_back_substitute_lapack (const DenseVectorM & b,
+                                                 DenseVectorM & x)
+{
+  // The calling sequence for getrs is:
+  // dgetrs(TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO)
+
+  // trans (input)
+  //       'n' for no transpose, 't' for transpose
+  char TRANS[] = "t";
+
+  // N (input)
+  //   The order of the matrix A.  N >= 0.
+  PetscBLASInt N = this->m();
+
+
+  // NRHS (input)
+  //      The number of right hand sides, i.e., the number of columns
+  //      of the matrix B.  NRHS >= 0.
+  PetscBLASInt NRHS = 1;
+
+  // A (input) double precision array, dimension (LDA,N)
+  //   The factors L and U from the factorization A = P*L*U
+  //   as computed by dgetrf.
+  // Here, we pass &(_val[0])
+
+  // LDA (input)
+  //     The leading dimension of the array A.  LDA >= max(1,N).
+  PetscBLASInt LDA = N;
+
+  // ipiv (input) int array, dimension (N)
+  //      The pivot indices from DGETRF; for 1<=i<=N, row i of the
+  //      matrix was interchanged with row IPIV(i).
+  // Here, we pass &(_pivots[0]) which was computed in _lu_decompose_lapack
+
+  // B (input/output) double precision array, dimension (LDB,NRHS)
+  //   On entry, the right hand side matrix B.
+  //   On exit, the solution matrix X.
+  // Here, we pass a copy of the rhs vector's data array in x, so that the
+  // passed right-hand side b is unmodified.  I don't see a way around this
+  // copy if we want to maintain an unmodified rhs in LibMesh.
+  x = b;
+  std::vector<double> & x_vec = x.get_values();
+
+  // We can avoid the copy if we don't care about overwriting the RHS: just
+  // pass b to the Lapack routine and then swap with x before exiting
+  // std::vector<T> & x_vec = b.get_values();
+
+  // LDB (input)
+  //     The leading dimension of the array B.  LDB >= max(1,N).
+  PetscBLASInt LDB = N;
+
+  // INFO (output)
+  //      = 0:  successful exit
+  //      < 0:  if INFO = -i, the i-th argument had an illegal value
+  PetscBLASInt INFO = 0;
+
+  // Finally, ready to call the Lapack getrs function
+  LAPACKgetrs_(TRANS, &N, &NRHS, &(_val[0]), &LDA, &(_pivots[0]), &(x_vec[0]), &LDB, &INFO);
+
+  // Check return value for errors
+  if (INFO != 0)
+    std::cout<<"Error during Lapack LU solve!"<<std::endl;
+
+  // Don't do this if you already made a copy of b above
+  // Swap b and x.  The solution will then be in x, and whatever was originally
+  // in x, maybe garbage, maybe nothing, will be in b.
+  // FIXME: Rewrite the LU and Cholesky solves to just take one input, and overwrite
+  // the input.  This *should* make user code simpler, as they don't have to create
+  // an extra vector just to pass it in to the solve function!
+  // b.swap(x);
+}
+
+
 void DenseMatrixM::_lu_decompose ()
 {
   // If this function was called, there better not be any
