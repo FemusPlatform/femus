@@ -416,8 +416,8 @@ void MGSolDA::GenBc (
 
     // set 1 all the points for  bc (boundary condition) ------------------------
     for ( int i1=0; i1< _Dim[_NoLevels-1]; i1++ ) {
-        bc[0][i1]=1;
-        bc[1][i1]=1;
+        _bc[0][i1]=1;
+        _bc[1][i1]=1;
         }
     // **************************************************************************
     // B) Reading  face_id vector (boundary zones) if the dataset exists
@@ -548,7 +548,7 @@ void MGSolDA::GenBc_loop (
                     xp[idim] = xyzgl[k+idim*offset];
                     }
                 if ( _node_dof[_NoLevels-1][k]>-1 ) {
-                    bc[0][_node_dof[_NoLevels-1][k]]  = -1000;
+                    _bc[0][_node_dof[_NoLevels-1][k]]  = -1000;
                     }
 
                 }
@@ -588,15 +588,15 @@ void MGSolDA::GenBc_loop (
                     /// Calling the local point functions
                     bc_intern_read ( face_id_node,mat_id_elem,xp,bc_Neu,bc_value );
 
-                    int old_val =  bc[0][_node_dof[_NoLevels-1][k]] ;
-                    bc[0][_node_dof[_NoLevels-1][k]]  = ( bc[0][_node_dof[_NoLevels-1][k]] == -1000 ) ? bc_Neu[0] : ( bc[0][_node_dof[_NoLevels-1][k]] );
+                    int old_val =  _bc[0][_node_dof[_NoLevels-1][k]] ;
+                    _bc[0][_node_dof[_NoLevels-1][k]]  = ( _bc[0][_node_dof[_NoLevels-1][k]] == -1000 ) ? bc_Neu[0] : ( _bc[0][_node_dof[_NoLevels-1][k]] );
 
                     // sharing boundary nodes on the same element
                     for ( int ivar=0; ivar<n_dofs; ivar++ )  {
                         int kdof=_node_dof[_NoLevels-1][k+ivar*offset]; // kdof <-k
-                        int number = bc[1][kdof]/10000;     // number of old count for double pt in an element
+                        int number = _bc[1][kdof]/10000;     // number of old count for double pt in an element
                         if ( abs ( number ) ==1 ) {
-                            bc[1][kdof] =bc[1][kdof] - bc[1][kdof]*10000/abs ( bc[1][kdof] ); // if the count is 1 set 0 if >1 leave
+                            _bc[1][kdof] =_bc[1][kdof] - _bc[1][kdof]*10000/abs ( _bc[1][kdof] ); // if the count is 1 set 0 if >1 leave
                             }
                         }
                     }
@@ -627,7 +627,7 @@ void MGSolDA::GenBc_loop (
                             bc_value[0]=1;
                             bc_Neu[0]=11;
                             bc_read ( face_id_node,mat_id_elem,xp,bc_Neu,bc_value );
-                            bc[0][_node_dof[_NoLevels-1][k]] =bc_Neu[0];
+                            _bc[0][_node_dof[_NoLevels-1][k]] =bc_Neu[0];
                             }
                         }
                     // normal
@@ -637,7 +637,7 @@ void MGSolDA::GenBc_loop (
                     // computation of k_el and face_id_el
                     int k_el=_mgmesh._el_map[0][ ( iel+iel0 ) *ndof_femv+sur_toply[NDOF_FEMB-1]]; // global node
                     int k_el_dof=_node_dof[_NoLevels-1][k_el];
-                    int bc_el= ( int ) bc[0][k_el_dof]%100;
+                    int bc_el= ( int ) _bc[0][k_el_dof]%100;
                     int score_old=1000;
 //
 //
@@ -658,7 +658,7 @@ void MGSolDA::GenBc_loop (
                     const int k_face=_mgmesh._el_map[0][ ( iel+iel0 ) *ndof_femv+ sur_toply[NDOF_FEMB-1]]; // global node
                     int k0dof=  _node_dof[_NoLevels-1][k_face];
                     int face_id_mid_face=face_id_vect[k0dof];
-                    int bc_face = ( int ) bc[0][k0dof];
+                    int bc_face = ( int ) _bc[0][k0dof];
                     bc_face = bc_face%100;
 
                     for ( int i=0; i< NDOF_FEMB; i++ ) { // node lement loop
@@ -666,7 +666,7 @@ void MGSolDA::GenBc_loop (
                         int k0dof=  _node_dof[_NoLevels-1][k];
                         if ( k0dof > -1 ) {
                             face_id_node=face_id_vect[k0dof];
-                            int bc_id= ( int ) bc[0][k0dof]; // label surface pt 00
+                            int bc_id= ( int ) _bc[0][k0dof]; // label surface pt 00
                             int mynormal=dir_maxnormal; // dir_normal=geometrical normal
 
                             int sign = ( bc_id==0 ) ? 1: ( bc_id/ ( abs ( bc_id ) ) );
@@ -677,7 +677,7 @@ void MGSolDA::GenBc_loop (
                             if ( ( bc_id%1000 ) /100 > 3 ) { //   pts label x00 ----------------------------------------------------------
                                 std::cout << "\n ... single pressure pts .. \n";
                                 if ( i<NDOF_PB ) {
-                                    bc[1][_node_dof[_NoLevels-1][k+DIMENSION* offset]] =4;
+                                    _bc[1][_node_dof[_NoLevels-1][k+DIMENSION* offset]] =4;
                                     }
                                 mynormal=abs ( ( bc_id%1000 ) /100 ) %4; // force the normal
                                 }
@@ -687,10 +687,10 @@ void MGSolDA::GenBc_loop (
                             // set the local boundary conditions into global vector bc[]
                             for ( int ivar=0; ivar<_nvars[2]; ivar++ ) { // quad el --
                                 int kdof=_node_dof[_NoLevels-1][k+ ( ivar ) * offset];
-                                int number = abs ( bc[1][kdof]/10000 ) +1;
-                                bc[1][kdof] += sign*10000; // updating number of common nodes
-                                if ( abs ( bc[1][kdof] ) <10000 || bc_id==bc_face ) {
-                                    bc[1][kdof] = sign* ( abs ( bc_id )+ ( mynormal+1 ) *1000+number*10000 );
+                                int number = abs ( _bc[1][kdof]/10000 ) +1;
+                                _bc[1][kdof] += sign*10000; // updating number of common nodes
+                                if ( abs ( _bc[1][kdof] ) <10000 || bc_id==bc_face ) {
+                                    _bc[1][kdof] = sign* ( abs ( bc_id )+ ( mynormal+1 ) *1000+number*10000 );
                                     }
                                 } // ----------------------------------------------------------------
                             }
@@ -861,11 +861,11 @@ void MGSolDA::init_dof (
 
 // Set up boundary conditions ++++++++++++++++++++++++++++
     if ( Level==_NoLevels-1 ) {
-        bc[0] =new int[_Dim[Level]];
-        bc[1] =new int[_Dim[Level]];
+        _bc[0] =new int[_Dim[Level]];
+        _bc[1] =new int[_Dim[Level]];
         for ( int k1=0; k1< _Dim[Level]; k1++ ) {
-            bc[0][k1]=1;
-            bc[1][k1]=1;
+            _bc[0][k1]=1;
+            _bc[1][k1]=1;
             }
         }
 
@@ -937,8 +937,8 @@ void  MGSolDA::get_el (
             const int  kdof_top = _node_dof[_NoLevels-1][indx_glob]; // dof from top level
 
             el_dof_indices[indx_loc]= _node_dof[Level][indx_glob];     //from mesh to dof
-            bc_dofs[0][indx_loc]       = bc[0][kdof_top];                    // element bc
-            bc_dofs[1][indx_loc]       = bc[1][kdof_top];                    // element bc
+            bc_dofs[0][indx_loc]       = _bc[0][kdof_top];                    // element bc
+            bc_dofs[1][indx_loc]       = _bc[1][kdof_top];                    // element bc
             uold[indx_loc]          = ( *x_old[_NoLevels-1] ) ( kdof_top ); // element sol
             } // end quadratic ------------------------------------------------
         }
@@ -968,8 +968,8 @@ void  MGSolDA::get_el_dof_bc (
                 const int kdof_top = _node_dof[_NoLevels-1][indx_glob]; // dof from top level
 
                 el_dof_indices[indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                bc_bd[indx_loc]         = bc[1][kdof_top];                    // element bc
-                bc_vol[indx_loc]        = bc[0][kdof_top];                    // element bc
+                bc_bd[indx_loc]         = _bc[1][kdof_top];                    // element bc
+                bc_vol[indx_loc]        = _bc[0][kdof_top];                    // element bc
                 } // end quadratic ------------------------------------------------
 
 //     // linear -----------------------------
@@ -981,8 +981,8 @@ void  MGSolDA::get_el_dof_bc (
                 const int kdof_top = _node_dof[_NoLevels-1][indx_glob]; // dof from top level
 
                 el_dof_indices[indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                bc_bd[indx_loc]         = bc[1][kdof_top];                    // element bc
-                bc_vol[indx_loc]        = bc[0][kdof_top];                    // element bc
+                bc_bd[indx_loc]         = _bc[1][kdof_top];                    // element bc
+                bc_vol[indx_loc]        = _bc[0][kdof_top];                    // element bc
                 } // end quadratic ------------------------------------------------
 
 
@@ -995,8 +995,8 @@ void  MGSolDA::get_el_dof_bc (
                 const int kdof_top = _node_dof[_NoLevels-1][indx_glob]; // dof from top level
 
                 el_dof_indices[indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                bc_bd[indx_loc]         = bc[1][kdof_top];                    // element bc
-                bc_vol[indx_loc]        = bc[0][kdof_top];                    // element bc
+                bc_bd[indx_loc]         = _bc[1][kdof_top];                    // element bc
+                bc_vol[indx_loc]        = _bc[0][kdof_top];                    // element bc
                 } // end piecewise ------------------------------------------------
         }
     return;
@@ -1722,12 +1722,12 @@ void MGSolDA::print_bc ( std::string namefile, const int Level ) {
     for ( int ivar=0; ivar<_nvars[2]; ivar++ ) {
         std::string var_name = _var_names[ivar]+"bd";
         for ( int i=0; i< n_nodes; i++ ) {
-            sol[i]= bc[1][_node_dof[_NoLevels-1][i+ ( ivar ) *offset]];
+            sol[i]= _bc[1][_node_dof[_NoLevels-1][i+ ( ivar ) *offset]];
             }
         _mgutils.print_Ihdf5 ( file_id,var_name,dimsf,sol );
         std::string var_name2 = _var_names[ivar]+"vl";
         for ( int i=0; i< n_nodes; i++ ) {
-            sol[i]= bc[0][_node_dof[_NoLevels-1][i+ivar*offset]];
+            sol[i]= _bc[0][_node_dof[_NoLevels-1][i+ivar*offset]];
             }
         _mgutils.print_Ihdf5 ( file_id,var_name2,dimsf,sol );
         }
@@ -1748,7 +1748,7 @@ void MGSolDA::print_bc ( std::string namefile, const int Level ) {
                     _mgmesh._off_nd[1][Level+1+isubdom*_NoLevels]-
                     _mgmesh._off_nd[1][isubdom*_NoLevels]; i++ ) {
 
-                sol[i]=  bc[1][_node_dof[_NoLevels-1][i+ivar*offset]];
+                sol[i]=  _bc[1][_node_dof[_NoLevels-1][i+ivar*offset]];
 
                 }
             } // 2bA end proj fine grid ----------------------------------
@@ -1785,7 +1785,7 @@ void MGSolDA::print_bc ( std::string namefile, const int Level ) {
                     _mgmesh._off_nd[1][Level+1+isubdom*_NoLevels]-
                     _mgmesh._off_nd[1][isubdom*_NoLevels]; i++ ) {
 
-                sol[i]=  bc[0][_node_dof[_NoLevels-1][i+ivar*offset]];
+                sol[i]=  _bc[0][_node_dof[_NoLevels-1][i+ivar*offset]];
 
                 }
             } // 2bA end proj fine grid ----------------------------------
@@ -2489,7 +2489,7 @@ void MGSolDA::ReadProl (
                 for ( int j=0; j<ncol; j++ ) { // fill the row with values and the indices - column loop
                     int jcol=j+length_row[iql][i];
                     double tmp=1.;
-                    if ( iql==1 && bc[0][irow]>1.5 && bc[0][irow]< 2.5 ) {
+                    if ( iql==1 && _bc[0][irow]>1.5 && _bc[0][irow]< 2.5 ) {
                         tmp=1.;
 
                         }
@@ -2751,7 +2751,7 @@ void MGSolDA::ReadRest (
                         }
                     ind[j] =node_dof_f[ind_jpos+off_val_l];
                     ( *valmat ) ( 0,j ) =
-                        ( bc[0][irow_top]%2 ) *
+                        ( _bc[0][irow_top]%2 ) *
                         val_row[iql][j+length_row[iql][i]]; //assign the value in the matrix
                     }//column loop
                 Rest.add_matrix ( *valmat,tmp,ind ); //insert row in the Restrictor
