@@ -499,7 +499,11 @@ void MGSolNS::SetBCFlags (
   // 4-> tau=a.velocity                      4-> stau=a.(velocity-velocity_0)------>
   const int bd_face = abs ( _bc_bd[sur_toply[NDOF_FEMB - 1]] ) % 100; // element normal-tg bc flag
   const int norm_face = ( abs ( _bc_bd[sur_toply[NDOF_FEMB - 1]] ) % 10000 ) / 1000 - 1 ; // element max-normal-dir bc flag
-
+  
+  for ( int  lbnode = 0; lbnode < NDOF_FEMB; lbnode++ )
+    if(el_conn[lbnode] == 3)
+      int a=1;
+  
   for ( int  lbnode = 0; lbnode < NDOF_FEMB; lbnode++ ) { // loop on surface nodes
       const int bd_node = abs ( _bc_bd[sur_toply[lbnode]] ) % 100; // point normal-tg  bc flag
       const int bc_var_check = abs ( _bc_bd[sur_toply[lbnode]] ) % 10000; // bc_var
@@ -512,7 +516,7 @@ void MGSolNS::SetBCFlags (
       int NormDir = bc_var_normal;
 
       // BC are imposed only if node bc equal to face bc
-      if ( bd_face == bd_node ) {
+      if ( bd_face == bd_node || ( bd_node == 88 || bd_node == 66 ) ) {
           int NormRow = sur_toply[lbnode] + NormDir * el_ndof;
 
           // Setting bc flags for normal direction --------------------------

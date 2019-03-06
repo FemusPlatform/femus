@@ -160,8 +160,8 @@ void MGSolNS::RowSetUp ( int nPhi, int indx_eq, int qp, int el_ndof[] )
       }
 
   if ( _bc_el[indx_eq] == -8 && qp == 0 ) {
-      std::cout << "ATTENTION!!! el node " << nPhi << " row " << indx_eq << " bc_el " << _bc_el[indx_eq] << " bc_vol " << _bc_vol[nPhi] << std::endl;
-      _bc_el[indx_eq] = 0;
+      std::cout << "ATTENTION!!! el node " << nPhi << " row " << indx_eq << " bc_el " << _bc_el[indx_eq] << " bc_vol " << _bc_vol[nPhi] <<" bc_bd "<<_bc_bd[nPhi]<< std::endl;
+      _bc_el[indx_eq] = 1;
       }
 
   _BoundEquation = ( _bc_el[indx_eq] <= -1 ) ? 1 : 0;

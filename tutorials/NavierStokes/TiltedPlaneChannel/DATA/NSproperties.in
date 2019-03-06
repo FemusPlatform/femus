@@ -30,7 +30,7 @@
    Les            0
    WallFunctionApproach   0
    InterpolatedMuTurb     0
-   TimeDisc               1
+   TimeDisc               2
    AssembleOnce           1
    NodeIDrefPressure      0
 # ---------------------------------------------------------------

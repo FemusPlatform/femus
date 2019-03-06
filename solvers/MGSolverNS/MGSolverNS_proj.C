@@ -234,6 +234,9 @@ void MGSolNS_proj::set_bc_matrix(
         NodeBCFlags ( sur_toply[lbnode], bd_node, bc_tg_flag, bc_n_flag, bc_var_normal );
         const int norm_node = (abs(_bc_bd[sur_toply[lbnode]]) % 10000) / 1000 - 1 ;
         
+        if(el_conn[lbnode]==3)
+            int a=1;
+        
         if (_nNSdim == 3) {
             CorrectBCFlags(_ProjDir[0], _ProjDir[1], bc_var_normal, sur_toply[lbnode], el_ndof[2], 0);
         }
