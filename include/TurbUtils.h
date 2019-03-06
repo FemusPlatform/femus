@@ -42,7 +42,8 @@ private:
   double __F2bt     ;    
  
   const int __Proc;
-  int       _MeshID;
+  int       __MeshID;
+  int       __NMeshes;
   
   int _LibToMed_3D[27]    = {7, 4, 5, 6, 3, 0, 1, 2, 19, 16, 17, 18, 11, 8, 9, 10, 15, 12, 13, 14, 25, 24, 21, 22, 23, 20, 26};
   int _LibToMed_2D[9]    = {0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -74,6 +75,8 @@ public:
   bool   _SolveNS, _SolveT, _SolveTBK, _SolveTTBK;
   int    _YapCorr, _Durbin, _Park;
   bool   _IsWallDistSet = false;
+  int    _SolveMuT;
+  int    _SolveAlphaT;
   
   
   std::map<std::string,std::string> _FileMap;    /// String map containing Tproperties.in parameters
@@ -82,7 +85,7 @@ public:
   std::map<std::string, ThermTurbModel> _ThermalModel; 
   
 public:
-  TurbUtils();  
+  TurbUtils(int MeshId = 0, int nMeshes = 0);  
 
   ~TurbUtils();
   void read_file();

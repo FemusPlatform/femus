@@ -352,8 +352,8 @@ int  npt_el=2
  
 private:
   // Private parameters are characterised by double underscore
-  const MEDCoupling::MEDCouplingUMesh * __InMesh;
-  const MEDCoupling::MEDCouplingUMesh * __OutMesh;
+  MEDCoupling::MEDCouplingUMesh * __InMesh;
+  MEDCoupling::MEDCouplingUMesh * __OutMesh;
   int  __BoundNodesPerCell;
   int  __TrgNodes;
   int  __Domain;

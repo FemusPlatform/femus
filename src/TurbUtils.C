@@ -1,5 +1,4 @@
 #include "TurbUtils.h"
-#include "Domain_conf.h"
 #include <sstream>
 #include <math.h>
 #include <iostream>
@@ -9,8 +8,8 @@
 //
 using namespace std;
 
-TurbUtils::TurbUtils() :
- __Proc( 0 ) {
+TurbUtils::TurbUtils(int MeshId, int nMeshes) :
+ __Proc( 0 ), __MeshID(MeshId), __NMeshes(nMeshes) {
     FillModelMap();
     FillParameters(); // DEFAULT VALUES
 }
@@ -29,7 +28,7 @@ void TurbUtils::FillParameters() {
     read_file();
 
     _klim = _wlim = _elim = _khlim = _whlim = _ehlim = 1.e-20;
-    
+    _SolveAlphaT = _SolveMuT = 0;
     
     std::cout<<"\n ========================================================= \n"
     << "\033[38;5;118m \t \t SETTING THE TURBULENCE MODEL \033[0m \n";
@@ -140,6 +139,10 @@ void TurbUtils::FillParameters() {
     if ( _FileMap ["utau"]!="" ) _InputUtau = stod ( _FileMap["utau"] );
     else _InputUtau = -1; // if negative then profiles will be calculated with default utau method
 
+    
+    if ( _FileMap ["SolveMuT"]!="" ) _SolveMuT = stoi ( _FileMap["SolveMuT"] );
+    if ( _FileMap ["SolveAlphaT"]!="" ) _SolveAlphaT = stoi ( _FileMap["SolveAlphaT"] );
+    
     if ( __Proc==0 ) {
         std::cerr <<" \n =====================================================\n";
         std::cerr <<"  TURB UTILS PARAMETERS   \n";
@@ -809,10 +812,10 @@ void TurbUtils::read_file() { // READING Tparameter.in =========================
     std::ostringstream file, file1, file2;
     std::vector<std::string> FILES;
 
-    if ( NUM_MESH>1 ) {
-        file   <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( _MeshID ) <<"/Turbulence.in";
-        file1  <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( _MeshID ) <<"/GeometrySettings.in";
-        file2  <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( _MeshID ) <<"/MaterialProperties.in";
+    if ( __NMeshes>0 ) {
+        file   <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( __MeshID ) <<"/Turbulence.in";
+        file1  <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( __MeshID ) <<"/GeometrySettings.in";
+        file2  <<getenv ( "APP_PATH" ) <<"/DATA/DATA"<<std::to_string ( __MeshID ) <<"/MaterialProperties.in";
     } else {              
         file   <<getenv ( "APP_PATH" ) <<"/DATA/Turbulence.in";
         file1  <<getenv ( "APP_PATH" ) <<"/DATA/GeometrySettings.in";
