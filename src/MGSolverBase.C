@@ -128,8 +128,8 @@ MGSolBase::~MGSolBase (
     Prl.clear();    // Restrictor and projector
 //   _attrib.clear();                // Cell properties
     delete [] _Dim;                 // dimension system Ax=b
-    delete[] bc[0];
-    delete[] bc[1];                    // boundary condition flag
+    delete[] _bc[0];
+    delete[] _bc[1];                    // boundary condition flag
     delete [] _node_dof;            // dof distribution
     delete [] _var_names;           // variables names
     delete []_refvalue;             // destroy variable unit vec
@@ -184,7 +184,6 @@ void MGSolBase::MGDofBcOp (
 
     for (int Level = 0; Level< _NoLevels; Level++)  {
         init (Level); // allocation struct
-
     }
 
 #ifdef PRINT_INFO

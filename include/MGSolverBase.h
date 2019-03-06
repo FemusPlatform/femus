@@ -8,6 +8,9 @@
 #include <string>
 #include <stdio.h>
 #include "MEDCouplingFieldDouble.hxx"
+#include "dense_matrixM.h"   // algebra dense matrices
+#include "dense_vectorM.h"   // algebra dense vectors
+
 class SparseMatrixM;
 class SparseMMatrixM;
 class NumericVectorM;
@@ -86,6 +89,14 @@ class MGSolBase
         ///<
         ///@}
         // ---------------------------------------
+        ///@{  \name  MATRIX and VECTOR
+        DenseMatrixM _KeM;
+        DenseVectorM _FeM;                  // local  matrix+rhs
+        ///<
+        ///@}
+        ///<
+        ///@}
+        // ---------------------------------------
         ///@{  \name  ATTRIBUTES
         const int _NoLevels;        ///< level number
         int * _Dim;                 ///< dimension number of dofs per level
@@ -106,8 +117,9 @@ class MGSolBase
         ///@}
         // ---------------------------------------
 ///@{  \name BC AND DOF MAP
-        int * bc[2];              ///< boundary conditions map (top level)
+        int * _bc[2];              ///< boundary conditions map (top level)
         int ** _node_dof;         ///< dof map
+        
 ///<
         ///@}
 
