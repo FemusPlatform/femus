@@ -2,7 +2,7 @@
 // --------------   NAVIER-STOKES system [NS_F] -----------------------------------------
 // ======================================================================================
 #include "Equations_conf.h"
-
+#ifdef NS_EQUATIONS
 // ======================================================================================
 // NS_EQUATIONS==1 coupled    solver (u,v,w,p)
 // NS_EQUATIONS==2 segregated solver (u,v,w) ( P in NSP_EQUATIONS)
@@ -161,5 +161,6 @@ void P_param::read_param (
     return;
 }
 
+#endif
 
 
