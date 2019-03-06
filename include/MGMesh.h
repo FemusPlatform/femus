@@ -78,6 +78,8 @@ public:
     int **  _node_map; ///< Node map: connects node level map to top node level ordering: _node_map[L][n]-> top grid
     int*  _off_nd[2];  ///< Node map indices subdomain-level offset (_node_map [0]quad [1]lin)
     
+    int *_NodeBDgroup;
+    
     ///  Node for level: index[L+F*_NoLevels]
     int * _NoNodes;    
     ///@}
