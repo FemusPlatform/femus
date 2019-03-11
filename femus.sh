@@ -18,6 +18,7 @@ function femus_show_configure_functions {
   echo "${green}List of functions for configuring femus applications${NC}"
   echo "  ${red}femus_application_configure <method>${NC}: function to be called within application folder."
   echo "     Application name, path and method (opt or dbg for compiling in optimized or debug mode) are set"
+  echo "  ${red}femus_link_solver_files${NC}: function for linking solver files inside femus/solvers/ln_solvers folder"
 }
 
 
@@ -443,7 +444,10 @@ echo "ALL TUTORIALS: COMPLETED RUN"
 
 
 function femus_tutorial_copy () {
-   
+
+export TUTORIAL_RUN
+export TUTORIAL_HOME=$FEMUS_DIR/tutorials/
+
    while :
 do
     case "$1" in
@@ -485,23 +489,59 @@ done
          
    export TUTORIAL_CLASS
    export TUTORIAL_CASE
+   
+   # here class and case are chosen from user
    femus_tutorial_class_select
-#    femus_tutorial_select_case $TUTORIAL_CLASS
       
-   echo "Selected test is $TUTORIAL_CASE of class $TUTORIAL_CLASS"
+   if [ "$TUTORIAL_CASE" == "all" ]; then
    
-   cp -r $FEMUS_DIR/tutorials/$TUTORIAL_CLASS/$TUTORIAL_CASE $TUTORIAL_CP
+   TUTORIAL_RUN=$TUTORIAL_CP/$TUTORIAL_CLASS"_tut"
+   export TUTORIAL_LOG=$TUTORIAL_RUN/tutorialsLog.log
    
-   cd $TUTORIAL_CASE
    
-   echo "-------------------------------------------------------"
-   echo "Tutorial has been copied"
-   echo "To run tutorial please execute"
-   echo "femus_application_configure <Method> (opt or dbg)"
-   echo "and then"
-   echo "source runTest.sh"
-   echo "-------------------------------------------------------"
+   if [ -d $TUTORIAL_RUN ]; then
+     rm -r $TUTORIAL_RUN
+   fi     
+     mkdir $TUTORIAL_RUN
+     cd $TUTORIAL_RUN
+     
+     touch $TUTORIAL_LOG
+     
+       unset CASES
+       export CASES=$(ls -l $TUTORIAL_HOME/$class | grep ^d | awk '{print $9}')
+       for tutorial in $CASES; do
+           echo "******************************************************************************************">> $TUTORIAL_LOG
+           echo "  NOW RUNNING $tutorial CASE ">> $TUTORIAL_LOG
+           echo "******************************************************************************************">> $TUTORIAL_LOG
+          unset tutorial_path
+          export tutorial_path=$TUTORIAL_RUN/$tutorial
+          cp -r $TUTORIAL_HOME/$class/$tutorial $tutorial_path
+          cd $tutorial_path
+          femus_application_configure opt  >> $TUTORIAL_LOG
+          source runTest.sh 
+          cd $TUTORIAL_RUN
+          echo >> $TUTORIAL_LOG
+       done    
+       echo >> $TUTORIAL_LOG
+       echo >> $TUTORIAL_LOG
    
+   else
+      
+     echo "Selected test is $TUTORIAL_CASE of class $TUTORIAL_CLASS"
+     
+     cp -r $FEMUS_DIR/tutorials/$TUTORIAL_CLASS/$TUTORIAL_CASE $TUTORIAL_CP
+     
+     cd $TUTORIAL_CASE
+     
+     echo "-------------------------------------------------------"
+     echo "Tutorial has been copied"
+     echo "To run tutorial please execute"
+     echo "femus_application_configure <Method> (opt or dbg)"
+     echo "and then"
+     echo "source runTest.sh"
+     echo "-------------------------------------------------------"
+   
+   fi
    
    return;
 }
@@ -527,16 +567,38 @@ function femus_tutorial_select_case () {
  export CASES=$(ls -l $FEMUS_DIR/tutorials/$1 | grep ^d | awk '{print $9}')
   
  echo "Choose tutorial case for class $TUTORIAL_CLASS: " 
- select tut_case in $CASES back_to_classes ;
+ select tut_case in $CASES all back_to_classes ;
   do
    case "$tut_case" in
     back_to_classes)
        femus_tutorial_class_select
     break;;   
+    "all")
+    echo " all tutorials of class $TUTORIAL_CLASS will be run"
+    TUTORIAL_CASE=$tut_case
+    break ;;
     *) echo $tut_case " case chosen"
     TUTORIAL_CASE=$tut_case
     break ;;
    esac
   done
+
+}
+
+function femus_link_solver_files () {
+
+  unset SOLVERS
+  export SOLVERS=$(ls  $PLAT_CODES_DIR/femus/solvers/ | grep "MG" )
+  
+  if [ -d $PLAT_CODES_DIR/femus/solvers/ln_solvers/ ]; then
+    rm -r $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+  fi
+  mkdir $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+  
+  for solver in $SOLVERS; do
+      ln -s $PLAT_CODES_DIR/femus/solvers/$solver/*.h $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+      ln -s $PLAT_CODES_DIR/femus/solvers/$solver/*.C $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+  done 
+
 
 }
