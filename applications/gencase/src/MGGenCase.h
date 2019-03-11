@@ -44,14 +44,16 @@ class MGGenCase {
   int _dcl_nel;        ///< # of param in the element table  (elem_sto)
   int _dclb_nel;       ///< # of parameters in the boundary element table
   
-
+  int **_ElPerProcPerLevel;
+  
+  
   public:
     
  MGUtils& _mgutils;  ///<  MGUtils class pointer
   
   // Destructor-Constructor ---------------------------------------
   MGGenCase(const Parallel::Communicator & comm_in,MGUtils& mgutils_in,MGGeomEl& mggeomel_in); ///<  Constructor
-  ~MGGenCase(){};                                       ///<  Destructor
+  ~MGGenCase();                                       ///<  Destructor
 
   // functions -----------------------------------
   /// Case generator
@@ -324,17 +326,6 @@ void  print_Mat(int *Mat,int nrow,int ncln);
   );  
   
   
-  void GenLevelMed(
-    int Level,
-    int celle,
-    int CumulativeElementsOtherLevels,
-    int *v_inv_el,
-    int *v_inv_nd,
-    int ** elem_sto,
-    double *coord,
-    std::string info_name,
-    const unsigned int LibToMed[]
-  );
   
 private:
   /// Print internal node structure (hdf5 format)	

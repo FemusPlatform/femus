@@ -58,9 +58,27 @@ MGGenCase::MGGenCase(const Parallel::Communicator & comm_in,
     _dclb_nel = NDOF_FEMB + 5;
     _n_subdomains = libMesh::global_n_processors();
 
+    _ElPerProcPerLevel = new int *[_n_subdomains];
+    for (int i=0; i<_n_subdomains; i++){
+        _ElPerProcPerLevel[i] = new int [_n_levels];
+        for(int j=0; j<_n_levels; j++)
+        _ElPerProcPerLevel[i][j] = 0;
+    }
+    
     return;
     }
 
+MGGenCase::~MGGenCase()
+{
+    
+    for (int i=0; i<_n_subdomains; i++)
+        delete [] _ElPerProcPerLevel[i];
+    delete [] _ElPerProcPerLevel;
+    
+    
+}
+    
+    
 // =======================================================
 /// This function is the main mesh generation function
 void
@@ -660,30 +678,44 @@ MGGenCase::printMesh(BoundaryMesh & bd_msht,	// boundary mesh
         }
     for (int kel = 0; kel < n_elements; kel++) {
         // counting (level and subdom)
-        n_elements_lev[elem_sto[kel][NDOF_FEM + 1]]++;
-        n_elements_sl[elem_sto[kel][NDOF_FEM + 1] +
-                      elem_sto[kel][NDOF_FEM + 2] * _n_levels]++;
+        int proc_id = elem_sto[kel][NDOF_FEM + 2];
+        int level_id = elem_sto[kel][NDOF_FEM + 1];
+        n_elements_lev[level_id]++;
+        n_elements_sl[level_id + proc_id * _n_levels] ++;
         //setup ordering vector
-        v_el[kel].first =
-            elem_sto[kel][NDOF_FEM + 1] + _n_levels * elem_sto[kel][NDOF_FEM + 2];
+        v_el[kel].first =  level_id + _n_levels * proc_id;
         v_el[kel].second = kel;
-        ElementsPerLevel[elem_sto[kel][NDOF_FEM + 1]]++;
+        
+        _ElPerProcPerLevel[proc_id][level_id] ++;
+        ElementsPerLevel[level_id]++;
         }
 
     for (int k = 0; k < _n_levels; k++) {
-        std::cout << "Elements in level " << k << ": " << ElementsPerLevel[k] <<
-                  std::endl;
+        std::cout << "Elements in level " << k << ": " << ElementsPerLevel[k] << std::endl;
+        std::cout << "Parallel subdivision: ";
+        for(int pp=0; pp<_n_subdomains; pp++)
+            std::cout<<" proc: "<<pp<<" n elem "<<_ElPerProcPerLevel[pp][k];
+        std::cout<<std::endl;
         }
-
+        
+    int count2 = 0;
+    for(int pp=0; pp<_n_subdomains; pp++){
+        for (int k = 0; k < _n_levels; k++) {
+            std::cout<<" p"<<pp<<"l"<<k<<": from "<<count2<<" <-> "<<count2 + _ElPerProcPerLevel[pp][k] - 1<<" |";
+            count2 += _ElPerProcPerLevel[pp][k];
+        }
+    }
+    std::cout<<"Total Elements "<<n_elements<<std::endl;
+         
     // std reordering on pairs NDOF_FEM
     std::sort(v_el.begin(), v_el.end());
     for (int i = 0; i < n_elements; i++) {
         int kel = v_el[i].second;
         v_inv_el[kel] = i;
-        if (kel == 344 || i == 344)
-            std::cout << "kel " << kel << " i " << i << "   " << v_el[i].first <<
-                      std::endl;
         }
+        
+        
+        
     // boundary ---------------------------------
     std::vector < std::pair < int, int >>v_elb(bd_n_elements);
     int *v_inv_elb = new int[bd_n_elements];
@@ -3248,11 +3280,7 @@ MGGenCase::print_med(int Level,	// Level
                 }
             }
         }
-//   int *conn_med= new int[n_element_top];
-//   for(int ie=0; ie<n_element_top; ie++) {
-//         for(int inode=0; inode<n_nodes_el; inode++) {
-//            conn_med[ie+inode*n_element_top]= conn[ie*n_nodes_el+inode];
-//   }
+
     bd_n_elements = count_eb;
     assert(bd_n_elements == count_eb);	// check
     std::cout << " Printing med file " << name.
@@ -3303,8 +3331,6 @@ MGGenCase::print_med(int Level,	// Level
     mm->setMeshAtLevel(-1, mesh2, false);
 
     // Volume Groups
-//   int n_vol_group_nodes=0;
-//   for(int i=0;i<n_groups_names;i++) if(group_id_names[i]<10) n_vol_group_nodes;
 
     std::map < int, std::vector < int >>vol_group_nodes;
     std::map < int, int >vol_group;
@@ -3410,6 +3436,7 @@ MGGenCase::print_med(int Level,	// Level
     mm->write(name.str().c_str(), 2);
 
     // clean
+    delete[]map_elem;
     delete[]coord;
     fama.clear();
     a.clear();
@@ -3436,10 +3463,19 @@ void
 MGGenCase::print_MedToMg(int Level,	// Level
                          BoundaryMesh & bd_msh0,	// boundary coarse mesh
                          Mesh & msh0,	// coarse mesh
-                         int n_groups, int *group_id_names, std::vector < std::pair < int, int > >v,	// node order
-                         int *v_inv_nd, std::vector < std::pair < int, int > >v_elb, int *nod_flag,	// bc node
+                         int n_groups, 
+                         int *group_id_names, 
+                         std::vector < std::pair < int, int > >v,	// node order
+                         int *v_inv_nd, 
+                         std::vector < std::pair < int, int > >v_elb, 
+                         int *nod_flag,	// bc node
                          int *mat_flag,	// mat element
-                         int *off_el, int *v_inv_el, std::vector < std::pair < int, int >>v_el, std::vector < int >ElementsPerLevel, int **elem_sto, std::string filename	// filename
+                         int *off_el, 
+                         int *v_inv_el, 
+                         std::vector < std::pair < int, int >>v_el, 
+                         std::vector < int >ElementsPerLevel, 
+                         int **elem_sto, 
+                         std::string filename	// filename
                         ) {
     // ==================================================
     // THIS ROUTINE IS USED TO PRINT MED MESH FILES WITH FIELDS THAT HELP CREATING INTERFACES
@@ -3489,47 +3525,50 @@ MGGenCase::print_MedToMg(int Level,	// Level
 #endif
 #endif
 
+/*  ELEMENT SORTING FOR MULTI PROC AND MULTILEVEL DOMAIN DECOMPOSITION
+*          PROC 0              PROC 1                  PROC N
+*  | .. :::: ======== | .. :::: ======== [...] | .. :::: ======== |
+*    L0  L1     LN      L0  L1     LN            L0  L1     LN
+*  --------------------------------------------------------------->
+*                INCREASING ELEMENT NUMBERING ORDER
+*
+*  | ------------------ A ---------------------| -- B -- |-- C --|
+*
+*/
 
-    //  mesh (volume) -----------------------------------------------------
-    std::vector < int >ElemPerLevel(Level + 1);
-    ElemPerLevel[0] = 0;
-    if (Level > 0)
-        for (int LEVEL = 1; LEVEL <= Level; LEVEL++) {
-            ElemPerLevel[LEVEL] =
-                ElemPerLevel[LEVEL - 1] + ElementsPerLevel[LEVEL - 1];
-            }
+    for (int LEVEL = 0; LEVEL <= Level; LEVEL++) {        
 
-
-    for (int LEVEL = 0; LEVEL <= Level; LEVEL++) {
         Mesh::const_element_iterator it_tr = msh0.level_elements_begin(LEVEL);
-        const Mesh::const_element_iterator end_tr =
-            msh0.level_elements_end(LEVEL);
+        const Mesh::const_element_iterator end_tr = msh0.level_elements_end(LEVEL);
+        
+        int n_elements = msh0.n_elem();	// from mesh
+        int *map_elem = new int[n_elements];
+        
         int n_element_top = 0;
 
-        MEDCoupling::DataArrayDouble * Volcells =
-            MEDCoupling::DataArrayDouble::New();
+        MEDCoupling::DataArrayDouble * Volcells = MEDCoupling::DataArrayDouble::New();
         Volcells->alloc(ElementsPerLevel[LEVEL], 1);
         double *CellMap = const_cast < double *>(Volcells->getPointer());
-        MEDCoupling::DataArrayDouble * ProcArray =
-            MEDCoupling::DataArrayDouble::New();
+        MEDCoupling::DataArrayDouble * ProcArray =  MEDCoupling::DataArrayDouble::New();
         ProcArray->alloc(ElementsPerLevel[LEVEL], 1);
         double *ProcMap = const_cast < double *>(ProcArray->getPointer());
 
-        int *conn;
-        conn = new int[ElementsPerLevel[LEVEL] * NDOF_FEM];
+        int *conn = new int[ElementsPerLevel[LEVEL] * NDOF_FEM];
         std::vector < int >Nodes;
 
         for (; it_tr != end_tr; ++it_tr) {
             // LOOP OVER THE MESH ELEMENTS ------------------------
             Elem *elem = *it_tr;	// element
-            int lev = elem->level();	// actual level of the mesh element
+            int lev = elem->level();	// actual level of the mesh element             
             int id_el = n_element_top;
 
             n_nodes_el = elem->n_nodes();	// number of element nodes
-//             CellMap[id_el] = v_inv_el[elem->id()];
-            CellMap[id_el] = v_el[id_el].second;
-            ProcMap[id_el] =
-                elem_sto[id_el + ElemPerLevel[LEVEL]][NDOF_FEM + 2];
+                        
+            if(LEVEL==Level)
+                map_elem[id_el] = elem->id();
+            int orig_el_id = v_inv_el[elem->id()];
+            CellMap[id_el] = orig_el_id;
+            ProcMap[id_el] = elem_sto[orig_el_id][NDOF_FEM + 2] ;
 
             // VOLUME
             for (int inode = 0; inode < n_nodes_el; inode++) {
@@ -3577,8 +3616,7 @@ MGGenCase::print_MedToMg(int Level,	// Level
                                                std::to_string(LEVEL), _dim - 1);
         BoundaryMesh->allocateCells(bd_n_elements);
         for (int i = 0; i < bd_n_elements; i++) {
-            BoundaryMesh->insertNextCell(MED_EL_BDTYPE, NumBdNodes,
-                                         conn_bd + i * NumBdNodes);
+            BoundaryMesh->insertNextCell(MED_EL_BDTYPE, NumBdNodes,conn_bd + i * NumBdNodes);
             }
         BoundaryMesh->finishInsertingCells();
 
@@ -3587,8 +3625,7 @@ MGGenCase::print_MedToMg(int Level,	// Level
         int LevelMeshNodes = s.size();
         double *Coords = new double[_dim * LevelMeshNodes];
 
-        MEDCoupling::DataArrayDouble * FinerConn =
-            MEDCoupling::DataArrayDouble::New();
+        MEDCoupling::DataArrayDouble * FinerConn = MEDCoupling::DataArrayDouble::New();
         FinerConn->alloc(LevelMeshNodes, 1);
         double *MapArray = const_cast < double *>(FinerConn->getPointer());
 
@@ -3599,8 +3636,7 @@ MGGenCase::print_MedToMg(int Level,	// Level
                 }
             }
 
-        MEDCoupling::DataArrayDouble * coordarr =
-            MEDCoupling::DataArrayDouble::New();
+        MEDCoupling::DataArrayDouble * coordarr = MEDCoupling::DataArrayDouble::New();
         coordarr->alloc(LevelMeshNodes, _dim);
         std::copy(Coords, Coords + LevelMeshNodes * _dim,
                   coordarr->getPointer());
@@ -3620,15 +3656,14 @@ MGGenCase::print_MedToMg(int Level,	// Level
             std::map < int, std::vector < int >>vol_group_nodes;
             std::map < int, int >vol_group;
             for (int i = 0; i < n_element_top; i++) {
-                vol_group[mat_flag[(int) CellMap[i]+ElemPerLevel[LEVEL]]]++;    //ElemPerLevel[LEVEL] is the cumulative number of elems of the coarser Levels
-                vol_group_nodes[mat_flag[(int) CellMap[i]+ElemPerLevel[LEVEL]]].push_back(i);
+                vol_group[mat_flag[map_elem[i]]]++;
+                vol_group_nodes[mat_flag[map_elem[i]]].push_back(i);
                 }
 
             int n_vol_group = vol_group.size();
             std::vector <
             const MEDCoupling::DataArrayInt * >gr_vol(n_vol_group);
-            MEDCoupling::DataArrayInt ** g_vol =
-                new MEDCoupling::DataArrayInt *[n_vol_group];
+            MEDCoupling::DataArrayInt ** g_vol = new MEDCoupling::DataArrayInt *[n_vol_group];
 
             int js = 0;
             // defining the vol group data to store
@@ -3707,7 +3742,6 @@ MGGenCase::print_MedToMg(int Level,	// Level
         CellField->setArray(Volcells);
         CellField->setName("MG_cell_id_Lev_" + std::to_string(LEVEL));
         MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(info_name, CellField);
-//         MEDCoupling::WriteField ( "MESH/ciao.med", CellField, true );
 
         // PROC FIELD STORING PROC ID
         MEDCoupling::MEDCouplingFieldDouble * ProcField =
@@ -3722,10 +3756,8 @@ MGGenCase::print_MedToMg(int Level,	// Level
             MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
         FinerLevelIDS->setMesh(VolumeMesh);
         FinerLevelIDS->setArray(FinerConn);
-        FinerLevelIDS->setName("FinerLevelNodeIDS_Lev_" +
-                               std::to_string(LEVEL));
-        MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(info_name,
-                FinerLevelIDS);
+        FinerLevelIDS->setName("FinerLevelNodeIDS_Lev_" + std::to_string(LEVEL));
+        MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(info_name, FinerLevelIDS);
 
         CellField->decrRef();
         ProcField->decrRef();
@@ -3736,11 +3768,14 @@ MGGenCase::print_MedToMg(int Level,	// Level
 
         delete[]Coords;
         delete[]conn;
+        delete[]map_elem;
         coordarr->decrRef();
         VolumeMesh->decrRef();
         BoundaryMesh->decrRef();
         mm->decrRef();
         }
+        
+        delete [] elem_bd_id2;
 #else
     std::cout <<
               "\n \n MGGenCase::Print_med you don't have MED library included in your project\n\n";
@@ -3761,133 +3796,6 @@ MGGenCase::print_MedToMg(int Level,	// Level
     }
 
 
-void
-MGGenCase::GenLevelMed(int Level,
-                       int celle,
-                       int CumulativeElementsOtherLevels,
-                       int *v_inv_el,
-                       int *v_inv_nd,
-                       int **elem_sto,
-                       double *coord,
-                       std::string info_name, const unsigned int LibToMed[]) {
-
-    MEDCoupling::DataArrayDouble * Volcells2 =
-        MEDCoupling::DataArrayDouble::New();
-    Volcells2->alloc(celle, 1);
-
-    MEDCoupling::DataArrayDouble * proc_num2 =
-        MEDCoupling::DataArrayDouble::New();
-    proc_num2->alloc(celle, 1);
-
-    int *NodeConnLev1 = new int[celle * NDOF_FEM];
-    int *NodeConnFinerLev = new int[celle * NDOF_FEM];
-    double *coords2 = new double[celle * NDOF_FEM * _dim];
-
-    for (int l = 0; l < celle; l++) {
-        int reverse_element = l + CumulativeElementsOtherLevels;
-        int level = elem_sto[reverse_element][NDOF_FEM + 1];
-        int proc = elem_sto[reverse_element][NDOF_FEM + 2];
-
-        std::cout << elem_sto[reverse_element][0] << std::endl;
-
-        for (int k = 0; k < NDOF_FEM; k++) {
-            NodeConnLev1[l * NDOF_FEM + k] = l * NDOF_FEM + k;
-            NodeConnFinerLev[l * NDOF_FEM + k] =
-                elem_sto[reverse_element][1 + LibToMed[k]];
-            for (int c = 0; c < _dim; c++) {
-                coords2[(l * NDOF_FEM + k) * _dim + c] =
-                    coord[elem_sto[reverse_element][1 + LibToMed[k]] * _dim + c];
-                }
-            }
-        Volcells2->setIJ(l, 0, v_inv_el[reverse_element]);
-        proc_num2->setIJ(l, 0, (double) proc);
-        }
-
-    MEDCoupling::MEDCouplingUMesh * VolumeMesh2 =
-        MEDCoupling::MEDCouplingUMesh::New("Mesh_Lev_" + std::to_string(Level),
-                                           _dim);
-    VolumeMesh2->allocateCells(celle);
-    for (int i = 0; i < celle; i++) {
-        VolumeMesh2->insertNextCell(MED_EL_TYPE, NDOF_FEM,
-                                    NodeConnLev1 + i * NDOF_FEM);
-        }
-    VolumeMesh2->finishInsertingCells();
-    MEDCoupling::DataArrayDouble * coordarr2 =
-        MEDCoupling::DataArrayDouble::New();
-    coordarr2->alloc(celle * NDOF_FEM, _dim);
-    std::copy(coords2, coords2 + celle * NDOF_FEM * _dim,
-              coordarr2->getPointer());
-    VolumeMesh2->setCoords(coordarr2);
-    std::cout << "               " << VolumeMesh2->getNumberOfNodes() << std::
-              endl;
-
-    int node_number = VolumeMesh2->getCoords()->getNumberOfTuples();
-    bool areNodesMerged;
-    int newNbOfNodes;
-    VolumeMesh2->mergeNodes(1.e-13, areNodesMerged, newNbOfNodes);	// removing double nodes
-    if (areNodesMerged) {
-        std::cout << "Level " << Level <<
-                  ": mesh nodes merged from initial value " << node_number << " to " <<
-                  newNbOfNodes << std::endl;
-        }
-    VolumeMesh2->zipCoords();
-
-    MEDCoupling::DataArrayDouble * FinerConn =
-        MEDCoupling::DataArrayDouble::New();
-    FinerConn->alloc(VolumeMesh2->getNumberOfNodes(), 1);
-    double *MapArray = const_cast < double *>(FinerConn->getPointer());
-
-    for (int cel = 0; cel < celle; cel++) {
-        std::vector < int >CellConn;
-        VolumeMesh2->getNodeIdsOfCell(cel, CellConn);
-        for (int nod = 0; nod < NDOF_FEM; nod++) {
-            MapArray[CellConn[nod]] =
-                v_inv_nd[NodeConnFinerLev[cel * NDOF_FEM + nod]];
-            }
-        }
-
-    MEDCoupling::WriteUMesh(info_name, VolumeMesh2, false);
-
-    // CELL FIELD STORING THE PROC ID FOR EVERY MESH CELL
-    MEDCoupling::MEDCouplingFieldDouble * proc_field2 =
-        MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
-    proc_field2->setMesh(VolumeMesh2);
-    proc_field2->setArray(proc_num2);
-    proc_field2->setName("Proc_Lev_" + std::to_string(Level));
-
-    MEDCoupling::MEDCouplingFieldDouble * FinerLevelIDS =
-        MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-    FinerLevelIDS->setMesh(VolumeMesh2);
-    FinerLevelIDS->setArray(FinerConn);
-    FinerLevelIDS->setName("FinerLevelNodeIDS_Lev_" + std::to_string(Level));
-
-    // CELL FIELD STORING THE MED-TO-MG MESH CELL NUMBERING
-    MEDCoupling::MEDCouplingFieldDouble * cell_field2 =
-        MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
-    cell_field2->setMesh(VolumeMesh2);
-    cell_field2->setArray(Volcells2);
-    cell_field2->setName("MG_cell_id_Lev_" + std::to_string(Level));
-    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(info_name, proc_field2);
-    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(info_name, cell_field2);
-    MEDCoupling::WriteFieldUsingAlreadyWrittenMesh(info_name, FinerLevelIDS);
-//     CumulativeElementsOtherLevels += celle;
-
-    VolumeMesh2->decrRef();
-    cell_field2->decrRef();
-    proc_field2->decrRef();
-    FinerConn->decrRef();
-    delete[]coords2;
-    delete[]NodeConnLev1;
-    delete[]NodeConnFinerLev;
-    return;
-    }
 
 
-
-
-
-
-
-
-
-// kate: indent-mode cstyle; indent-width 4; replace-tabs on; 
+// kate: indent-mode cstyle; indent-width 4; replace-tabs on;

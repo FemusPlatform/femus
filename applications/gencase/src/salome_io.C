@@ -770,14 +770,13 @@ void SalomeIO::read_bc_mat(
   print_Ihdf5(file_id2,"group_names",dimsf,group_names);
   
   //clean
-  delete[] mat_flag; delete[] bc_flag;
-  delete family_id; delete[]group_names;
-   H5Fclose(file_id2);
-  
-  // clean
+  delete[] mat_flag; 
+  delete[] bc_flag;
+  delete[] family_id; 
+  delete[]group_names;
+  H5Fclose(file_id2);
+
   delete []fam_vector; bdgroup_name.clear();
-//   for (int i=0; i<n_elements; i++) std::cout<<i+1<<"  " <<bc_flag[i]<<"\n";
-//   for (int i=0; i<n_nodes; i++)    std::cout<<i+1<<"  "<<mat_flag[i]<<"\n";
 
 
   return;
