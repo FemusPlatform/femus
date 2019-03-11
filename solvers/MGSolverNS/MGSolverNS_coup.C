@@ -88,7 +88,22 @@ void MGSolNS_coup::ContinuityEquation ( double JxW_g2, int el_ndof[] ) {
 
               _KeM ( indp, i + _nNSdim * el_ndof[2] ) +=  dtxJxWp_g * 1.e-40;
               
+              if ( _wall_frac > 1.e-5 ) {
+                    const int    indp      = i+el_ndof[2]*_nNSdim;
+                    const double dtxJxWp_g = ( _bc_el[indp] != 0 ) ? JxW_g2 : 0.;
+
+                    for ( int j = 0; j<el_ndof[1]; j++ ) {// loop over linear nodes - pressure laplacian
+                        double Lap=0.;
+                        for ( int idim=0; idim<  _nNSdim; idim++ ) Lap += _dphi_g[1][j+idim*NDOF_P]*_dphi_g[1][i+idim*NDOF_P];
+                        const double phij_g= _phi_g[1][j];
+                        _KeM ( indp,NDOF_FEM*_nNSdim + j ) += 0.001*dtxJxWp_g* Lap ;
+                    }
+                }
+              
           }// i
+          
+          
+                
       }// ikl=0 discontinuous ikl=1 continuous pressure
 
   return;
@@ -112,10 +127,15 @@ void MGSolNS_coup::MomentumEquation(double JxW_g2, int el_ndof[], int qp)
           for ( int  row_shift = 0; row_shift < _nvars[2]; row_shift++ )    { // LOOP OVER ROWS: i + row_shift*el_ndof2
               int indx     = i + row_shift * el_ndof[2];
               RowSetUp ( i, indx, qp, el_ndof )  ;
-
-
+            
+              
               // zero line for Dirichlet  bc -----------------------------------------------------------
-              if ( _bc_el[indx] < 0 || ( _bc_el[indx] == 0 && ( _bc_vol[i] == 11 || _bc_vol[i] == 31 ) ) ) {
+              if ( 
+                  (
+                   _bc_el[indx] < 0 || ( _bc_el[indx] == 0 && ( _bc_vol[i] == 11 || _bc_vol[i] == 31 ) ) 
+                  )
+                  && _ImmVal                   
+                ) {
                   for ( int  ivarN = row_shift; ivarN < row_shift + _NComp; ivarN++ )     { // Loop over velocity components for equation written in row indx
                       const int ivar = ivarN % _nNSdim;
 
@@ -193,6 +213,11 @@ void MGSolNS_coup::MomentumEquation(double JxW_g2, int el_ndof[], int qp)
                           } // jp pressure linear
                       }
                   } // end loop ivar
+                  else if ( !_ImmVal ) {
+                    _KeM ( indx,indx ) = 1;
+                    _FeM ( indx )     = 1*_u_1ts[i+row_shift*NDOF_FEM];
+                }
+                  
               }
           } // end loop i
     

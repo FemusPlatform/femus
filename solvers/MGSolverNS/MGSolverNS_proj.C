@@ -91,7 +91,11 @@ void MGSolNS_proj::MomentumEquation ( double JxW_g2, int el_ndof[], int qp )
       RowSetUp ( i, indx_eq, qp, el_ndof )  ;
 
       // zero line for Dirichlet  bc -----------------------------------------------------------
-      if ( _bc_el[indx_eq] < 0 || ( _bc_el[indx_eq] == 0 && ( _bc_vol[i] == 11 || _bc_vol[i] == 31 ) ) ) {
+      if (
+          (
+              _bc_el[indx_eq] < 0 || ( _bc_el[indx_eq] == 0 && ( _bc_vol[i] == 11 || _bc_vol[i] == 31 ) )
+          )   && _ImmVal
+    ) {
           for ( int  ivarN = _dir; ivarN < _dir + _NComp; ivarN++ )     { // Loop over velocity components for equation written in row indx
               const int ivar = ivarN % _nNSdim;
               // computation of alpha beta (factor for adding equations) ----------------------------------------------
@@ -177,7 +181,10 @@ void MGSolNS_proj::MomentumEquation ( double JxW_g2, int el_ndof[], int qp )
                   } // end A element matrix quad -quad (end loop on j)---------------------------------------------
               }
           } // end loop ivar
-          
+          else if ( !_ImmVal ) {
+                    _KeM ( i, i ) = 1;
+                    _FeM ( i )    = 1*_u_1ts[i+_dir*NDOF_FEM];
+          }
         
       } // end loop i
 

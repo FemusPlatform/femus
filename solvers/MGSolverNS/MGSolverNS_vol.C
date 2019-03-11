@@ -181,6 +181,12 @@ void MGSolNS::RowSetUp ( int nPhi, int indx_eq, int qp, int el_ndof[] )
 
   _NComp = ( _BoundEquation ) ? _nNSdim : 1;                            // Default: 1 vel comp for equation in row indx -> ivar = row_shift
 
+  _ImmVal = 1;
+  if(_ImmersedBoundary==1)
+     if(_data_eq[2].ub[ ( _FF_idx[IB_COL] ) *NDOF_FEM + nPhi] > 0.9)
+        _ImmVal = 0;
+  
+  
   return;
   }
 

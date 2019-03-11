@@ -1,0 +1,75 @@
+# ===============================================================
+/ #                         TBK SOLVER SETTINGS
+# ===============================================================
+#
+# ---------------------------------------------------------------
+# STEADY STATE SOLUTION
+# If 1 (yes) then steady state equation is solved - without temporal
+# derivative
+#
+  SolveSteady  0
+#
+# ---------------------------------------------------------------
+# NUMERICAL STABILIZATION: 
+# ...............................................................
+# CONSISTENT
+# Supg: standard supg formulation - streamwise upwind
+# 1 (yes) or 0 (no)
+#
+  Supg         1
+# ...............................................................
+# NON CONSISTENT1 (yes) or 0 (no)
+# 0 < UnderRelaxation < 1
+  Upwind                      0
+  ReactionNumberBased         0
+  DynamicUnderRelaxation      0.        
+# ...............................................................
+#
+  MaxNonLinearIterations    0
+#
+# ---------------------------------------------------------------
+# INITIAL CONDITION
+# The available choices are:
+#  FlatProfile    yes/no
+#    yes          Inlet values set over the entire domain
+#    no           Values calculated as function of wall distance and utau
+# 
+  FlatProfile     1
+# ---------------------------------------------------------------  
+# TURBULENCE WITH LES - 1(yes) or 0(no)
+   Les            0
+#  
+# ---------------------------------------------------------------
+# BOUNDARY CONDITIONS
+# The available boundary conditions are: 
+#  wall0         Dirichlet: zero wall value 
+#  wall          Dirichlet: wall value according to near wall behavior
+#  inlet         Dirichlet: inlet value based on turbulence intensity
+#  insulation    Neumann:   zero derivative in boundary normal direction
+#  robinT        Neumann:   derivative value based on near wall behavior
+# 
+#  In order to set the boundary condition follow the example below
+#  NSgroup<Group Number>    <Boundary Condition for kh>,<Boundary Condition for wh>
+#        NSgroup10       <Bound_cond>
+#  ! A condition for each group defined in SimulationConfiguration.in file must be specified !
+#  vertical
+#  NSgroup10          velocity 
+#  NSgroup11          outflow
+#  NSgroup12          wall_turb
+#  NSgroup13          wall_turb
+#  horizontal
+#  NSgroup10         wall_turb
+#  NSgroup11         wall_turb
+#  NSgroup12         pressure_inlet_x
+#  NSgroup13         velocity 
+# for cubetto_30_30
+#  NSgroup20         wall
+#  NSgroup11         outflow
+#  NSgroup13         velocity_in   
+ # for cubetto_30_30
+  NSgroup10      pressure_inlet_z
+  NSgroup11      velocity
+  NSgroup12       wall_turb_split
+#  NSgroup12      wall
+ / ==============================================================
+  

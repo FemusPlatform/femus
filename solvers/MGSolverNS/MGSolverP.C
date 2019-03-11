@@ -148,6 +148,10 @@ void  MGSolP::GenMatRhs (
           _bc_el[j] = _bc_vol[j] / 10;
           }
 
+      double wall_frac = 0;
+       if ( _FF_idx[IB_F] >= 0 ) 
+         wall_frac = _mgmesh._VolFrac[ iel+nel_b];
+          
       for ( int  iside = 0; iside < el_sides; iside++ ) {
           if ( el_neigh[iside] == -1 ) {
               // setup boundary element  ----------------------------------------------------------------
@@ -217,6 +221,8 @@ void  MGSolP::GenMatRhs (
 
                           Lap += _dphi_g[1][j + idim * el_ndof[1]] * _dphi_g[1][i + idim * el_ndof[1]]; // Laplacian
                           }
+//                       if(wall_frac > 1.e-5)
+//                           Lap *=10.;
 
                       _KeM ( i, j ) += dtxJxW_g * Lap;
                       } // ---------------------------------------------
@@ -493,6 +499,12 @@ void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
       pres_2ts = 0.;
       }
 
+      div_1ts = 1.;
+      div_2ts = 0.;
+      div_3ts = 0.;
+      pres_1ts = 1.;
+      pres_2ts = 0.;  
+      
   for ( int idim = 0; idim < _nPdim; idim++ ) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts );
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts );
@@ -504,7 +516,7 @@ void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
 
   for ( int dim = 0; dim < _nPdim; dim++ )
     for ( int node = 0; node < el_ndof[2]; node++ )
-      _u_div[node + dim * el_ndof[2]] =   div_1ts * u_1ts[dim * NDOF_FEM + node]
+      _u_div[node + dim * el_ndof[2]] =     div_1ts * u_1ts[dim * NDOF_FEM + node]
                                           + div_2ts * u_2ts[dim * NDOF_FEM + node]
                                           + div_3ts * u_3ts[dim * NDOF_FEM + node];
 

@@ -84,7 +84,7 @@ protected:
     double _Phi_supg, _f_upwind;
     double _ElemVolume;
     int _Coupled;
-    
+    int _ImmersedBoundary, _ImmVal;
     //! Flag for equation assembly
     /*! This flag sets the equation that needs to be assembled on each element node.
      * The possible values are:<br>
@@ -123,7 +123,7 @@ protected:
     int _pres_order;
     int _NComp;
     int _WallElement;
-    
+    double _wall_frac;
     int _BoundEquation, _NormalEquation;
     double _ProjDir[3][DIMENSION];
 

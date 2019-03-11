@@ -87,6 +87,8 @@ MGSolNS::MGSolNS (
       std::abort();
       }
 
+  _ImmersedBoundary=0;    
+      
   return;
   } //****************************************************************************************************//
 
@@ -141,6 +143,9 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
       const int idx = _data_eq[2].tab_eqs[k];
       _FF_idx[k] = ( idx >= 0 ) ? _data_eq[2].indx_ub[idx] : -1;
       }
+      
+  if(_FF_idx[IB_F]>=0)
+    _ImmersedBoundary = 1;
 
   // element matrix and rhs  (mode 0= matrix only or mode 1=matrix +rhs) --------------------------
   A[Level]->zero();
@@ -218,7 +223,11 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
           }
 
       _WallElement = 0;
-
+      if ( _FF_idx[IB_F] >= 0 ) 
+         _wall_frac = _mgmesh._VolFrac[ iel+nel_b];
+      else
+         _wall_frac = 0.;
+      
       // --------------------------------------------------------------------------
       //  Boundary and boundary bc
       // --------------------------------------------------------------------------
