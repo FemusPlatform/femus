@@ -781,7 +781,6 @@ const MEDCouplingUMesh* EquationSystemsExtendedM::getUMeshCoupling(
     abort();
   }
   const MEDCouplingUMesh *sourceMesh = fct->getSupport();
-  MEDCoupling::WriteUMesh("source.med",sourceMesh,true);
   return sourceMesh->deepCopy();
 }
 

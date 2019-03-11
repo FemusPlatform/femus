@@ -60,7 +60,7 @@ void FEMUS::init_interface (
 ) { // =========================================================================
 
   //  interface   names (vG[j]) ----------------------------------------------------------
-  std::cout << "Interface printed on file:RESU_MED/Interface_mesh.med";
+
   std::vector<std::string> vG ( IDSvec.size() );
   std::cout << " Creating an interface with id " << interface_name << " containing groups ";
 
@@ -122,9 +122,6 @@ void FEMUS::init_interface (
             );
   // interface_name+order_cmp  -> interface <-support+MedToMgMapArray
   init_interface ( interface_name, order_cmp, support, MedToMgMapArray );
-
-  // print
-  if ( get_proc() == 0 )  MEDCoupling::WriteUMesh ( "RESU_MED/Interface_mesh.med", support, true );
 
   std::cout << "Interface " << interface_name << " on group " << vG[0] << "  on_nodes " << on_nodes;
   std::cout << " NUMBER OF NODES " << support->getNumberOfNodes() << std::endl;

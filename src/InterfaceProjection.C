@@ -515,7 +515,7 @@ void InterfaceProjection::FillParameters (
     std::string FileName="S"+__InMesh->getName() +"_T"+__OutMesh->getName() +"_MeshCoupling.med";
 
     if(_proc==0){
-      MEDCoupling::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,true );
+      MEDCoupling::WriteUMesh ( "RESU_MED/"+FileName,__OutMesh,false );
       MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CanonicalPosition );
       MEDCoupling::WriteFieldUsingAlreadyWrittenMesh ( "RESU_MED/"+FileName,CellS );
     }
