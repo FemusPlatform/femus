@@ -92,11 +92,13 @@ void MGUtils::read_par()   // READ PARAMETER FILES AND FILL RELATIVE MAPS ======
 
 // file names ------------------
     std::vector<std::string> maps;
-    maps.resize ( 4 ); // PARAMETER files
+    maps.resize ( 5 ); // PARAMETER files
     maps[0] = get_file ( "BASEPARUTILS" );
     maps[1] = get_file ( "GEOM_PAR" );
     maps[2] = get_file ( "SIM_CONFIG" );
     maps[3] = get_file ( "MAT_PROP" );
+    maps[4] = "Equations.in";
+    
 
     double double_value;
     std::string string_value;
@@ -128,7 +130,7 @@ void MGUtils::read_par()   // READ PARAMETER FILES AND FILL RELATIVE MAPS ======
                     } else if ( i==1 ) {
                         fin >> double_value;
                         set_geom_par ( buf,double_value );
-                    } else if ( i==2 ) {
+                    } else if ( i==2 || i==4 ) {
                         fin >> string_value;
                         set_sim_par ( buf,string_value );
                     } else {
@@ -148,6 +150,36 @@ void MGUtils::read_par()   // READ PARAMETER FILES AND FILL RELATIVE MAPS ======
 #endif
         fin.close();
     }// END CYCLE ON FILES TO READ ----------------------------------------------------------
+    
+    
+    // READING EQUATIONS.in FILE
+        std::ostringstream filename;
+        filename << _data_dir << "Equations.in"; // file name
+        std::ifstream fin;
+        fin.open ( filename.str().c_str() ); // stream file
+        buf="";
+#ifdef PRINT_INFO
+        if ( fin.is_open() ) {
+            std::cout << "Init Reading = " << filename.str() <<  std::endl;
+        }
+#endif
+        if ( fin.is_open() ) { // -------------------------------------------------------------
+            while ( buf != "/" ) {
+                fin >> buf;    // find "/" file start
+            }
+            fin >> buf;
+            while ( buf != "/" ) {
+                if ( buf == "#" ) {
+                    getline ( fin, buf );    // comment line
+                } else {
+                        fin >> string_value;
+                        set_sim_par ( buf,string_value );
+                }
+                fin >> buf;// std::cerr <<buf.c_str() << "\n ";
+            }
+        } // --------------------------------------------------------------------------------------
+    
+    
     maps.clear();
 
     return;
