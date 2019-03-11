@@ -6,17 +6,9 @@
 
 // class local configuration -------
 #include "MGSolverT.h"
-#include "MGSclass_conf.h"
 
 // configuration files -----------
 #include "Printinfo_conf.h"
-
-#ifdef HAVE_MED
-#include "MEDCouplingUMesh.hxx"
-#include "MEDCouplingFieldDouble.hxx"
-#include "MEDLoader.hxx"
-#include "InterfaceFunctionM.h"
-#endif
 
 
 // standard  library
@@ -24,10 +16,7 @@
 
 // local include -------------------
 #include "MGGeomEl.h"
-// #include "MGMesh.h"
-#include "EquationSystemsExtendedM.h"
 #include "MeshExtended.h"
-#include "MGSystem.h"
 #include "MGFE.h"
 #include "MGUtils.h"
 #include "numeric_vectorM.h"
@@ -70,7 +59,6 @@ _kappa0 ( _mgutils._mat_prop["kappa0"] ) { // parameter  conductivity reference
 
     /// A) reading parameters  for field coupling (in _FF_idx[])
     _nTdim=DIMENSION;
-    _euler_impl=1;
     for ( int k_index=0; k_index<30; k_index++ ) {
         _FF_idx[k_index]=-1;
     }
@@ -100,6 +88,8 @@ _kappa0 ( _mgutils._mat_prop["kappa0"] ) { // parameter  conductivity reference
 
     _SolveT=(_mgutils._sim_config["SolveTemperature"].compare("yes") == 0) ? true: false;
 
+    _Axisym=_mgutils._geometry["Axisym"];
+    
     return;
 }
 
@@ -115,8 +105,6 @@ void  MGSolT::GenMatRhs (
 ) {  // ===============================================
 //   double Crank_Nicolson =1.;
     /// a) Set up
-    const int unsteady_flag=_T_parameter._SolveSteady;
-    const int iaxisim = ( int ) ( _mgutils._geometry["Axysim"] );
 
     // geometry ---------------------------------------------------------------------------------------
     const int  offset = _mgmesh._NoNodes[_NoLevels-1];   // mesh nodes
@@ -128,7 +116,6 @@ void  MGSolT::GenMatRhs (
     // gauss integration  -----------------------------------------------------------------------------
     double x_m[DIMENSION];
     double normal[DIMENSION];
-    double     u_old[NDOF_FEM];
     const int el_ngauss = _fe[2]->_NoGauss1[ _nTdim-1];                   // elem gauss points
     const int elb_ngauss = _fe[2]->_NoGauss1[ _nTdim-2];             // bd elem gauss points
 
@@ -165,10 +152,9 @@ void  MGSolT::GenMatRhs (
     if ( mode ==1 ) {
         b[Level]->zero();    // global matrix+rhs
     }
-    DenseMatrixM KeM;
-    DenseVectorM FeM;                // local  matrix+rhs
-    KeM.resize ( el_mat_nrows,el_mat_ncols );
-    FeM.resize ( el_mat_nrows );     // resize  local  matrix+rhs
+
+    _KeM.resize ( el_mat_nrows,el_mat_ncols );
+    _FeM.resize ( el_mat_nrows );     // resize  local  matrix+rhs
 
     int ndof_lev=0;
     for ( int pr=0; pr <_mgmesh._iproc; pr++ ) {
@@ -183,8 +169,8 @@ void  MGSolT::GenMatRhs (
     for ( int iel=0; iel < ( nel_e - nel_b ); iel++ ) {
 
         // set to zero matrix and rhs and center
-        KeM.zero();
-        FeM.zero();
+        _KeM.zero();
+        _FeM.zero();
 
         /// 1. geometry and element  fields ------------------------------------
         // Element Connectivity (el_conn)  and coordinates (_xx_qnds)
@@ -200,6 +186,9 @@ void  MGSolT::GenMatRhs (
                                                        el_ndof[deg],el_conn,offset,_data_eq[deg].indx_ub[eq],_data_eq[deg].ub );
             }
         }
+        
+        _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[T_F]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, 0, _T_1ts );       // time step -1
+        _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[T_F]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, 0, _T_2ts );   // time step -2
 
         // ----------------------------------------------------------------------------------
         /// 2. Boundary integration  (bc)
@@ -226,23 +215,25 @@ void  MGSolT::GenMatRhs (
                 }
                 int sign_normal=1;
                 _fe[2]->normal_g ( _xxb_qnds,x_m,normal,sign_normal );
-                bc_set ( KeM,FeM,sur_toply,el_ndof[2],elb_ndof[2],elb_ngauss,sign_normal, iaxisim );
+                bc_set ( sur_toply,el_ndof[2],elb_ndof[2],elb_ngauss,sign_normal );
             }
         }
         // ----------------------------------------------------------------------------------
         //   3. Volume integration
         // ----------------------------------------------------------------------------------
-        //  external cell properties -------------------------------------
-        if ( _FF_idx[K_F]>=0 ) _y_dist=_mgmesh._dist[ iel+nel_b];
-        // volume integral
-        
-//         _mgutils._TurbParameters->GetLevelElemNodeWallDist(iel,Level,WallDist);
-//         _mgutils._TurbParameters->GetLevelElemAlphaTurb(iel,Level,AlphaTurb);
-        vol_integral ( KeM,FeM,el_ndof2,el_ngauss,mode, WallDist, AlphaTurb );
 
-        A[Level]->add_matrix ( KeM,el_dof_indices );               // global matrix
+        if ( _FF_idx[K_F]>=0 )  
+            _y_dist=_mgmesh._dist[ iel+nel_b];
+        if ( _FF_idx[IB_F]>=0 ) 
+            _wall_frac=_mgmesh._VolFrac[ iel+nel_b];
+        else
+            _wall_frac=0.;
+
+        vol_integral ( el_ndof2,el_ngauss,mode );
+
+        A[Level]->add_matrix ( _KeM,el_dof_indices );               // global matrix
         if ( mode == 1 ) {
-            b[Level]->add_vector ( FeM,el_dof_indices );    // global rhs
+            b[Level]->add_vector ( _FeM,el_dof_indices );    // global rhs
         }
     } // end of element loop
 
@@ -290,9 +281,8 @@ void MGSolT::MGTimeStep (
 #endif
 
         /// C) Solution of the linear MGsystem (MGSolT::MGSolve).
-        if ( _mgutils.get_name() != 1 ) {
-            MGSolve ( 1.e-6,40 );
-        }
+        MGSolve ( 1.e-6,40 );
+
 #if PRINT_TIME==1
         end_time=std::clock();
         std::cout << " Assembly+solution time -----> ="<< double ( end_time- start_time ) / CLOCKS_PER_SEC
@@ -300,6 +290,8 @@ void MGSolT::MGTimeStep (
 #endif
 
         /// D) Update of the old solution at the top Level  (MGSolT::OldSol_update),
+        
+        x_old[_NoLevels-1]->localize ( *x_oold[_NoLevels-1] );
         x[_NoLevels-1]->localize ( *x_old[_NoLevels-1] );
     }
     return;

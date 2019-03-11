@@ -17,26 +17,19 @@
 
 // ===============================================================================================
 void MGSolT::vol_integral (
-    DenseMatrixM &KeM,
-    DenseVectorM &FeM,
     const int el_ndof2,
     const int el_ngauss,
-    const int mode,
-    double WallDist[],
-    double AlphaTurb[]
+    const int mode
 ) { // ==============================================================================================
 
     double vel_g[DIMENSION];
-    double T_der[DIMENSION],T_secder[DIMENSION*DIMENSION];
     double xyz_g[DIMENSION];
+    double T_1ts_g[1], T_2ts_g[1];
     double rhocp=1.;
-    double WallDist_OnG[1];
-    double AlphaTurb_OnG[1], AlphaTurb_gdx[DIMENSION];
-    WallDist_OnG[0] = 0.;
-// --------------------------------------------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------------------------------------------
     /// c) gaussian integration loop (n_gauss)
     // ------------------------------------------------------------------------------------------------------------------
-    double area = 0.;
+
     for ( int qp=0; qp< el_ngauss; qp++ ) {
         // shape functions at gaussian points -----------------------------------
         double det2      = _fe[2]->Jac ( qp,_xx_qnds,_InvJac2 );  // Jacobian
@@ -47,25 +40,27 @@ void MGSolT::vol_integral (
 
         //  fields --------------------------------------------------------------------------------------------------------
         interp_el_sol ( _xx_qnds,0,_nTdim,_phi_g[2],el_ndof2,xyz_g );
+        interp_el_sol ( _T_1ts,0,1,_phi_g[2],el_ndof2,T_1ts_g );
+        interp_el_sol ( _T_2ts,0,1,_phi_g[2],el_ndof2,T_2ts_g );
         interp_el_sol ( _data_eq[2].ub,0,_data_eq[2].indx_ub[_data_eq[2].n_eqs],_phi_g[2],el_ndof2,_ub_g[2] ); // quadratic
-        //  derivatives
-        interp_el_gdx ( _data_eq[2].ub,_FF_idx[T_F],1,_dphi_g[2],el_ndof2,T_der );
-        interp_el_gddx ( _data_eq[2].ub,_FF_idx[T_F],1,_ddphi_g[2],el_ndof2,T_secder );
-	interp_el_gddx ( _data_eq[2].ub,_FF_idx[CO_F]+1,1,_ddphi_g[2],el_ndof2,AlphaTurb_gdx );
 
-	// axisymmetric (index -> 0)
-        if ( ( int ) ( _mgutils._geometry["Axysim"] ) ==1 )  JxW_g2  *=xyz_g[0];
-        double alpha_eff = _IPrdl*_IRe;
+        if ( _Axisym ==1 )  
+            JxW_g2  *=xyz_g[0];
+        
+        _alpha_turb = _IPrdl*_IRe;
+        
         // Velocity field -> [NS_F] -> (quad, _indx_eqs[NS_F]) ----------------------------------------->
         for ( int idim=0; idim<  _nTdim; idim++ ) vel_g[idim] = 0.;
         if ( _FF_idx[NS_F]>-1 )
             for ( int idim=0; idim<  _nTdim; idim++ )
                 vel_g[idim] =_ub_g[2][_FF_idx[NS_F]+idim];    // velocity field
+                
+        if ( _FF_idx[ALPHA_T]>-1 )
+            _alpha_turb = _ub_g[2][_FF_idx[ALPHA_T]]*_IRe;
+            
         rhocp =1.;
-        double alpha_turb=0.;
 
-        area += JxW_g2;
-        double f_upwind = CalcFUpwind ( vel_g, _dphi_g[2], alpha_eff, _nTdim, el_ndof2 );
+        double f_upwind = CalcFUpwind ( vel_g, _dphi_g[2], _alpha_turb, _nTdim, el_ndof2 );
 	
         /// d) Local (element) assemblying energy equation
         // =====================================================================================================================
@@ -73,13 +68,7 @@ void MGSolT::vol_integral (
             const double phii_g=_phi_g[2][i];
             double dtxJxW_g=JxW_g2;           // area with bc and weight
             if ( _bc_el[i]==1 ) {
-                double Phi_supg=0.,Lap_expl=0.,Lap_supg=0.,Adv_expl=0.;  // supg, Lap explicit , Lap explicit supg
-                for ( int idim=0; idim< _nTdim; idim++ ) {
-                    const double  dphiidxg=_dphi_g[2][i+idim*el_ndof2];
-                    Adv_expl += vel_g[idim]*T_der[idim];
-                    Lap_supg += alpha_eff*T_secder[idim*_nTdim+idim];       // explicit Laplacian supg
-                    Lap_expl += alpha_eff*T_der[idim]* dphiidxg;            // explicit Laplacian
-                }
+                double Phi_supg=0.;
 
                 if ( _T_parameter._Supg==1 && _bc_bd[i]!=0 )
                     for ( int idim=0; idim< _nTdim; idim++ )
@@ -88,12 +77,12 @@ void MGSolT::vol_integral (
                 // Rhs Assemblying  ---------------------------------------------------------------------------------------------------
                 if ( mode == 1 ) { // rhs
                     double TimeDerivative = 0.;
-                    if ( _T_parameter._SolveSteady == 0 ) TimeDerivative = dtxJxW_g*rhocp*_ub_g[2][_FF_idx[T_F]]* ( phii_g+Phi_supg ) /_dt ;    // time
+                    if ( _T_parameter._SolveSteady == 0 ) 
+                        TimeDerivative = dtxJxW_g*rhocp*(2.*T_1ts_g[0] - 0.5*T_2ts_g[0])* ( phii_g+Phi_supg ) /_dt ;    // time
                     double SourceTerms = dtxJxW_g* ( phii_g+Phi_supg ) * (
-                        0.
-//                                      +_qheat* ( phii_g+Phi_supg )                          // source term
+                                     +    _wall_frac*_qheat                        // source term
                                          );
-                    FeM ( i ) += TimeDerivative/* + SourceTerms*/;
+                    _FeM ( i ) += TimeDerivative + SourceTerms;
                 }
 
                 // Matrix Assemblying ------------------------------------------------------------------------------------------------
@@ -104,15 +93,17 @@ void MGSolT::vol_integral (
                         const double  dphiidxg=_dphi_g[2][i+idim*el_ndof2];
                         const double  dphijdxg=_dphi_g[2][j+idim*el_ndof2];
                         Adv += vel_g[idim]*dphijdxg;                                                                // advection
-                        Lap += alpha_eff*dphijdxg*dphiidxg;                                                        // diffusion
+                        Lap += _alpha_turb*dphijdxg*dphiidxg;                                                        // diffusion
 //                         Lap += _T_parameter._Upwind*f_upwind*vel_g[idim]*vel_g[idim]*dphijdxg*dphiidxg;             // normal upwind
-                        Lap_supgi += alpha_eff*_ddphi_g[2][j*_nTdim*_nTdim+idim*_nTdim+idim];
+                        Lap_supgi += _alpha_turb*_ddphi_g[2][j*_nTdim*_nTdim+idim*_nTdim+idim];
                     }
-                    if ( _T_parameter._SolveSteady == 0 ) KeM ( i,j ) += dtxJxW_g*rhocp*phij_g* ( phii_g +Phi_supg ) /_dt;                
-                    KeM ( i,j ) +=dtxJxW_g* ( // energy-equation matrix
-                                      + rhocp*Adv* ( phii_g+Phi_supg )  //advection term
-                                      + Lap                             //diffusion term
-                                      - Lap_supgi * Phi_supg              //diff supg term
+                    if ( _T_parameter._SolveSteady == 0 ) 
+                        _KeM ( i,j ) += dtxJxW_g*rhocp*phij_g* 1.5* ( phii_g +Phi_supg ) /_dt;     
+                    
+                    _KeM ( i,j ) += dtxJxW_g* ( // energy-equation matrix
+                                      + rhocp*Adv* ( phii_g+Phi_supg )     //advection term
+                                      + Lap                                //diffusion term
+                                      - Lap_supgi * Phi_supg               //diff supg term
                                   );
                 }
             }

@@ -9,16 +9,11 @@
 // config files ------------------
 #include "UserT.h"
 #include "MGFE_conf.h"
-// class files ---------------------
-#include "MGSclass_conf.h"
-// Local Includes -----------------
 #include "MGSolverDA.h"
 
 
 // Forward declarations ----------
 class MGEquationsSystem;
-
-
 
 
 // =================================================
@@ -36,7 +31,6 @@ private:
     int   _nTdim;  //<dimension
     double       _dt;            ///< =_mgutils.get_par("dt");
     int _FF_idx[30];    //< field equation flag
-    double _euler_impl;
     // parameters--------------------------------------------------------------------------------------------
     // constant reference parameters (From paramater.in file _mgphys.get_par("Uref")) -----------------------
     const double _uref; /**< "Uref" */ const double _lref;/**< "lref" */ const double _Tref;/**< "Tref" */
@@ -51,10 +45,9 @@ private:
 
     // turbulence
     double _alpha_turb;  /**< turb conducibility*/ double _IPrdl_turb; /**< turb Prandl number*/
-    double _kappa_g[2];  /**< reference kappa*/    double _kappaT_g[2];    /**< reference omega */
     double _y_dist;     ///< distance from the wall
-    double _sP;         ///< turbulent tensor modulus
-    double _nut_ratio;  ///< effective turbulent viscosity
+
+    double _T_1ts[NDOF_FEM], _T_2ts[NDOF_FEM];
 
     // mesh -------------------------------------------------------------------------------------------------
     const int    _offset;  ///< = _mgmesh._NoNodes[_NoLevels-1]= mesh nodes
@@ -66,13 +59,14 @@ private:
     int   _bc_el[NDOF_FEM];  /**<  b.cond in matrix assemblying */
     // ------------------ integration -----------------------
     //  fields at gaussian points
-    double  _ub_g[3][30];/**< external field  (0-1-2 degree)*/ double _xxg[DIMENSION];/**< gauss pts*/
+    double _ub_g[3][30];/**< external field  (0-1-2 degree)*/ double _xxg[DIMENSION];/**< gauss pts*/
     double _InvJac2[DIMENSION *DIMENSION];
-    double  _ub_dxg[2*DIMENSION];     ///< external field derivative  (0-1-2 degree)
+    double _ub_dxg[2*DIMENSION];     ///< external field derivative  (0-1-2 degree)
    
     double _Wall_dist;
     bool _SolveT = true;
-
+    double _wall_frac;
+    int _Axisym;
 public:
     // ==========================================================================
     // =========         Constructor - Destructor  ==============================
@@ -133,23 +127,17 @@ public:
     /// It is called by MGSolT::GenMatRhs in MGSolverT.C
     /// This function sets  the  functional defined (user write} 
     void bc_set (
-        DenseMatrixM &KeM /**< Local matrix  */,DenseVectorM &FeM/**< Local rhs */,
         int sur_toply[] /**< Local matrix  */,
         int el_ndof2 /**< el dofs*/,int elb_ndof2 /**< el bd dofs*/,int elb_ngauss /**< #pt gauss  */,
-        int sign_normal /**< old velocity field  */,
-        const int axysim
+        int sign_normal /**< old velocity field  */
     );
     // ==========================================================================
     /// This function assembles the volume integral to obtain the algebraic sytem.
     /// It is called by MGSolT::GenMatRhs in MGSolverT.C
     void vol_integral (
-        DenseMatrixM &KeM/**< Local matrix  */, 
-	DenseVectorM &FeM/**< Local rhs */,
         const int el_ndof2/**< el dofs*/,
 	const int el_ngauss/**< #pt gauss  */,
-        const int mode,
-	double WallDist[],
-	double AlphaTurb[]
+        const int mode
     );
     // ==========================================================================
     /// This function computes the field values of all fields in the data structure.
