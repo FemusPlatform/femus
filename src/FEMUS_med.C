@@ -78,9 +78,6 @@ void FEMUS::init_interface (
   // interface mesh file (FieldContainingMap) + map MedToMg (MedToMgMapArray)
   MEDCoupling::MCAuto<MEDCoupling::MEDCouplingField> tmp;
 
-
-
-
   int FinerLevel = _mg_utils->_geometry["nolevels"] - 1;
 
   if ( on_nodes ) {
@@ -700,9 +697,18 @@ void FEMUS::GetInfo (
 
 
 void FEMUS::SetPieceFieldOnYdist (
-  MEDCoupling::MEDCouplingFieldDouble * Field,
-  MEDCoupling::MEDCouplingFieldDouble * CellMap
+  MEDCoupling::MEDCouplingFieldDouble * Field
 ) {
+  
+
+  MEDCoupling::MCAuto<MEDCoupling::MEDCouplingField> tmp = MEDCoupling::ReadFieldCell (
+        /*MEDCoupling::ON_CELLS,*/ "MESH/" + _mg_utils->_interface_mesh,
+        "Mesh_Lev_" + std::to_string ( _mg_mesh->_NoLevels-1 ), 0, "MG_cell_id_Lev_" + std::to_string ( _mg_mesh->_NoLevels-1 ), -1, -1 );
+  
+  MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble>
+  CellMap ( MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingField, MEDCoupling::MEDCouplingFieldDouble> ( tmp ) );
+  
+  
   double * FieldVal = const_cast<double *> ( Field->getArray()->getPointer() );
   double * CellArray = const_cast<double *> ( CellMap->getArray()->getPointer() );
 
@@ -736,7 +742,9 @@ void FEMUS::SetPieceFieldOnYdist (
           }
       }
 
-
+  tmp->decrRef();
+  CellMap->decrRef();  
+      
   return;
   }
 

@@ -119,14 +119,9 @@ else
 
   mgutils[0]->set_IB_info ( &IBmover );
 
-  MEDCoupling::MEDCouplingFieldDouble * FieldContainingMap;
-  FieldContainingMap = MEDCoupling::ReadField ( MEDCoupling::ON_CELLS, "MESH/" + mgutils[0]->_interface_mesh,
-                       "Mesh_Lev_" + std::to_string ( Levels-1 ), 0, "MG_cell_id_Lev_" + std::to_string ( Levels-1 ), -1, -1 )->deepCopy();
-
   PW_VolumeFraction = IBmover.GetFluidCellColor();
-  P.SetPieceFieldOnYdist ( PW_VolumeFraction, FieldContainingMap );
+  P.SetPieceFieldOnYdist ( PW_VolumeFraction );
   P.setMeshName ( mgutils[0]->_interface_mesh );
-
 
   // INITIALIZATION OF EQUATIONS TO SOLVE -----------------------------------
 
@@ -139,7 +134,6 @@ else
       }
 
   PW_VolumeFraction->decrRef();    
-  FieldContainingMap->decrRef(); 
   NodeVolumeFraction->decrRef(); 
   PalaMesh->decrRef(); 
   FemusMesh->decrRef(); 

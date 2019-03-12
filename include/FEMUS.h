@@ -475,8 +475,7 @@ MEDCoupling::MEDCouplingFieldDouble *getValuesOnInterface_from_cell(   // field 
     );
     // ================================================================================================
     void SetPieceFieldOnYdist(
-      MEDCoupling::MEDCouplingFieldDouble * Field, 
-      MEDCoupling::MEDCouplingFieldDouble * CellMap
+      MEDCoupling::MEDCouplingFieldDouble * Field
     );
     
 //     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> ReadField(

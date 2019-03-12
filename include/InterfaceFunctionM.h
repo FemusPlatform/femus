@@ -23,7 +23,7 @@ class InterfaceFunctionM {
 
 protected:     
   // data interface function ==================================================
-  const MeshExtended                 * _mesh_mg;     ///< MGMesh
+  const MeshExtended                  * _mesh_mg;     ///< MGMesh
   const MEDCoupling::MEDCouplingUMesh * _support_med; ///< MEDCoupling mesh
   const MEDCoupling::MEDCouplingUMesh * _support_med_orig; ///< MEDCoupling mesh
   MEDCoupling::MEDCouplingFieldDouble *_field;        ///< field
