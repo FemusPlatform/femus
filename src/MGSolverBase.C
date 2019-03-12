@@ -803,6 +803,45 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
     return f_upwind;
 }
 
+// ====================================================================
+/// This function gets element dof indices using local-to-global map
+// ====================================================================
+void MGSolBase::get_el_dof_indices (
+    const int Level,       ///Level                                (in)
+    const int iel,         ///ELement number                       (in)
+    const int el_conn[],   ///ELement connectivity                 (in)
+    const int el_dof[],    ///Quadratic[2] Linear[1] Const[0] dofs (in)
+    const int offset,      ///Offset                               (in)
+    std::map<int,std::vector<int>> &el_dof_indices ///Global dof of iel (out)
+) const
+{
+    for ( int id=0; id<NDOF_FEM; id++ )  {
+        // quadratic -------------------------------------------------
+        if ( id <el_dof[2] )  for ( int  ivar=0; ivar<_nvars[2]; ivar++ ) { //ivarq is like idim
+                const int indx_loc_ql = id +ivar*el_dof[2];
+                const int indx_glob= el_conn[id]+ivar*offset;
+
+                el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
+            } // end quadratic ------------------------------------------------
+
+//     // linear -----------------------------
+        if ( id <el_dof[1] )    for ( int ivar=0; ivar<_nvars[1]; ivar++ ) { //ivarq is like idim
+                const int indx_loc_ql = id +ivar*el_dof[1]+_nvars[2]*el_dof[2];
+                const int indx_glob= el_conn[id]+ ( ivar+_nvars[2] ) *offset;
+
+                el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
+            } // end quadratic ------------------------------------------------
+
+        //     // piecewise -----------------------------
+        if ( id <el_dof[0] )    for ( int ivar=0; ivar<_nvars[0]; ivar++ ) { //ivarq is like idim
+                const int indx_loc_ql = id +ivar*el_dof[0]+_nvars[2]*el_dof[2]+_nvars[1]*el_dof[1];
+                const int indx_glob= id+iel*el_dof[0]+ ( ivar+_nvars[2]+_nvars[1] ) *offset;
+
+                el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
+            } // end piecewise ------------------------------------------------
+    }
+    return;
+}
 
 // ========================================================================
 #ifdef VANKA
@@ -813,6 +852,7 @@ double MGSolBase::CalcFUpwind (double VelOnGauss[], double PhiDer[], double Diff
 #include "dense_matrixM.h"                          
 #include "petsc_vectorM.h"
 #include "petsc_matrixM.h"
+#include "MeshExtended.h"
 //
 // ====================================================================
 /// This function does one multigrid step
@@ -836,10 +876,10 @@ double MGSolBase::MGStep_Vanka(
     int Level,            // Level
     double Eps1,          // Tolerance
     int MaxIter,          // n iterations
-    const int Gamma,     // Control V W cycle
-    const int Nc_pre,    // n pre-smoothing cycles
-    const int Nc_coarse, // n coarse cycles
-    const int Nc_post    // n post-smoothing cycles
+    const int Gamma,      // Control V W cycle
+    const int Nc_pre,     // n pre-smoothing cycles
+    const int Nc_coarse,  // n coarse cycles
+    const int Nc_post     // n post-smoothing cycles
 ) {
 // ====================================================================
     std::pair<int,double> rest(0,0.);
@@ -921,51 +961,57 @@ double MGSolBase::MGStep_Vanka(
 }
 
 // ========================================================
+/// This function solves a Vanka step  Ax=b
 
-void MGSolBase::Vanka_solve(
-    int Level,
-    SparseMatrixM&  matrix_in,
-    NumericVectorM& solution_in,
-    NumericVectorM& rhs_in,
-    const double tol,
-    const  int m_its
+void MGSolBase::Vanka_solve(       
+    int Level,                      /// Level
+    SparseMatrixM&  matrix_in,      /// Matrix A
+    NumericVectorM& solution_in,    /// Previous solution x
+    NumericVectorM& rhs_in,         /// Rhs b
+    const double tol,               /// Tolerance
+    const  int m_its                /// n smoothing cycles
 ) {
     //Get el_dof to know the linear system size
     int el_dof[3];
     el_dof[0]= ( ( _nvars[0] >0 ) ? NDOF_K :0 );    //Lagrange piecewise constant variables
     el_dof[1]= ( ( _nvars[1] >0 ) ? NDOF_P:0 );     //Lagrange piecewise linear variables
     el_dof[2]= ( ( _nvars[2] >0 ) ? NDOF_FEM:0 );   //Lagrange piecewise linear variables
-    const int system_size=el_dof[2]*_nvars[2]+el_dof[1]*_nvars[1]+el_dof[0]*_nvars[0];    //ndofs of linear system
+    const int system_size=el_dof[2]*_nvars[2]+el_dof[1]*_nvars[1]+el_dof[0]*_nvars[0];    //ndofs elem
     std::map<int,std::vector<int>> el_dof_indices;               // element dof vector
+    std::map<int,std::vector<int>> subdom_el_map;                // subdom map vector
 
-    //Matrix, solution and rhs init
+    const int  nel_e = _mgmesh._off_el[0][Level+_NoLevels*_iproc+1];
+    const int  nel_b = _mgmesh._off_el[0][Level+_NoLevels*_iproc];
+
+    //Now we use the mat group to create the Vanka blocks
+    MeshExtended  *ext_mesh=dynamic_cast<MeshExtended *> ( &_mgmesh );
+    for ( int iel=0; iel < ( nel_e - nel_b ); iel++ ) {
+        int mat=ext_mesh->_mat_id[ iel+nel_b];
+        if (mat%4==1) {subdom_el_map[0].push_back(iel);  }
+        if (mat%4==2) {subdom_el_map[0].push_back(iel);  subdom_el_map[1].push_back(iel);}
+        if (mat%4==3) {subdom_el_map[1].push_back(iel);  subdom_el_map[2].push_back(iel);}
+        if (mat%4==0) {subdom_el_map[2].push_back(iel);  }
+    }
+    int size;    //linear system size
     DenseMatrixM Mat;
     DenseVectorM sol,loc_rhs;
-    Mat.resize(system_size,system_size);
-    sol.resize(system_size);
-    loc_rhs.resize(system_size);
-    
+
     //Petsc variables init
     PetscErrorCode ierr;
-    PetscScalar matr[system_size*system_size];
     PetscInt ncols;
     const PetscInt *cols;
     const PetscScalar *vals;
-    PetscInt idx[system_size];
-    
+
     // Make sure the data passed in are really of Petsc types
-    PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
-    PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*>(&solution_in);
-    PetscVectorM* rhs      = libmeshM_cast_ptr<PetscVectorM*>(&rhs_in);
+    PetscMatrixM* matrix   = libmeshM_cast_ptr<PetscMatrixM*> ( &matrix_in );
+    PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*> ( &solution_in );
+    PetscVectorM* rhs      = libmeshM_cast_ptr<PetscVectorM*> ( &rhs_in );
 
     // Close the matrices and vectors in case this wasn't already done.
-    matrix->close();    solution->close();    rhs->close();
+    matrix->close();
+    solution->close();
+    rhs->close();
 
-
-    int ndof_lev=0;   // for multilevel multi proc point ordering ------------------------------------------
-    for ( int pr=0; pr <_mgmesh._iproc; pr++ ) {
-        ndof_lev +=_mgmesh._off_el[0][pr*_NoLevels+Level+1]-_mgmesh._off_el[0][pr*_NoLevels+Level];
-    }
 
     /// a) Set up
     // geometry -----------------------------------------------------------------------------------
@@ -979,83 +1025,79 @@ void MGSolBase::Vanka_solve(
     vector<double> b_loc[offset];
     rhs->localize(*b_loc);
 
-    const int  nel_e = _mgmesh._off_el[0][Level+_NoLevels*_iproc+1];
-    const int  nel_b = _mgmesh._off_el[0][Level+_NoLevels*_iproc];
-
-    //====== Get el_dof_indices map for all elements===============================
+    //====== Get el_dof_indices map for all elements at this level===============================
     for (int iel=0; iel < (nel_e - nel_b); iel++) {
         el_dof_indices[iel].resize(system_size);
     }
 
-    for (int iel=0; iel < (nel_e - nel_b); iel++) {
-        _mgmesh.get_el_nod_conn(0,Level,iel,el_conn,xx_qnds);  // get connectivity and coord
-        for ( int id=0; id<NDOF_FEM; id++ )  {
-            // quadratic -------------------------------------------------
-            if ( id <el_dof[2] )  for ( int  ivar=0; ivar<_nvars[2]; ivar++ ) { //ivarq is like idim
-                    const int indx_loc_ql = id +ivar*el_dof[2];
-                    const int indx_glob= el_conn[id]+ivar*total_offset;
-
-                    el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                } // end quadratic ------------------------------------------------
-
-//     // linear -----------------------------
-            if ( id <el_dof[1] )    for ( int ivar=0; ivar<_nvars[1]; ivar++ ) { //ivarq is like idim
-                    const int indx_loc_ql = id +ivar*el_dof[1]+_nvars[2]*el_dof[2];
-                    const int indx_glob= el_conn[id]+ ( ivar+_nvars[2] ) *total_offset;
-
-                    el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                } // end quadratic ------------------------------------------------
-
-            //     // piecewise -----------------------------
-            if ( id <el_dof[0] )    for ( int ivar=0; ivar<_nvars[0]; ivar++ ) { //ivarq is like idim
-                    const int indx_loc_ql = id +ivar*el_dof[0]+_nvars[2]*el_dof[2]+_nvars[1]*el_dof[1];
-                    const int indx_glob= id+iel*el_dof[0]+ ( ivar+_nvars[2]+_nvars[1] ) *total_offset;
-
-                    el_dof_indices[iel][indx_loc_ql]= _node_dof[Level][indx_glob];     //from mesh to dof
-                } // end piecewise ------------------------------------------------
-        }
+    for ( int iel=0; iel < ( nel_e - nel_b ); iel++ ) {
+        _mgmesh.get_el_nod_conn ( 0,Level,iel,el_conn,xx_qnds ); // get connectivity and coord
+        get_el_dof_indices ( Level,iel,el_conn,el_dof, total_offset,el_dof_indices );
     }
-    //======End Get el_dof_indices map for all elements===============================
-    int nsm=m_its;
-    for (int ismooth=0; ismooth<= nsm; ismooth++) {
-        //element loop
-        for (int iel_order=0; iel_order < (nel_e - nel_b); iel_order++) {
-            int iel=iel_order; 
-            for (int i=0; i<system_size; i++) {
-                idx[i]=el_dof_indices[iel][i];
-            }
-            ierr=MatGetValues(matrix->mat(),system_size, idx,system_size, idx,matr);
 
-            for (int inode=0; inode <system_size; inode++) {  //loop over ndof
+    //======End Get el_dof_indices map for all elements at this level===============================
+
+    int nsm=m_its;
+    for ( int ismooth=0; ismooth<= nsm; ismooth++ ) {  //smooth loop
+        for ( int n_subdom=0; n_subdom < subdom_el_map.size(); n_subdom++ ) { //loop over subdomains
+            std::vector<int> subdom_indx;  //subdom restricted indx with no repeated dof
+            subdom_indx.resize ( system_size*subdom_el_map[n_subdom].size() );  //max number
+            for ( int loc_el=0; loc_el<subdom_el_map[n_subdom].size(); loc_el++ ) {  //el in subdom
+//               std::cout<<"subdom "<<n_subdom<<" iel "<<subdom_el_map[n_subdom][loc_el]<<std::endl;
+                for ( int i=0; i<system_size; i++ ) {
+                    subdom_indx[i+loc_el*system_size]=el_dof_indices[subdom_el_map[n_subdom][loc_el]][i];
+                }
+            }
+            std::sort ( subdom_indx.begin(), subdom_indx.end() );       //removing duplicates
+            auto last = std::unique ( subdom_indx.begin(), subdom_indx.end() );
+            subdom_indx.erase ( last, subdom_indx.end() );
+            size=subdom_indx.size();
+            PetscScalar matr[size*size];  //Resize with actual linear system size
+            PetscInt idx[size];
+            Mat.resize ( size,size );
+            sol.resize ( size );
+            loc_rhs.resize ( size );
+            for ( int i=0; i<size; i++ ) {
+                idx[i]=subdom_indx[i];
+            }
+
+            ierr=MatGetValues ( matrix->mat(),size, idx,size, idx,matr );  //extract values from global matrix
+
+            for ( int inode=0; inode <size; inode++ ) { //loop over ndof
 //         std::cout << el_conn[inode] << " " ;
                 ierr=MatGetRow(matrix->mat(),idx[inode],&ncols,&cols,&vals);
 
-                loc_rhs(inode)=(*b_loc)[idx[inode]];  //RHS from assembly
-                for (int i=0; i<system_size; i++)
-                    loc_rhs(inode)+=matr[i+system_size*inode]*(*x_loc)[idx[i]]; //sum diagonal values
-                for (int i=0; i <ncols; i++)
-                    loc_rhs(inode) -=vals[i]*(*x_loc)[cols[i]];   //subtract all row values
+                loc_rhs ( inode ) = ( *b_loc ) [idx[inode]]; //RHS from assembly
+                for ( int i=0; i<size; i++ ) {
+                    loc_rhs ( inode )+=matr[i+size*inode]* ( *x_loc ) [idx[i]];    //sum diagonal values
+                }
+                for ( int i=0; i <ncols; i++ ) {
+                    loc_rhs ( inode ) -=vals[i]* ( *x_loc ) [cols[i]];    //subtract all row values
+                }
 
                 ierr=MatRestoreRow(matrix->mat(),idx[inode],&ncols,&cols,&vals);
 
             }//end inode
 
             Mat.zero();
-            for (int j=0;j<system_size;j++)
-              for (int i=0;i<system_size;i++)
-                Mat(j,i)=matr[i+j*system_size];
-              
-            Mat.lu_solve(loc_rhs,sol);  
+            for ( int j=0; j<size; j++ )
+                for ( int i=0; i<size; i++ ) {
+                    Mat ( j,i ) =matr[i+j*size];
+                }
 
-            for (int i=0; i<system_size; i++)
-                (*x_loc)[idx[i]]=sol(i)/*res[i]*/;
+            Mat.lu_solve(loc_rhs,sol);  //Solve Mat*sol=loc_rhs with libmesh lu decomposition
 
-            if(ismooth == nsm) {
-                for (int i=0; i<system_size; i++)
-                    (*x[Level]).set(idx[i],sol(i)/*res[i]*/);
+            for ( int i=0; i<size; i++ ) {
+                (*x_loc) [idx[i]]=sol(i) ;
             }
-        } //end iel
-    }//end ismooth
+
+            if ( ismooth == nsm ) {   // We save the solution only after the nsm-th smoothing cycle
+                for ( int i=0; i<size; i++ ) {
+                    (*x[Level]).set (idx[i],sol(i));
+                }
+            }
+        } //end subdom loop
+    }//end ismooth loop
     return;
 }
 #endif

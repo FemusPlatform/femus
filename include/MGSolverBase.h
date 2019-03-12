@@ -316,6 +316,16 @@ class MGSolBase
             double  uold[]                  ///< \param[out]  <uold>   solution
         )  const  ;
         ///@}
+        /// Return element dof indices using local-to-global map
+        void get_el_dof_indices (
+          const int Level,                                 ///< \param[in] <Level>   level         
+          const int iel,                                   ///< \param[in] <iel>     eLement number                       
+          const int el_conn[],                             ///< \param[in] <el_conn> connectivity                 
+          const int el_dof[],                              ///< \param[in] <el_dof>  quadratic[2] linear[1] const[0] dofs 
+          const int offset,                                ///< \param[in] <offset>  offset for connectivity                               
+          std::map<int,std::vector<int>> &el_dof_indices   ///< \param[out]<el_dof-indices>  dof indices
+        ) const; 
+        ///@}
         // =============================
         virtual void set_vector ( const int &, const int & ) = 0;
         virtual void set_xooold2x() = 0;
