@@ -92,6 +92,15 @@ public:
     MGFE* _fe[3];       ///< fem  (piecewise linear,piecewise quadratic)
     double _dt =0.1;
     int _dir=0;
+    
+    
+    //! Number of solutions needed for restart
+    /* This number is used for printing and reading solutions for system restart.
+     * Default value is equal to 1. With value _NumRestartSol=2 the solution
+     * stored in _x_oold vector is printed with _old suffix, while with _NumRestartSol=3
+     * also the _x_ooold stored solution is printed, with _oold suffix (visible inside .h5 file)
+     */
+    int _NumRestartSol;
 // ========================================================================
 ///@{ \name  Constructor destructor memory allocation
 // ========================================================================
