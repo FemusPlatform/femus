@@ -10,7 +10,6 @@
 // configuration files -----------
 #include "Printinfo_conf.h"
 
-
 // standard  library
 #include <sstream>
 

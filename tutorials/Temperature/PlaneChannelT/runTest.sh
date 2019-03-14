@@ -19,7 +19,7 @@ cp $FEMUS_DIR/solvers/MGSolverT/*.h SRC/
 cp $FEMUS_DIR/solvers/MGSolverT/*.C SRC/
 
 echo "Compiling application "    >> $TUTORIAL_LOG
-if [ -f $FEMUS_DIR/lib/libfemus_2d.so ]; then
+if [ -f $FEMUS_DIR/lib/libfemus_2d_$METHOD.so ]; then
   echo "FEMuS 2D library found " >> $TUTORIAL_LOG
   echo "Compiling with library " >> $TUTORIAL_LOG
   make withlib_2d -j2
@@ -43,7 +43,7 @@ fi
 
 femus_gencase_run_lib2D 1
 
-mpiexec -np 1 $FM_MYAPP-opt 2> messages.log
+mpiexec -np 1 $FM_MYAPP-$METHOD 2> messages.log
 
 
 

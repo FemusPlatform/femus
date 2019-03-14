@@ -1,4 +1,3 @@
-
 #ifndef __userNS_h__
 #define __userNS_h__
 
@@ -6,7 +5,7 @@
 // ===================================
 #ifdef NS_EQUATIONS
 // ==================================
-#include "Solvertype_enum.h"
+
 
 /*! \defgroup NS_Boundary_conditions     Enum Table: NS Boundary conditions  */
 /// \ingroup NS_Boundary_conditions
@@ -31,87 +30,6 @@ enum bound_cond {
     velocity               =       99,     ///<  \f$ {u_n} = {u_n^*} \wedge {u_{t1}} = {u_{t1}^*} \wedge {u_{t2}} = {u_{t2}^*} \f$: Fixed velocity components along normal and tangential directions
     velocity_norm          =       98,     ///<  \f$  {u_n} = {u_n^*}  \wedge  u_{t1} = 0 \wedge u_{t2} = 0  \f$: Fixed velocity along normal direction and zero velocity components along tangential direction
     velocity_tang          =       89      ///<  \f$  {u_n} = 0  \wedge  {u_{t1}} = {u_{t1}^*} \wedge {u_{t2}} = {u_{t2}^*} \f$: Zero velocity field along normal direction and fixed velocity components along tangential direction
-};
-
-/*! \defgroup NS_param   Class Table:  Navier-Stokes equation parameters (NS_param) */
-/// \ingroup NS_param
-// ============================================================================
-class NS_param
-{
-    //< This class defines the physical and numerical  energy equation parameters
-public:
-    int _SolveSteady;                    /// Flag for steady state solution - value: 0 or 1
-    int _Supg;                           /// Flag for SUPG stabilization of advection term - value: 0 or 1
-    int _Upwind;                         /// Flag for normal upwind stabilization - value: 0 or 1
-    double _UnderRelaxation;             /// Flag for stabilization based on UnderRelaxation - value between 0 and 1
-    int _ReactionNumberBased;            /// Flag for stabilization based on reaction number - value: 0 or 1
-    int _FlatProfile;                    /// Flag for initial solution: flat profile or modulated as function of wall distance - value: 0 or 1
-    bool _SolveNS;                         /// Flag for solution of temperature equation
-    int _WallFunctionApproach;
-    int _InterpolatedMuTurb;
-    std::vector<int>  _BoundaryGroupsIDs ;         /// Vector containing boundary group ids
-    std::map<int,  bound_cond>  _map_NSgroup;      /// Map containing boundary group ids and their relative boundary condition
-    std::map<std::string, bound_cond> _BoundMap;   /// Map that associates a bound_condT condition to the relative string
-    std::map<std::string,std::string> _FileMap;    /// String map containing Tproperties.in parameters
-    int _Les;                                      /// Flag for turbulence with LES
-    int _MaxNonLinearIterations;                   /// Maximum number of non linear interations
-    SolverTypeM _SolverType;             // for other solver types see Solvertype_enum.h
-    double _Penalty_n;
-    double    _Penalty_tg;
-    double    _Tg1_stress;
-    double    _Tg2_stress;
-    double   _Threshold;
-    int      _TimeDisc;
-    NS_param()
-    {
-        _SolverType              =GMRESM;
-        _SolveSteady             =0;
-        _Supg                    =1;
-        _Upwind                  =0.;
-        _ReactionNumberBased     =0;
-        _FlatProfile             =1;
-        _UnderRelaxation         =0.;
-        _Les                     =0.;
-        _MaxNonLinearIterations  =1;
-        _WallFunctionApproach    =0;
-        _InterpolatedMuTurb      =0;
-        _Penalty_n               =1e+5;
-        _Penalty_tg              =0.;
-        _Tg1_stress              =0.;
-        _Tg2_stress              =0.;
-        _Threshold               =0.495;
-        _TimeDisc                =1;
-        _BoundMap["interior"]        = interior;
-        _BoundMap["nostress"]        = nostress;
-        _BoundMap["outflow"]         = outflow;
-        _BoundMap["pressure_outlet"] = pressure_outlet;
-        _BoundMap["outflow_p"]       = outflow_p;
-        _BoundMap["pressure_inlet"]  = pressure_inlet;
-        _BoundMap["slip"]            = slip;
-        _BoundMap["wall"]            = wall;
-        _BoundMap["penalty_turb"]    = penalty_turb;
-        _BoundMap["velocity"]        = velocity;
-        _BoundMap["velocity_norm"]   = velocity_norm;
-        _BoundMap["velocity_tang"]   = velocity_tang;
-        _BoundMap["accelerating_swirl"]           = accelerating_swirl;
-        _BoundMap["decelerating_swirl"]           = decelerating_swirl;
-        _BoundMap["accelerating_stress"]    = accelerating_stress;
-        _BoundMap["decelerating_stress"]    = decelerating_stress;
-        _BoundMap["stress"]    = stress;
-        _BoundMap["swirl"]    = swirl;
-    }
-
-    ~NS_param()
-    {
-        _BoundMap.clear();
-        _FileMap.clear();
-        _map_NSgroup.clear();
-        _BoundaryGroupsIDs.clear();
-    };
-
-    void  read_param ( MGUtils & mgutils ); /// This function sets all the T_param parameters
-    void  read_file();                     /// This function reads the parameters from Tproperties.in file
-    void  print_par();                     /// This function prints the parameters contained in Tproperties.in
 };
 
 #endif

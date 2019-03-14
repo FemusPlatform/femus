@@ -10,6 +10,8 @@
 #include "MGFE_conf.h"
 #include "MGSolverDA.h"
 #include "UserP.h"
+#include "Pparameters.h"
+
 // Forward declarations ----------
 class MGEquationsSystem;
 
@@ -70,7 +72,7 @@ private:
     
     
     bool _AxiSym;
-    bool _SolveP;
+    int _SolveP;
     double _factor;
     
     int _AssembleOnce;

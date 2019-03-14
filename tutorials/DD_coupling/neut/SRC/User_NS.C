@@ -1,321 +1,56 @@
 // ======================================================================================
-// --------------   NAVIER-STOKES system [NS_F] -----------------------------------------
+//                  NAVIER-STOKES INITIAL AND BOUNDARY CONDITIONS
 // ======================================================================================
 #include "Equations_conf.h"
 
 #ifdef NS_EQUATIONS
-// #if NS_EQUATIONS==1
-// ======================================================================================
-// NS_EQUATIONS==0 projection solver (u,v,w) ( P in NSP_EQUATIONS)
-// NS_EQUATIONS==1 coupled    solver (u,v,w,p)
-// NS_EQUATIONS==2 segregated solver (u,v,w) ( P in NSP_EQUATIONS)
-// ======================================================================================
 
-// class files --------------------------------------------------------------------------
-
-#include "MGSolverNS.h"       // Navier-Stokes class header file
-
-
-// config file --------------------------------------------------------------------------
-#include "MGGeomEl.h"        // Geometrical element
-#include "MGFE_conf.h"        // FEM approximation
-#include "Printinfo_conf.h"  // Print options
-
-// local Femus class include ------------------------------------------------------------
-#include "MGMesh.h"          // Mesh class
-#include "MGSystem.h"        // System class
-#include "MGEquationsSystem.h"  // Equation map class
+#include "MGSolverNS.h"      
+#include <fstream>
 #include "MGUtils.h"
-// standard lib -------------------------------------------------------------------------
-#include <string.h>          // string library
 
-// local alg lib ------------------------------------------------------------------------
-#include "dense_matrixM.h"   // algebra dense matrices
-#include "sparse_matrixM.h"  // algebra sparse matrices
-#include "dense_vectorM.h"   // algebra dense vectors
-#include "numeric_vectorM.h" // algebra numerical vectors
-#include "linear_solverM.h"  // algebra solvers
-// ======================================================================================
-/**     \addtogroup user_function User functions
- * @{
- */
 
-/// \ingroup  user_function ic_read
-// ======================================================================================
-/// This function generates the initial conditions for the NS system:
+// INITIAL CONDITION ---------------------------------------------------------------------
 void MGSolNS::ic_read(
   int bc_gam,
   int bc_mat,
   double xp[],
   int iel,
   double u_value[]
-) {// ===================================================================================
-
-  double ILref = 1./_lref;
+) {
 
   double vel[3];
 
   vel[0] = 0.;
   vel[1] = 0.;
   vel[2] = 0.8;
-
+  
 if(_Coupled==1){
   u_value[0] = vel[0];
   u_value[1] = vel[1];
   u_value[DIMENSION-1] = (_nNSdim==2)? vel[1]:vel[2];
-  u_value[DIMENSION] = 0.0  ;
+  u_value[DIMENSION] = 0.0;
 }
-else{
+else if (_Coupled==0){
   u_value[0] = vel[_dir];  
-}  
+}
   
   return;
 }
 
-/// \ingroup  user_function bc_read
-// ========================================
-// This function  defines the boundary conditions for the NS system:
+// BOUNDARY CONDITIONS -------------------------------------------------------------------
 void MGSolNS::bc_read(
   int bc_gam,
   int bc_mat,
-  double xp[],          // xp[] is the NON-DIMENSIONAL node coordinates
-  int bc_Neum[], 	// normal
-  int bc_flag[]         // boundary condition flag
-) {// ===================================
-  //     0  ->  single component
-  //     +4 ->  nonhomogeneous
-  //     +2 ->  tg
-  //     +1 ->  normal
-// ===================================
-  double ILref = 1./_lref;
+  double xp[],          
+  int bc_Neum[], 
+  int bc_flag[]         
+) {
+
+  bc_Neum[0] = outflow;
   bc_Neum[0] = _NS_parameter._map_NSgroup[bc_gam];
 
-  // The low and right bottom corners are not correct with groups only
   return;
 }
 
-
-
-
-
-
-void NS_param::read_param (
-  MGUtils & mgutils
-) {
-  //  Reading parameter  -> NSproperties.in ------------------------------------------------
-  read_file();
-
-  // Boundary condition block ------------------------------------------------------------
-  std::cout << "Navier-Stokes boundary condition block \n";
-  // boundary group names  from
-  std::string GroupString = mgutils._sim_config["BoundaryGroups"];
-  int count = 0;
-  int pos1 = 0;
-  int Length = GroupString.length();
-
-  while ( count < Length ) {
-      if ( GroupString.at ( count ) == ',' ) {
-          std::string  temps = GroupString.substr ( pos1, count - pos1 );
-          _BoundaryGroupsIDs.push_back ( stoi ( temps ) );
-          pos1 = count + 1;
-          }
-
-      count++;
-      }
-
-  // boundary group values from
-  _BoundaryGroupsIDs.push_back ( stod ( GroupString.substr ( pos1, Length - pos1 ) ) );
-
-  for ( int i = 0; i < _BoundaryGroupsIDs.size(); i++ ) {
-      std::string BDcond = "NSgroup" + to_string ( _BoundaryGroupsIDs[i] );
-      _map_NSgroup[_BoundaryGroupsIDs[i]] = _BoundMap[_FileMap[BDcond]];
-      }
-
-  // ---------------------  end bc ------------------------------------
-  // Navier-Stokes parameters block ------------------------------------------------------------
-  std::cout << " NAVIER-STOKES PARAMETER map (_NS_parameter) in  NSproperties.in + UserNS.h :\n";
-
-  if ( _FileMap ["SolveSteady"] != "" ) {
-      _SolveSteady  = stoi ( _FileMap["SolveSteady"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._SolveSteady (in UserNS.h) \n";
-      }
-
-  if ( _FileMap ["MaxNonLinearIterations"] != "" ) {
-      _MaxNonLinearIterations   = stoi ( _FileMap["MaxNonLinearIterations"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._MaxNonLinearIterations (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["DynamicUnderRelaxation"] != "" ) {
-      _UnderRelaxation = stof ( _FileMap["DynamicUnderRelaxation"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._DynamicUnderRelaxation (in UserNS.h)\n";
-      }
-
-  std::cout << " NSproperties.in: default value for _NS_parameter._SolverType  (in UserNS.h) \n";
-
-  if ( _FileMap ["Supg"] != "" ) {
-      _Supg = stoi ( _FileMap["Supg"] );
-      }
-  else {
-      std::cout << " NSproperties.in:  default value for _NS_parameter.Supg (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Upwind"] != "" ) {
-      _Upwind = stof ( _FileMap["Upwind"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._Upwind (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Les"] != "" )  {
-      _Les = stof ( _FileMap["Les"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._Les (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["ReactionNumberBased"] != "" ) {
-      _ReactionNumberBased     = stoi ( _FileMap["ReactionNumberBased"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._ReactionNumberBased  (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["FlatProfile"] != "" ) {
-      _FlatProfile = stoi ( _FileMap["FlatProfile"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._FlatProfile (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["InterpolatedMuTurb"] != "" ) {
-      _InterpolatedMuTurb = stoi ( _FileMap["InterpolatedMuTurb"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._InterpolatedMuTurb (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["WallFunctionApproach"] != "" ) {
-      _WallFunctionApproach = stoi ( _FileMap["WallFunctionApproach"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._WallFunctionApproach (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Penalty_n"] != "" ) {
-      _Penalty_n = stof ( _FileMap["Penalty_n"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter.Penalty_n (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Penalty_tg"] != "" ) {
-      _Penalty_tg = stof ( _FileMap["Penalty_tg"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter.Penalty_tg (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Tg1_stress"] != "" ) {
-      _Tg1_stress = stof ( _FileMap["Tg1_stress"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter.Tg1_stress (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Tg2_stress"] != "" ) {
-      _Tg2_stress = stof ( _FileMap["Tg2_stress"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter.Tg2_stress (in UserNS.h)\n";
-      }
-
-  if ( _FileMap ["Threshold"] != "" ) {
-      _Threshold = stof ( _FileMap["Threshold"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter.Threshold (in UserNS.h)\n";
-      }
-  if ( _FileMap ["TimeDisc"] != "" ) {
-      _TimeDisc = stoi ( _FileMap["TimeDisc"] );
-      }
-  else {
-      std::cout << " NSproperties.in: default value for _NS_parameter._TimeDisc (in UserNS.h)\n";
-      }
-// ---------------------  end parameter NS ------------------------------------
-  _FileMap.clear();
-  return;
-  }
-
-// ============================================================
-/// This function reads NS parameter file (NSparameter.in)
-void NS_param::read_file (
-) { //  ===========================================================
-
-  //  getting file name --------------------------------------------------------------------
-  std::ostringstream file;
-  file << getenv ( "APP_PATH" ) << "/DATA/NSproperties.in";
-  std::ifstream fin;
-  fin.open ( file.str().c_str() ); // stream file
-#ifdef PRINT_INFO
-
-  if ( fin.is_open() ) {
-      std::cout << "\nInit Reading = " << file.str() <<  std::endl;
-      }
-
-#endif
-
-  //  reading param file -----------------------------------------------------------------
-  if ( fin.is_open() ) {
-      std::string string_value;
-      std::string buf = ""; // read double, string, dummy
-
-      while ( buf != "/" ) {
-          fin >> buf;     // find "/" file start
-          }
-
-      fin >> buf;
-
-      while ( buf != "/" ) {
-          if ( buf == "#" ) {
-              getline ( fin, buf );     // comment line
-              }
-          else {
-              fin >> string_value;
-              _FileMap[buf] = string_value;
-              }
-
-          fin >> buf;
-          }
-      }
-  else {
-      std::cerr << "NS_param.read_file(): no parameter file found" << std::endl;
-      abort();
-      }
-
-// printing after reading ----------------------------------------------------------------------------------------
-#ifdef PRINT_INFO
-  std::cout << "\033[038;5;" << "\n  NAVIER-STOKES PARAMETER MAP \n \033[0m"  << std::endl;
-
-  for ( std::map<std::string, std::string >::const_iterator it = _FileMap.begin(); it != _FileMap.end(); ++it ) {
-      std::cout << it->first << " " << it->second << "\n";
-      }
-
-  std::cout << "\033[038;5;" << NS_F + 50 << ";1m \
-                \n----------------------------------------------\n\033[0m"  << std::endl;
-#endif
-
-  fin.close();
-  return;
-  }
-
-
-
-
-
-#endif  //ENDIF NS_EQUATIONS
+#endif 

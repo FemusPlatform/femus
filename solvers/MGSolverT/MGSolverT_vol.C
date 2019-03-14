@@ -4,13 +4,7 @@
 #ifdef T_EQUATIONS // 3D-2D Energy equation
 // ============================================
 
-
-
-#include "MGSclass_conf.h"        // Navier-Stokes class conf file
 #include "MGSolverT.h"       // Navier-Stokes class header file
-
-// local Femus class include -----------------------------------
-// #include "MGMesh.h"          // Mesh class
 #include "MGFE.h"          // Mesh class,double vel_g[]
 
 

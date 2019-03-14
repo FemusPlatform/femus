@@ -27,14 +27,16 @@ void MGSolNS::ic_read(
 
   double ILref = 1./_lref;
 
-  // =======================================================================================
-  //    boundary conditions box file plane_ch_rotate.med ==================================
-  
   double vel[3];
+  double mod = -0.1;
+  double notaL = 0.00001;
 
-  vel[0] = 2. * 0.3;
-  vel[1] = 0.;
-  vel[2] = 0.;
+  double pi_2 = acos(0.);
+  mod = -0.1;
+
+  vel[0] = 0.25*mod + notaL;
+  vel[1] = -0.433013*mod +notaL;
+  vel[2] = 0.866025*mod +notaL;
 
 if(_Coupled==1){
   u_value[0] = vel[0];
@@ -58,12 +60,7 @@ void MGSolNS::bc_read(
   double xp[],          // xp[] is the NON-DIMENSIONAL node coordinates
   int bc_Neum[], 	// normal
   int bc_flag[]         // boundary condition flag
-) {// ===================================
-  //     0  ->  single component
-  //     +4 ->  nonhomogeneous
-  //     +2 ->  tg
-  //     +1 ->  normal
-// ===================================
+) {
   double ILref = 1./_lref;
   bc_Neum[0] = outflow;
   bc_Neum[0] = _NS_parameter._map_NSgroup[bc_gam];
@@ -71,6 +68,7 @@ void MGSolNS::bc_read(
   // The low and right bottom corners are not correct with groups only
   return;
 }
+
 
 
 #endif  //ENDIF NS_EQUATIONS

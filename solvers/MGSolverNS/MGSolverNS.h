@@ -7,15 +7,17 @@
 // =================================
 // classe include ---------
 #include "MGSolverDA.h"
+#include "UserNS.h"
+#include "NSparameters.h"
 // Forwarded classes ------
 class MGUtils;
 class MGSystem;
 class MGEquationsMap;
 class MGFEMap;
-
+// class NS_param;
 /// @image html swirl2.png
 
-#include "UserNS.h"
+
 
 enum TANG_CALC_TYPE{
   GEOM_BASED = 0,  
@@ -26,6 +28,7 @@ enum TIME_DER_TYPE{
   OLDER_STEPS = 0,
   ACTUAL_STEP = 1  
 };
+
 
 // ===========================================================================
 //                                Navier-Stokes equation class

@@ -33,6 +33,7 @@
    TimeDisc               2
    AssembleOnce           1
    NodeIDrefPressure      0
+   NumRestartSol          1
 # ---------------------------------------------------------------
 # INITIAL CONDITION
 # ---------------------------------------------------------------

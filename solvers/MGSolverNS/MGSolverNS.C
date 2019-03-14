@@ -49,6 +49,7 @@ MGSolNS::MGSolNS (
 
   // READ PARAMETERS FROM CLASS NS_parameter
   _NS_parameter.read_param ( _mgutils );
+  _NumRestartSol = _NS_parameter._NumRestartSol;
   _nNSdim = DIMENSION;
 
   // class equation ---------------------------------------------------------------------
@@ -59,8 +60,8 @@ MGSolNS::MGSolNS (
   _pres_order = ( _nvars[0] > 0 ) ? 0 : 1;
   // class variable names ------------------------------------------------------------
 //   _dir = 0;
-  
-  
+
+
   //===================================================================================================//
   //                                    C) Setting solver type                                         //
   //===================================================================================================//
@@ -87,8 +88,8 @@ MGSolNS::MGSolNS (
       std::abort();
       }
 
-  _ImmersedBoundary=0;    
-      
+  _ImmersedBoundary = 0;
+
   return;
   } //****************************************************************************************************//
 
@@ -143,8 +144,8 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
       const int idx = _data_eq[2].tab_eqs[k];
       _FF_idx[k] = ( idx >= 0 ) ? _data_eq[2].indx_ub[idx] : -1;
       }
-      
-  if(_FF_idx[IB_F]>=0)
+
+  if ( _FF_idx[IB_F] >= 0 )
     _ImmersedBoundary = 1;
 
   // element matrix and rhs  (mode 0= matrix only or mode 1=matrix +rhs) --------------------------
@@ -187,7 +188,7 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
       get_el_field_data ( iel, Level, el_conn, offset, el_ndof, ndof_lev );
 
       CalcVolume();
-      
+
       // initializing  volume quantities
       for ( int idim = 0; idim < _nNSdim; idim++ ) { // quad loop entities (vector)
           x_m[idim] = 0.;
@@ -215,6 +216,7 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
           if ( el_neigh[iside] == -1 ) {
               for ( int  lbnode = 0; lbnode < elb_ndof[2]; lbnode++ ) {
                   int lnode = _mgmesh._GeomEl._surf_top[lbnode + elb_ndof[2] * iside]; // local nodes
+
                   for ( int idim = 0; idim < _nNSdim; idim++ ) {
                       _bc_el[lnode + idim * el_ndof[2]] = _BdFlagId;
                       }
@@ -223,11 +225,12 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
           }
 
       _WallElement = 0;
-      if ( _FF_idx[IB_F] >= 0 ) 
-         _wall_frac = _mgmesh._VolFrac[ iel+nel_b];
+
+      if ( _FF_idx[IB_F] >= 0 )
+        _wall_frac = _mgmesh._VolFrac[ iel + nel_b];
       else
-         _wall_frac = 0.;
-      
+        _wall_frac = 0.;
+
       // --------------------------------------------------------------------------
       //  Boundary and boundary bc
       // --------------------------------------------------------------------------
@@ -258,7 +261,7 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
               } // iside -1
           }  // -----------------------------  End Boundary -------------------------------------
 
-      matrixrhsvol ( el_ndof, mode, el_conn);
+      matrixrhsvol ( el_ndof, mode, el_conn );
 
       // ----------------------------------------------------------------------------------
       //   E) Add them to the global matrix
@@ -270,7 +273,7 @@ void  MGSolNS::GenMatRhs ( const double/* time*/, const int
       } //  =============== End of element loop =============================================
 
 // ===============================================================================
-el_dof_indices.clear();
+  el_dof_indices.clear();
   A[Level]->close();
 
   if ( mode == 1 ) {
@@ -304,7 +307,7 @@ void MGSolNS::MGTimeStep_no_up (
       std::cout  << std::endl << "\033[038;5;" << NS_F + 50 << ";1m "
                  << "--------------------------------------------------- \n\t"
                  <<  _eqname.c_str()
-                 << " solution of problem " << _mgutils.get_name() <<" with dir "<<_dir
+                 << " solution of problem " << _mgutils.get_name() << " with dir " << _dir
                  << "\n ---------------------------------------------------\n\033[0m";
 
       // ========================================================================================= //
@@ -316,6 +319,7 @@ void MGSolNS::MGTimeStep_no_up (
 #endif
 
       GenMatRhs ( time, _NoLevels - 1, 1 );                                       // matrix and rhs
+
       for ( int Level = 0 ; Level < _NoLevels - 1; Level++ ) {
           GenMatRhs ( time, Level, 0 );   // matrix
           }
@@ -347,8 +351,10 @@ void MGSolNS::MGTimeStep_no_up (
           for ( int Level = 0 ; Level < _NoLevels - 1; Level++ ) {
               GenMatRhs ( time, Level, 0 );   // matrix
               }
+
           MGSolve ( 1.e-6, 15 );                                                        // solve
           }
+
       _TimeStep ++;
       }
 
@@ -359,10 +365,13 @@ void MGSolNS::MGTimeStep_no_up (
 
 void MGSolNS::MGUpdateStep (
 ) {
-  x_oold[_NoLevels - 1] -> localize (*x_ooold[_NoLevels - 1]);  // time step -2
-  x_old[_NoLevels - 1]  -> localize ( *x_oold[_NoLevels - 1]);  // time step -1
-  x[_NoLevels - 1]      -> localize (  *x_old[_NoLevels - 1]);  // time step
-  x[_NoLevels - 1]      -> localize ( *x_nonl[_NoLevels - 1]);
+  if ( _SolveNS ) {
+      x_oold[_NoLevels - 1] -> localize ( *x_ooold[_NoLevels - 1] ); // time step -2
+      x_old[_NoLevels - 1]  -> localize ( *x_oold[_NoLevels - 1]  ); // time step -1
+      x[_NoLevels - 1]      -> localize ( *x_old[_NoLevels - 1]   );  // time step
+      x[_NoLevels - 1]      -> localize ( *x_nonl[_NoLevels - 1]  );
+      }
+
   return;
   } //****************************************************************************************************//
 
@@ -508,11 +517,11 @@ void MGSolNS::SetBCFlags (
   // 4-> tau=a.velocity                      4-> stau=a.(velocity-velocity_0)------>
   const int bd_face = abs ( _bc_bd[sur_toply[NDOF_FEMB - 1]] ) % 100; // element normal-tg bc flag
   const int norm_face = ( abs ( _bc_bd[sur_toply[NDOF_FEMB - 1]] ) % 10000 ) / 1000 - 1 ; // element max-normal-dir bc flag
-  
+
   for ( int  lbnode = 0; lbnode < NDOF_FEMB; lbnode++ )
-    if(el_conn[lbnode] == 3)
-      int a=1;
-  
+    if ( el_conn[lbnode] == 3 )
+      int a = 1;
+
   for ( int  lbnode = 0; lbnode < NDOF_FEMB; lbnode++ ) { // loop on surface nodes
       const int bd_node = abs ( _bc_bd[sur_toply[lbnode]] ) % 100; // point normal-tg  bc flag
       const int bc_var_check = abs ( _bc_bd[sur_toply[lbnode]] ) % 10000; // bc_var

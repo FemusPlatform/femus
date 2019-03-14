@@ -3,7 +3,7 @@
 // ===============================================================
 #include "Equations_conf.h"
 #ifdef NS_EQUATIONS
-
+#include "UserP.h"
 #include "MGSolverP.h"       // Navier-Stokes class header file
 #include "MGFE_conf.h"        // FEM approximation
 #include "MGGeomEl.h"        // FEM approximation
@@ -13,6 +13,7 @@
 #include "MGFE.h"          // Mesh class
 #include "EquationSystemsExtendedM.h"  // Equation map class
 #include "Solvertype_enum.h"
+#include "Pparameters.h"
 
 // local alg lib -----------------------------------------------
 #include "dense_matrixM.h"   // algebra dense matrices
@@ -61,6 +62,10 @@ MGSolP::MGSolP (
   _AssembleOnce = _P_parameter._AssembleOnce;
   _AlreadyAssembled = 0;
   _NodeIDrefPressure = _P_parameter._NodeIDrefPressure;
+  _NumRestartSol = _P_parameter._NumRestartSol;
+
+  _SolveP = ( _mgutils._sim_config["SolveNavierStokes"].compare ( "yes" ) == 0 ) ? 1 : 0;
+
   return;
   }
 //
@@ -141,17 +146,18 @@ void  MGSolP::GenMatRhs (
       _mgmesh.get_el_nod_conn ( 0, Level, iel, el_conn, _xx_qnds );
       _mgmesh.get_el_neighbor ( el_sides, 0, Level, iel, el_neigh );
       get_el_dof_bc ( Level, iel + ndof_lev, _el_dof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
-      get_el_data( el_ndof, el_conn, offset );
-      
-      
+      get_el_data ( el_ndof, el_conn, offset );
+
+
       for ( int  j = 0; j < el_ndof[1]; j++ ) {
           _bc_el[j] = _bc_vol[j] / 10;
           }
 
       double wall_frac = 0;
-       if ( _FF_idx[IB_F] >= 0 ) 
-         wall_frac = _mgmesh._VolFrac[ iel+nel_b];
-          
+
+      if ( _FF_idx[IB_F] >= 0 )
+        wall_frac = _mgmesh._VolFrac[ iel + nel_b];
+
       for ( int  iside = 0; iside < el_sides; iside++ ) {
           if ( el_neigh[iside] == -1 ) {
               // setup boundary element  ----------------------------------------------------------------
@@ -221,6 +227,7 @@ void  MGSolP::GenMatRhs (
 
                           Lap += _dphi_g[1][j + idim * el_ndof[1]] * _dphi_g[1][i + idim * el_ndof[1]]; // Laplacian
                           }
+
 //                       if(wall_frac > 1.e-5)
 //                           Lap *=10.;
 
@@ -326,7 +333,7 @@ void  MGSolP::GenRhs (
 
       _mgmesh.get_el_nod_conn ( 0, Level, iel, el_conn, _xx_qnds );
       _mgmesh.get_el_neighbor ( el_sides, 0, Level, iel, el_neigh );
-      
+
       get_el_dof_bc ( Level, iel + ndof_lev, _el_dof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
       get_el_data ( el_ndof, el_conn, offset );
 
@@ -347,7 +354,7 @@ void  MGSolP::GenRhs (
 
           double dtxJxW_g = JxW_g;
 
-          interp_el_gdx ( _p_rhs, 0, 1, _dphi_g[1], el_ndof[1], _p_gdx ); 
+          interp_el_gdx ( _p_rhs, 0, 1, _dphi_g[1], el_ndof[1], _p_gdx );
 
 
           // RHS CALCULATION =============================================================
@@ -414,51 +421,53 @@ void MGSolP::MGTimeStep_no_up (
   const int iter  // Number of max inter
 )
   {
-  /* ========================================================================================= */
-  /*              A) Set up the time step                                                      */
-  /* ========================================================================================= */
-  std::cout  << std::endl << "\033[038;5;" << 155 << ";1m "
-             << "--------------------------------------------------- \n\t"
-             <<  _eqname.c_str()
-             << " solution of problem " << _mgutils.get_name()
-             << "\n ---------------------------------------------------\n \033[0m";
-  /* ========================================================================================= */
-  /*              B) Assemblying of the Matrix-Rhs                                             */
-  /* ========================================================================================= */
+  if ( _SolveP == 1 ) {
+      /* ========================================================================================= */
+      /*              A) Set up the time step                                                      */
+      /* ========================================================================================= */
+      std::cout  << std::endl << "\033[038;5;" << 155 << ";1m "
+                 << "--------------------------------------------------- \n\t"
+                 <<  _eqname.c_str()
+                 << " solution of problem " << _mgutils.get_name()
+                 << "\n ---------------------------------------------------\n \033[0m";
+      /* ========================================================================================= */
+      /*              B) Assemblying of the Matrix-Rhs                                             */
+      /* ========================================================================================= */
 #if PRINT_TIME==1
-  std::clock_t start_time = std::clock();
+      std::clock_t start_time = std::clock();
 #endif
 
 
-  if ( _AssembleOnce == 0 || _AlreadyAssembled == 0 ) {
-      GenMatRhs ( time, _NoLevels - 1, 1 );                                         // matrix and rhs
+      if ( _AssembleOnce == 0 || _AlreadyAssembled == 0 ) {
+          GenMatRhs ( time, _NoLevels - 1, 1 );                                         // matrix and rhs
 
-      for ( int Level = 0 ; Level < _NoLevels - 1; Level++ ) {
-          GenMatRhs ( time, Level, 0 ); // matrix
+          for ( int Level = 0 ; Level < _NoLevels - 1; Level++ ) {
+              GenMatRhs ( time, Level, 0 ); // matrix
+              }
+
+          if ( _AssembleOnce == 1 ) {
+              _AlreadyAssembled = 1;
+              }
           }
 
-      if ( _AssembleOnce == 1 ) {
-          _AlreadyAssembled = 1;
+      if ( _AssembleOnce == 1 && _AlreadyAssembled == 1 ) {
+          GenRhs ( time, _NoLevels - 1, 1 );                                         // matrix and rhs
           }
-      }
-
-  if ( _AssembleOnce == 1 && _AlreadyAssembled == 1 ) {
-      GenRhs ( time, _NoLevels - 1, 1 );                                         // matrix and rhs
-      }
 
 #if PRINT_TIME==1
-  std::clock_t end_time = std::clock();
-  std::cout << "  Assembly time -----> =" << double ( end_time - start_time ) / CLOCKS_PER_SEC << " s " << std::endl;
+      std::clock_t end_time = std::clock();
+      std::cout << "  Assembly time -----> =" << double ( end_time - start_time ) / CLOCKS_PER_SEC << " s " << std::endl;
 #endif
-  /* ========================================================================================= */
-  /*               C) Solution of the linear MGsystem (MGSolP::MGSolve)                        */
-  /* ========================================================================================= */
-  MGSolve ( 1.e-6, 15 );
+      /* ========================================================================================= */
+      /*               C) Solution of the linear MGsystem (MGSolP::MGSolve)                        */
+      /* ========================================================================================= */
+      MGSolve ( 1.e-6, 15 );
 #if PRINT_TIME==1
-  end_time = std::clock();
-  std::cout << " Assembly+solution time -----> =" << double ( end_time - start_time ) / CLOCKS_PER_SEC
-            << "s " << std::endl;
+      end_time = std::clock();
+      std::cout << " Assembly+solution time -----> =" << double ( end_time - start_time ) / CLOCKS_PER_SEC
+                << "s " << std::endl;
 #endif
+      }
 
   return;
   } /******************************************************************************************************/
@@ -467,9 +476,11 @@ void MGSolP::MGTimeStep_no_up (
 /// This function controls the assembly and the solution of the P_equation system:
 void MGSolP::MGUpdateStep()
   {
-
-  x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] ); // p(n-1)
-  x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );      // p(n)
+  if ( _SolveP == 1 ) {
+      x_oold[_NoLevels - 1]->localize ( *x_ooold[_NoLevels - 1] ); // p(n-2)
+      x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );   // p(n-1)
+      x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );        // p(n)
+      }
 
   return;
   } /******************************************************************************************************/
@@ -499,12 +510,12 @@ void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
       pres_2ts = 0.;
       }
 
-      div_1ts = 1.;
-      div_2ts = 0.;
-      div_3ts = 0.;
-      pres_1ts = 1.;
-      pres_2ts = 0.;  
-      
+  div_1ts = 1.;
+  div_2ts = 0.;
+  div_3ts = 0.;
+  pres_1ts = 1.;
+  pres_2ts = 0.;
+
   for ( int idim = 0; idim < _nPdim; idim++ ) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts );
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts );
@@ -517,8 +528,8 @@ void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
   for ( int dim = 0; dim < _nPdim; dim++ )
     for ( int node = 0; node < el_ndof[2]; node++ )
       _u_div[node + dim * el_ndof[2]] =     div_1ts * u_1ts[dim * NDOF_FEM + node]
-                                          + div_2ts * u_2ts[dim * NDOF_FEM + node]
-                                          + div_3ts * u_3ts[dim * NDOF_FEM + node];
+                                            + div_2ts * u_2ts[dim * NDOF_FEM + node]
+                                            + div_3ts * u_3ts[dim * NDOF_FEM + node];
 
   for ( int node = 0; node < el_ndof[1]; node++ )
     _p_rhs[node] = pres_1ts * _p_1ts[node]

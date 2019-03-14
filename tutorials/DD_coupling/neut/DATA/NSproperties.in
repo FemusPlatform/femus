@@ -32,7 +32,8 @@
    InterpolatedMuTurb     0
    TimeDisc               2
    AssembleOnce           1
-   NodeIDrefPressure      101
+   NodeIDrefPressure      -1
+   NumRestartSol          1
 # ---------------------------------------------------------------
 # INITIAL CONDITION
 # ---------------------------------------------------------------
