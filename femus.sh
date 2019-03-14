@@ -139,7 +139,7 @@ function femus_gencase_compile_lib {
   
 }
 
-function femus_FEMuS_compile_lib {
+function femus_FEMuS_compile_lib_opt {
 
   OLD_METHOD=$METHOD
   export ACTUAL_DIR=$PWD
@@ -155,6 +155,36 @@ function femus_FEMuS_compile_lib {
   echo "Compiling femus library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
   femus_application_configure opt
+  # removing libfemus_2d.so
+  make clean
+  # removing object files from femus/src
+  make src_clean
+  make $1
+  
+  # cleaning after lib building
+  make src_clean
+  
+  cd $ACTUAL_DIR
+  export METHOD=$OLD_METHOD
+  femus_application_configure $METHOD
+}
+
+function femus_FEMuS_compile_lib_dbg {
+
+  OLD_METHOD=$METHOD
+  export ACTUAL_DIR=$PWD
+  echo "Compiling femus library for 2D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
+  femus_application_configure dbg
+  # removing libfemus_2d.so
+  make clean
+  # removing object files from femus/src
+  make src_clean
+  make $1
+  
+  echo "Compiling femus library for 3D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
+  femus_application_configure dbg
   # removing libfemus_2d.so
   make clean
   # removing object files from femus/src

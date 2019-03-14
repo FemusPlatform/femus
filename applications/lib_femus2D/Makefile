@@ -97,7 +97,7 @@ SRC_CONTRIB += $(wildcard $(FEMUS_CONTRIB)/parallel/*.C)
 SRC_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC))
 CONTRIB_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_CONTRIB))
 # finally define the executable file name 
-MAIN = $(FEMUS_DIR)/lib/libfemus_2d.so
+MAIN = $(FEMUS_DIR)/lib/libfemus_2d_$(METHOD).so
 
 LIB_SRC_APP_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/src/*.C )))
 LIB_SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(LIB_SRC_APP_FILES))
