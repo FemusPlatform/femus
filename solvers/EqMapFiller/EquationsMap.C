@@ -45,7 +45,7 @@
 #ifdef  T_G_EQUATIONS // Temperature control ================
 #include "MGSolverT_G.h"
 #endif // -----------------------------------------
-#ifdef  T_COUP_EQUATIONS // Temperature control ================
+#ifdef  T_COUP_EQUATIONS // Temperature control coupled opt system ================
 #include "MGSolverT_COUP.h"
 #endif // -----------------------------------------
 #ifdef  ALFA_EQUATIONS
@@ -209,8 +209,13 @@ void EquationsMap::FillEquationMap (
         if ( _myproblemP[iname] == IB_F ) {
             initImmersedBoundary ( EqMap );
             }
+          
+      if ( _myproblemP[iname]== TCOUP_F ) {
+          initCoupledTemperature ( EqMap );
+          } 
 
         }
+        
 
     // This Function calls the MGSolDA::init_ext_fields()
     for ( auto eqn = EqMap._equations.begin(); eqn != EqMap._equations.end(); eqn++ ) {
@@ -580,6 +585,18 @@ void EquationsMap::initControlTemperature ( EquationSystemsExtendedM & EqMap ) {
 #endif
     return;
     }
+// ================================== T_COUPLED_EQUATIONS ================================
+void EquationsMap::initCoupledTemperature ( EquationSystemsExtendedM & EqMap ) {
+#ifdef T_COUP_EQUATIONS
+    _nvars[0]=0;
+    _nvars[1]=0;          // Costant(1)  Linear(0)
+    _nvars[2]=3;          // quadratic(2) Approximation
+
+    EqMap.AddSolver<MGSolTCOUP> ( "TCOUP0", TCOUP_F, _nvars[0],_nvars[1],_nvars[2],"T" );
+
+#endif
+    return;
+}
 
 void EquationsMap::initImmersedBoundary ( EquationSystemsExtendedM & EqMap ) {
 #ifdef IMMERSED_BOUNDARY
@@ -658,6 +675,8 @@ void EquationsMap::Fill_FIELD_map (
     _map_str2field["CTRLY_F"]  = CTRLY_F;   // [16]-> Color function for FSI equations
     _map_str2field["CTRLZ_F"]  = CTRLZ_F;   // [16]-> Color function for FSI
     _map_str2field["MG_ImmersedBoundary"]  = IB_F;    // [16]-> Color function for FSI
+    _map_str2field["MG_CoupledTemperature"] = TCOUP_F;  // [29]-> Coupled Temperature optimality system
+    _map_str2field["TCOUP_F"]   = TCOUP_F;    // [4] -> Temperature   (quadratic (2);T_EQUATIONS)
     return;
     }
 
@@ -800,6 +819,17 @@ void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
             // DA
             if ( EqnName == "MG_DA" ) {
                 ProbObj->ActivateScalar ( 2, DA_F, "DA", _QuadEq );
+                }
+                
+            // COUPLED OPTIMAL CONTROL TEMPERATURE
+            if ( EqnName == "MG_CoupledTemperature" ) {
+//                 if ( EqnLabel <=2 ) {
+                    int coupled = 1;
+                    ProbObj->ActivateVectField ( 2, TCOUP_F, "TCOUP0", _QuadEq, coupled );
+//                     if ( coupled == 0 ) {
+//                         ProbObj->ActivateScalar ( 1, P_F, "NSAP", _LinearEq );
+//                         }
+//                     }
                 }
             }
 

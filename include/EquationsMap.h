@@ -74,7 +74,9 @@ enum  FIELDS : int {
   // TURBULENCE
   DIST = 26,
   MU_T = 27,
-  ALPHA_T = 28
+  ALPHA_T = 28,
+  MG_CoupledTemperature = 29, // [29]-> Coupled Temperature optimality system 
+  TCOUP_F=29                  // [29]-> Coupled Temperature optimality system
   };
 
 
@@ -182,6 +184,9 @@ class EquationsMap {
     
     /// Initializaiton of Control temperature system
     void initControlTemperature ( EquationSystemsExtendedM & EqMap );
+    
+    /// Initializaiton of Temperature control optimality system
+    void initCoupledTemperature ( EquationSystemsExtendedM & EqMap );
 
     /// Initializaiton of Immersed Boundary system
     void initImmersedBoundary ( EquationSystemsExtendedM & EqMap );
