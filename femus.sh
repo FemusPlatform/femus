@@ -116,10 +116,6 @@ function femus_gencase_compile_lib {
   femus_application_configure opt 
   make clean
   make $1
-  if [ -f "$FEMUS_DIR/bin/gencase_2d" ]; then
-    rm $FEMUS_DIR/bin/gencase_2d 
-  fi
-  ln -s $MAIN_GENCASE_DIR/gencase_2d/gencase_2d $FEMUS_DIR/bin/gencase_2d
   
   # 3D gencase
   echo "${red}Now compiling standard gencase application for 3D geometries"
@@ -128,11 +124,7 @@ function femus_gencase_compile_lib {
   femus_application_configure opt 
   make clean
   make $1
-  if [ -f "$FEMUS_DIR/bin/gencase_3d" ]; then
-    rm $FEMUS_DIR/bin/gencase_3d 
-  fi
-  ln -s $MAIN_GENCASE_DIR/gencase_3d/gencase_3d $FEMUS_DIR/bin/gencase_3d
-  
+
   cd $ACTUAL_DIR
   export METHOD=$OLD_METHOD
   femus_application_configure $METHOD

@@ -106,7 +106,7 @@ OBJS_APP = $(addprefix $(OBJ_DIR), $(SRC_OBJS))
 
 
 # finally define the executable file 
-MAIN = $(FM_MYAPP)
+MAIN = $(FEMUS_DIR)/bin/$(FM_MYAPP)
 
 
 
