@@ -39,7 +39,7 @@
  #  WallGroups contains the boundary ids used for wall distance 
  #  calculation on interior points
  # ---------------------------------------------------------------
-   BoundaryGroups    12,13,14,15
-   VolumeGroups      0
+   BoundaryGroups    10,11,12,13
+   VolumeGroups      2
    WallGroups        12,13,15
  / #--------------------------------------------------------------   

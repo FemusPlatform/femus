@@ -195,7 +195,7 @@ withlib_2d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_2d $(LIBSAPP)
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_2d_$(METHOD) $(LIBSAPP)
 
 # COMPILING WITH FEMUS LIBRARY
 withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
@@ -208,7 +208,7 @@ withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_3d $(LIBSAPP)	
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_3d_$(METHOD) $(LIBSAPP)	
 	
 vpath %.C ./SRC/
 vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/

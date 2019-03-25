@@ -61,8 +61,8 @@
 #  ! A condition for each group defined in SimulationConfiguration.in file must be specified !
 #
  #  plane bc
-   NSgroup15          wall
-   NSgroup14          wall
+   NSgroup10          wall
+   NSgroup11          wall
    NSgroup12          pressure_outlet
    NSgroup13          velocity_norm
 #

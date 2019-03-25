@@ -14,9 +14,6 @@ cp $FEMUS_DIR/solvers/Makefile .
 mkdir RESU
 mkdir RESU_MED
 
-# copy standard solvers into local SRC folder
-cp $FEMUS_DIR/solvers/MGSolverNS/*.h SRC/
-cp $FEMUS_DIR/solvers/MGSolverNS/*.C SRC/
 
 echo "Compiling application "    >> $TUTORIAL_LOG
 if [ -f $FEMUS_DIR/lib/libfemus_2d_$METHOD.so ]; then
@@ -44,4 +41,26 @@ fi
 
 femus_gencase_run_lib2D 1
 
+if [ "$?" != 0 ]; then
+      
+      echo "==============================================" >> $TUTORIAL_LOG
+      echo "            GENCASE TERMINATED WITH ERROR "     >> $TUTORIAL_LOG
+      echo "==============================================" >> $TUTORIAL_LOG
+      
+      return
+else      
+      echo " Gencase run without errors "     >> $TUTORIAL_LOG
+fi
+
 mpiexec -np 1 $FM_MYAPP-$METHOD 2> messages.log
+
+if [ "$?" != 0 ]; then
+      
+      echo "==============================================" >> $TUTORIAL_LOG
+      echo "            APPLICATION TERMINATED WITH ERROR " >> $TUTORIAL_LOG
+      echo "==============================================" >> $TUTORIAL_LOG
+      
+      return
+else      
+      echo " Application run without errors "     >> $TUTORIAL_LOG
+fi

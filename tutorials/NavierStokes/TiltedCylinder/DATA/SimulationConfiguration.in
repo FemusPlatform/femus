@@ -41,6 +41,6 @@
  #  calculation on interior points
  # ---------------------------------------------------------------
    BoundaryGroups    13,20,21
-   VolumeGroups      0
+   VolumeGroups      2
    WallGroups        12,13,15
  / #--------------------------------------------------------------   
