@@ -322,7 +322,7 @@ void  print_Mat(int *Mat,int nrow,int ncln);
      std::vector<std::pair<int, int>> v_el,
      std::vector<int>ElementsPerLevel,
      int ** elem_sto,
-    std::string filename="default_coarse_mesh.med" /// namefile
+    std::string filename="default_coarse_mesh" /// namefile
   );  
   
   
@@ -343,9 +343,10 @@ private:
       std::vector<std::pair<int,int> > v_elb,
       int * nod_flag,
   int * mat_flag,
-    std::string filename="default_coarse_mesh.med" /// namefile
+    std::string filename="default_coarse_mesh" /// namefile
   );
 };
 
 
 #endif
+

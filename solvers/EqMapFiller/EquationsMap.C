@@ -89,6 +89,12 @@
 #ifdef   TWO_PHASE
 #include "MGSolverCC.h"
 #endif
+#ifdef A_EQUATIONS
+#include "MGSolverA.h"
+#endif
+#ifdef Q_EQUATIONS
+#include "MGSolverQ.h"
+#endif
 
 
 
@@ -213,6 +219,14 @@ void EquationsMap::FillEquationMap (
       if ( _myproblemP[iname]== TCOUP_F ) {
           initCoupledTemperature ( EqMap );
           } 
+          
+      if ( _myproblemP[iname] == A_F ) {
+          initAreaMono ( EqMap );
+          }
+          
+      if ( _myproblemP[iname] == Q_F ) {
+          initFlowrateMono ( EqMap );
+          }
 
         }
         
@@ -606,8 +620,28 @@ void EquationsMap::initImmersedBoundary ( EquationSystemsExtendedM & EqMap ) {
     EqMap.AddSolver<MGSolIB> ( "IB1", IB_F, _nvars[0], _nvars[1], _nvars[2], "Col" );
     EqMap.AddSolver<MGSolIB> ( "IB2", IB_F + 1, _nvars[0], _nvars[1], _nvars[2], "VolFrac" );
 #endif
-    return;
-    }
+  return;
+  }
+      
+void EquationsMap::initAreaMono ( EquationSystemsExtendedM & EqMap ) {
+#ifdef A_EQUATIONS
+  _nvars[0] = 0;
+  _nvars[1] = 1;
+  _nvars[2] = 0; // only Quadratic[2] approx
+  EqMap.AddSolver<MGSolA> ( "A", A_F, _nvars[0], _nvars[1], _nvars[2], "A" );
+#endif
+  return;
+  }
+
+void EquationsMap::initFlowrateMono ( EquationSystemsExtendedM & EqMap ) {
+#ifdef Q_EQUATIONS
+  _nvars[0] = 0;
+  _nvars[1] = 1;
+  _nvars[2] = 0; // only Quadratic[2] approx
+  EqMap.AddSolver<MGSolQ> ( "Q", Q_F, _nvars[0], _nvars[1], _nvars[2], "Q" );
+#endif
+  return;
+  }
 
 
 
@@ -677,8 +711,10 @@ void EquationsMap::Fill_FIELD_map (
     _map_str2field["MG_ImmersedBoundary"]  = IB_F;    // [16]-> Color function for FSI
     _map_str2field["MG_CoupledTemperature"] = TCOUP_F;  // [29]-> Coupled Temperature optimality system
     _map_str2field["TCOUP_F"]   = TCOUP_F;    // [4] -> Temperature   (quadratic (2);T_EQUATIONS)
-    return;
-    }
+  _map_str2field["MG_MonoArea"]  = A_F;    // [30]-> Area for monodimensional code
+  _map_str2field["MG_MonoFlowrate"]  = Q_F;    // [31]-> Flowrate for monodimensional code
+  return;
+  }
 
 /// Solution sharing between activated equations
 void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
@@ -831,7 +867,18 @@ void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
 //                         }
 //                     }
                 }
-            }
+          // DA
+          if ( EqnName == "MG_DA" ) {
+              ProbObj->ActivateScalar ( 2, DA_F, "DA", _QuadEq );
+              }
+              
+          // ONE-DIMENSIONAL CODE
+          if ( EqnName == "MG_MonoArea" ) {
+              ProbObj->ActivateScalar ( 1, A_F, "A", _LinearEq );
+              ProbObj->ActivateScalar ( 1, Q_F, "Q", _LinearEq );
+              }
+        
+          }
 
         }
 

@@ -105,7 +105,7 @@ void init_eletypes() {
     {
       eledef.dim     = 1;    // SE3 Salome -> EDGE3 (8) LIBMESH ------------------------
       eledef.type    = EDGE3;  eledef.exptype = 8;     // element libmesh name/number
-      eledef.nnodes  = 3;   eledef.nfaces  = 2;        // number of nodes/faces
+      eledef.nnodes  = 3;      eledef.nfaces  = 2;        // number of nodes/faces
       eledef.nodes.clear();      // clean function
       const unsigned int nodes[] = {0,2,1}; // map
       // inverse map
@@ -806,7 +806,7 @@ int  SalomeIO::read_fem_type(
   fem_type_vol["TE4"] = 4;  fem_type_vol["T10"] = 11;
   fem_type_vol["QU4"] = 3;  fem_type_vol["QU8"] = 19; fem_type_vol["QU9"] = 10;
   fem_type_vol["TR3"] = 2;  fem_type_vol["TR6"] = 9;
-  fem_type_vol["SE2"] = 0;  fem_type_vol["SE3"] = 0;  // not valid in 3D
+  fem_type_vol["SE2"] = 1;  fem_type_vol["SE3"] = 8;  // not valid in 3D
   if(DIMENSION==3) {    // not valid in 3D as boundary
     fem_type_vol["QU4"] = 0; fem_type_vol["QU8"] = 0; fem_type_vol["QU9"] = 0;
     fem_type_vol["TR3"] = 0; fem_type_vol["TR6"] = 0;
@@ -824,7 +824,9 @@ int  SalomeIO::read_fem_type(
     fem_type_bd["TR6"] = 0;fem_type_bd["QU8"] = 0;fem_type_bd["QU9"] = 0;
     fem_type_bd["QU4"] = 0; fem_type_bd["TR3"] = 0;
   }
-
+  if(DIMENSION==1) {    // not valid in 3D as boundary
+    fem_type_bd["SE2"] = 0;  fem_type_bd["SE3"] = 0;
+  }
   hid_t       gid=H5Gopen(file_id,MESH_NAME_DIR,
 #if HDF5_VERSIONM!=188          
                     H5P_DEFAULT
@@ -842,6 +844,7 @@ int  SalomeIO::read_fem_type(
     H5Lget_name_by_idx(file_id,MESH_NAME_DIR, H5_INDEX_NAME, H5_ITER_INC,i,el_fem_type[i],4, H5P_DEFAULT);
     if(fem_type_vol[el_fem_type[i]]!=0 && index_vol==-1)  index_vol=i;
     if(fem_type_bd[el_fem_type[i]]!=0 && index_bd==-1)  index_bd=i;
+    if(DIMENSION==1) index_bd=0;
   }
 
   // LIBMESH volume fem type (itype_vol) and MEDfem (el_fem_type_vol-el_fem_type_bd)

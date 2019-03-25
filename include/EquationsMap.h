@@ -76,7 +76,9 @@ enum  FIELDS : int {
   MU_T = 27,
   ALPHA_T = 28,
   MG_CoupledTemperature = 29, // [29]-> Coupled Temperature optimality system 
-  TCOUP_F=29                  // [29]-> Coupled Temperature optimality system
+  TCOUP_F=29,                  // [29]-> Coupled Temperature optimality system
+  A_F = 30,                   // [30]-> 1D area solver 
+  Q_F=31                      // [31]-> 1D flow rate solver
   };
 
 
@@ -190,6 +192,12 @@ class EquationsMap {
 
     /// Initializaiton of Immersed Boundary system
     void initImmersedBoundary ( EquationSystemsExtendedM & EqMap );
+    
+    /// Initializaiton of one-dimensional Area system
+    void initAreaMono ( EquationSystemsExtendedM & EqMap );
+    
+    /// Initializaiton of one-dimensional Flowrate system
+    void initFlowrateMono ( EquationSystemsExtendedM & EqMap );
     
 
   };
