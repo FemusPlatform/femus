@@ -131,6 +131,54 @@ function femus_gencase_compile_lib {
   
 }
 
+function femus_turbulence_compile_lib_opt {
+
+  OLD_METHOD=$METHOD
+  export ACTUAL_DIR=$PWD
+  echo "Compiling femus turb library for 2D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_turb2D
+  femus_application_configure opt
+  # removing libturb_2d.so
+  make clean
+  make $1
+  
+  echo "Compiling femus turb library for 3D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_turb3D
+  femus_application_configure opt
+  # removing libturb_3d.so
+  make clean
+  make $1
+  
+  cd $ACTUAL_DIR
+  export METHOD=$OLD_METHOD
+  femus_application_configure $METHOD
+}
+
+function femus_turbulence_compile_lib_dbg {
+
+  OLD_METHOD=$METHOD
+  export ACTUAL_DIR=$PWD
+  echo "Compiling femus turb library for 2D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_turb2D
+  femus_application_configure dbg
+  # removing libturb_2d.so
+  make clean
+  # removing object files from femus/src
+  make $1
+  
+  echo "Compiling femus turb library for 3D geometry "
+  cd $PLAT_CODES_DIR/femus/applications/lib_turb3D
+  femus_application_configure dbg
+  # removing libturb_3d.so
+  make clean
+  # removing object files from femus/src
+  make $1
+  
+  cd $ACTUAL_DIR
+  export METHOD=$OLD_METHOD
+  femus_application_configure $METHOD
+}
+
 function femus_FEMuS_compile_lib_opt {
 
   OLD_METHOD=$METHOD
@@ -618,9 +666,16 @@ function femus_link_solver_files () {
   mkdir $PLAT_CODES_DIR/femus/solvers/ln_solvers/
   
   for solver in $SOLVERS; do
-      ln -s $PLAT_CODES_DIR/femus/solvers/$solver/*.h $PLAT_CODES_DIR/femus/solvers/ln_solvers/
-      ln -s $PLAT_CODES_DIR/femus/solvers/$solver/*.C $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+      unset SRC_FILES_TO_LINK
+      unset HEADER_FILES_TO_LINK
+      export SRC_FILES_TO_LINK=$(find $PLAT_CODES_DIR/femus/solvers/$solver/ -maxdepth 3 -name "*.C" )
+      export HEADER_FILES_TO_LINK=$(find $PLAT_CODES_DIR/femus/solvers/$solver/ -maxdepth 3 -name "*.h" )
+      for source_file in $SRC_FILES_TO_LINK; do
+          ln -s $source_file $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+      done
+      for header_file in $HEADER_FILES_TO_LINK; do
+          ln -s $header_file $PLAT_CODES_DIR/femus/solvers/ln_solvers/
+      done
   done 
-
-
+  
 }

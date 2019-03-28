@@ -40,6 +40,7 @@ MED_COUPL_DIR         =  $(MED_COUPL_PATH)
 
 INCLUDES =  -I./
 INCLUDES += -I$(FEMUS_DIR)/src/
+INCLUDES += -I$(FEMUS_DIR)/solvers/ln_solvers/
 INCLUDES += -I./DATA/
 INCLUDES += -I$(FEMUS_DIR)/include/
 INCLUDES += -I$(FEMUS_CONTRIB)/matrix/

@@ -387,7 +387,7 @@ void EquationsMap::initDynamicTurbulence ( EquationSystemsExtendedM & EqMap ) {
             break;
             }
 
-        case ::nagano_ke: {
+        case nagano_ke: {
             EqMap.AddSolver<MGSolNaganoKE> ( "K2K", K_F, _nvars[0], _nvars[1], _nvars[2], "kappa" );
             EqMap.AddSolver<MGSolNaganoKE> ( "K1W", K_F + 1, _nvars[0], _nvars[1], _nvars[2], "epsilon" );
             break;
@@ -399,9 +399,9 @@ void EquationsMap::initDynamicTurbulence ( EquationSystemsExtendedM & EqMap ) {
             break;
             }
 
-        case ::wilcox_log: {
-            EqMap.AddSolver<MGSolWilcoxLog> ( "K2K", K_F, _nvars[0], _nvars[1], _nvars[2], "log_k" );
-            EqMap.AddSolver<MGSolWilcoxLog> ( "K1W", K_F + 1, _nvars[0], _nvars[1], _nvars[2], "log_w" );
+        case wilcox_log: {
+            EqMap.AddSolver<MGSolWilcoxLog> ( "K2K", K_F, _nvars[0], _nvars[1], _nvars[2], "lk" );
+            EqMap.AddSolver<MGSolWilcoxLog> ( "K1W", K_F + 1, _nvars[0], _nvars[1], _nvars[2], "lw" );
             break;
             }
 
@@ -454,12 +454,64 @@ void EquationsMap::initThermalTurbulence ( EquationSystemsExtendedM & EqMap ) {
     EqMap.AddSolver<MGSolTTBK> ( "TK2", KTT_F + 1, _nvars[0], _nvars[1], _nvars[2], "wh" );
 #endif
 
+#endif    
+    
+#ifdef RANS_THERMAL_EQUATIONS
+    _nvars[0] = 0;                   // Costant(0)
+    _nvars[1] = 0;                   // Linear(1)
+    _nvars[2] = ( RANS_EQUATIONS % 2 ) + 1; // Quadratic(2)
+
+
+    const std::string TurbModel = ( _TurbulenceModel["RANS_thermal"] != "" ) ? _TurbulenceModel["RANS_thermal"] : "default";
+    int Model = ::ThermTurbModelMap.at ( TurbModel );
+
+    switch ( Model ) {
+        case nagano_logT: {
+            EqMap.AddSolver<MGSolNaganoLogT> ( "TK", KTT_F, _nvars[0], _nvars[1], _nvars[2], "lkh" );
+            EqMap.AddSolver<MGSolNaganoLogT> ( "TK2", KTT_F + 1, _nvars[0], _nvars[1], _nvars[2], "lwh" );
+            break;
+            }
+
+        case nagano_kwT: {
+            EqMap.AddSolver<MGSolNaganoKWT> ( "TK", KTT_F, _nvars[0], _nvars[1], _nvars[2], "kh" );
+            EqMap.AddSolver<MGSolNaganoKWT> ( "TK2", KTT_F + 1, _nvars[0], _nvars[1], _nvars[2], "wh" );
+            break;
+            }
+
+        case nagano_keT: {
+            EqMap.AddSolver<MGSolNaganoKET> ( "TK", KTT_F, _nvars[0], _nvars[1], _nvars[2], "kh" );
+            EqMap.AddSolver<MGSolNaganoKET> ( "TK2", KTT_F + 1, _nvars[0], _nvars[1], _nvars[2], "eh" );
+            break;
+            }
+
+        case default_therm: {
+            std::cerr << "==================================================================\n";
+            std::cerr << " MGEquationSystem: settin default therm turb model: nagano_logT \n";
+            std::cerr << "==================================================================\n";
+            EqMap.AddSolver<MGSolNaganoLogT> ( "TK", KTT_F, _nvars[0], _nvars[1], _nvars[2], "lkh" );
+            EqMap.AddSolver<MGSolNaganoLogT> ( "TK2", KTT_F + 1, _nvars[0], _nvars[1], _nvars[2], "lwh" );
+            break;
+            }
+
+        default: {
+            std::cerr << "==================================================================\n";
+            std::cerr << " MGEquationSystem: unknown turbulence model " << TurbModel << "\n";
+            std::cerr << " change value inside Turbulence.in -> RANS_thermal value    \n";
+            std::cerr << "==================================================================\n";
+            abort();
+            break;
+
+            }
+        }
+
+#endif    // end TBK model =============================================================      
+    
 #ifdef _TURBULENCE_
     _nvars[2] = 1;
     EqMap.AddSolver<MGSolTURB> ( "ALPHA_T", ALPHA_T, _nvars[0], _nvars[1], _nvars[2], "alphaT" );
 #endif
 
-#endif
+
     return;
     }
 

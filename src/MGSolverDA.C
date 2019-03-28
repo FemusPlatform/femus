@@ -1063,6 +1063,63 @@ void  MGSolDA::get_el_dof_bc (
   return;
   }
 
+  /// This function gets  the dof , the bc and the solution  vector at the nodes of  an element
+void  MGSolDA::set_el_dof_bc (
+  const int Level,       // level
+  const int iel,         // element subdomain
+//   const int nvars[],       // # of variables to get  <-
+  const int el_nds[],      // # of element nodes for this variable  <-
+  const int el_conn[],   // connectivity <-
+  const int  offset,      // offset for connectivity <-
+  std::vector<int>  &  el_dof_indices, // element connectivity ->
+  int  bc_vol[],        // element boundary cond flags ->
+  int  bc_bd[]        // element boundary cond flags ->
+)  const { // ==============================================================
+
+  for ( int id = 0; id < NDOF_FEM; id++ )  {
+      // quadratic -------------------------------------------------
+      if ( id < el_nds[2] )  for ( int  ivar = 0; ivar < _nvars[2]; ivar++ ) { //ivarq is like idim
+            const int indx_loc = id + ivar * NDOF_FEM;
+            const int indx_loc_ql = id + ivar * el_nds[2];
+            const int indx_glob = el_conn[id] + ivar * offset;
+            const int kdof_top = _node_dof[_NoLevels - 1][indx_glob]; // dof from top level
+
+            el_dof_indices[indx_loc_ql] = _node_dof[Level][indx_glob];    //from mesh to dof
+             _bc[1][kdof_top]=bc_bd[indx_loc]         ;                    // element bc
+             _bc[0][kdof_top]=bc_vol[indx_loc]        ;                    // element bc
+            } // end quadratic ------------------------------------------------
+
+//     // linear -----------------------------
+//       if ( id < el_nds[1] )    for ( int ivar = 0; ivar < _nvars[1]; ivar++ ) { //ivarq is like idim
+// //        const int  indx_loc_l = id +ivar*el_nds[1];
+//             const int indx_loc = id + ( ivar + _nvars[2] ) * NDOF_FEM;
+//             const int indx_loc_ql = id + ivar * el_nds[1] + _nvars[2] * el_nds[2];
+//             const int indx_glob = el_conn[id] + ( ivar + _nvars[2] ) * offset;
+//             const int kdof_top = _node_dof[_NoLevels - 1][indx_glob]; // dof from top level
+// 
+//             el_dof_indices[indx_loc_ql] = _node_dof[Level][indx_glob];    //from mesh to dof
+//             bc_bd[indx_loc]         = _bc[1][kdof_top];                    // element bc
+//             bc_vol[indx_loc]        = _bc[0][kdof_top];                    // element bc
+//             } // end quadratic ------------------------------------------------
+// 
+// 
+//       //     // piecewise -----------------------------
+//       if ( id < el_nds[0] )    for ( int ivar = 0; ivar < _nvars[0]; ivar++ ) { //ivarq is like idim
+// //        const int  indx_loc_l = id +ivar*el_nds[1];
+//             const int indx_loc = id + ( ivar + _nvars[2] + _nvars[1] ) * NDOF_FEM;
+//             const int indx_loc_ql = id + ivar * el_nds[0] + _nvars[2] * el_nds[2] + _nvars[1] * el_nds[1];
+//             const int indx_glob = id + iel * el_nds[0] + ( ivar + _nvars[2] + _nvars[1] ) * offset;
+//             const int kdof_top = _node_dof[_NoLevels - 1][indx_glob]; // dof from top level
+// 
+//             el_dof_indices[indx_loc_ql] = _node_dof[Level][indx_glob];    //from mesh to dof
+//             bc_bd[indx_loc]         = _bc[1][kdof_top];                    // element bc
+//             bc_vol[indx_loc]        = _bc[0][kdof_top];                    // element bc
+//             } // end piecewise ------------------------------------------------
+      }
+
+  return;
+  }
+  
 // =================================================================================
 /// This function interpolates a vector field and its derivative over the fem element
 void  MGSolDA::interp_el_gdx (

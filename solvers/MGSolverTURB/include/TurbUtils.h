@@ -6,53 +6,25 @@
 
 #include "TurbModels.h"
 
+class DYNturModels;
+class Therm4P;
+
 class TurbUtils{
 private:  
-  // NAGANO-DERIVED TURBULENCE MODEL COEFFICIENTS
-  const double __CMU = 0.09;
-  const double __CP1 = 1.025;
-  const double __CP2 = 0.9;
-  const double __CD1 = 1.1;
-  const double __CD2 = 1.9;
-  const double __C20 = 1.9;
-  const double __C10 = 1.5;
-  const double __Prdl_inf = 0.75;
-  
-  // WILCOX-DERIVED TURBULENCE MODEL COEFFICIENTS
-  const double __AW = 13./25.;
-  const double __AN = 1. - __AW;
-  const double __BETAS = 8./100.;
-  const double __BETAW = 3./40.;
-  const double __BETAN = __BETAS - __BETAW;
-  
   double _klim, _wlim, _khlim, _whlim, _elim, _ehlim;
+  double __IPr;
   
-  // DYNAMICAL TURBULENCE FUNCTIONS
-  double __Rt    ;
-  double __Rd    ;
-  double __fmu   ;
-  double __fcorr ;
-  double __Ret   ;
+  double __CMU=0.09;
   
-  // THERMAL TURBULENCE FUNCTIONS
-  double __IPr      ;  
-  double __rT       ;
-  double __F1t      ;
-  double __F2at     ;
-  double __F2bt     ;    
- 
   const int __Proc;
   int       __MeshID;
   int       __NMeshes;
   
-  int _LibToMed_3D[27]    = {7, 4, 5, 6, 3, 0, 1, 2, 19, 16, 17, 18, 11, 8, 9, 10, 15, 12, 13, 14, 25, 24, 21, 22, 23, 20, 26};
-  int _LibToMed_2D[9]    = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-  int **_CanElemMap;
-
 public: 
   double _utau;
   double _kwall;
   double _wwall;
+  
   double _BoundWallDist;
   double _MuTurb;
   double _AlphaTurb;
@@ -84,9 +56,12 @@ public:
   std::map<std::string, DynTurbModel> _DynamicModel;  
   std::map<std::string, ThermTurbModel> _ThermalModel; 
   
+  DYNturModels * _DynModel;
+  Therm4P      * _ThermModel;
+  
 public:
   TurbUtils(int MeshId = 0, int nMeshes = 0);  
-
+  
   ~TurbUtils();
   void read_file();
   void print_par();
@@ -152,14 +127,20 @@ public:
   
   void DynTurInitValues(double & kappa, double & omega, double WallDist, bool FlatProfile);
   void DynTurInitValues(double & kappa, double & omega, double WallDist, double Utau);
-  void TherTurInitValues(double & kappaT, double & omegaT, double WallDist, double NormFlux, double AvVel, double Diameter, bool FlatProfile);
-  void CalcWallFuncKappaAndOmega(double KappaAndOmega[], int NodeOnBound, double WallDist, double utau);
-  void CalcWallFuncThermalKappaAndOmega(double KappaAndOmega[], int NodeOnBound, double WallDist, double utau);
+  void TherTurInitValues(double & kappaT, double & omegaT, double WallDist, double RefDeltaT, double AvVel, double Diameter, bool FlatProfile);
+
   inline bool CheckIfFilled(){return _IsFilled;}
   inline void SetAvVel(double vel){ _vmid = vel;}
   inline void SetDiameter(double diameter){ _diameter = diameter;}
   double Musker (double dist, double utau) ;  
 
+  inline double GetKlim(){return _klim;}
+  inline double GetElim(){return _elim;}
+  inline double GetWlim(){return _wlim;}
+  inline double GetKHlim(){return _khlim;}
+  inline double GetEHlim(){return _ehlim;}
+  inline double GetWHlim(){return _whlim;}
+  
 };
 
 

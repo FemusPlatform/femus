@@ -2053,7 +2053,7 @@ void MGFE::get_phi_gl_g (
     double phi[]     // shape functions ->
 ) {// =================================================
     for ( int ish=0; ish<_NoShape[kdim-1]; ish++ ) {
-        phi[ish] = _phi_map1[kdim-1][ish*_NoGauss1[kdim-1]+qp];
+        phi[ish] = _phi_map1[kdim-1][ish*_NoGauss1[kdim-1]+qp];        
     }
     return;
 }

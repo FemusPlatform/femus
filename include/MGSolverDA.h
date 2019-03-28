@@ -411,6 +411,20 @@ public:
         int bc_vol[],        // element boundary cond flags ->
         int  bc_bd[]        // element boundary cond flags ->
     )  const ;  // ==============================================================
+    
+    void  set_el_dof_bc (
+        const int Level,       // level
+        const int iel,
+//   const int nvars[],       // # of variables to get  <-
+        const int el_nds[],      // # of element nodes for this variable  <-
+        const int el_conn[],   // connectivity <-
+        const int offset,      // offset for connectivity <-
+        std::vector<int>   & el_dof_indices, // element connectivity ->
+        int bc_vol[],        // element boundary cond flags ->
+        int  bc_bd[]        // element boundary cond flags ->
+    )  const ;  // ==============================================================
+    
+    
 ///@}
 
  void set_dt (double dt){_dt =dt;}; // computation val3=musker

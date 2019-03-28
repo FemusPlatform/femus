@@ -13,96 +13,82 @@
 # ----------------------------------------------------------
 # -------------------- FLAGS -------------------------------
 # ----------------------------------------------------------
-# define the compiler to use
+
+OBJ_DIR = obj/
+TURB_SOLVERS = $(FEMUS_DIR)/solvers/MGSolverTURB/solvers/
+TURB_UTILITY = $(FEMUS_DIR)/solvers/MGSolverTURB/utility/
+TURB_INCLUDE = $(FEMUS_DIR)/solvers/MGSolverTURB/include/
+
+
 CXX = mpicxx
-# define the optimized and the debugging flag for compiling
+
+
 ifeq ($(METHOD),opt)
   CFLAGS = -O3 -w -fPIC -std=c++11 -DNDEBUG
 else
   CFLAGS = -O0 -felide-constructors -g -ansi -pedantic -W -Wall -Wextra \
   -Wno-long-long -Wpointer-arith -Wformat -Wparentheses -fPIC -std=c++11
-
 endif
 
-#### ------------   LIBMESH -----------------------------
-LIBMESH_INCLUDE=$(LIBMESH_PATH)/include/
-LIBMESH_CONTRIB=$(LIBMESH_PATH)/contrib/
-LIBMESH_LIB=$(LIBMESH_PATH)/lib64/
-# ----------------------------------------------------------
-# -------------------- INCLUDE -----------------------------
-# ----------------------------------------------------------
-# define any directories containing header files other than /usr/include
+
+# ----------------------------------------------------------------------------------------
+# PATHS FOR HEADER FILES
+# ----------------------------------------------------------------------------------------
 CONTRIB_HDF5_INCPATH =  $(HDF5_PATH)/include
 FEMUS_CONTRIB        =  $(FEMUS_DIR)/contrib
 MED_ROOT_DIR         =  $(MED_PATH)
 med_ROOT_DIR         =  $(med_PATH)
 MED_COUPL_DIR         =  $(MED_COUPL_PATH)
 
-INCLUDES =  -I./
-INCLUDES += -I$(FEMUS_DIR)/src/
-INCLUDES += -I$(FEMUS_DIR)/solvers/ln_solvers/
+INCLUDES =  -I$(TURB_INCLUDE)
 INCLUDES += -I./DATA/
 INCLUDES += -I$(FEMUS_DIR)/include/
 INCLUDES += -I$(FEMUS_CONTRIB)/matrix/
 INCLUDES += -I$(FEMUS_CONTRIB)/parallel/
-# INCLUDES += -I$(FEMUS_CONTRIB)/Libmesh_cpp/
-# INCLUDES += -I$(FEMUS_CONTRIB)/Libmesh_cpp/libmesh_problem/
-# INCLUDES +=-I${LIBMESH_PATH}/include/
 INCLUDES += -I$(CONTRIB_HDF5_INCPATH)
 INCLUDES += -I$(PETSC_DIR)/include
 INCLUDES += -I${MED_ROOT_DIR}/include/salome/ 
 INCLUDES += -I${med_ROOT_DIR}/include/
 INCLUDES += -I${MED_COUPL_DIR}/include/
-# the files below are set in order to know when it is necessary to recompile.
-# If the INCLUDES_SRC are changed than the SRC files will be recompiled,
-# if the INCLUDES_CONTRIB are changed than the SRC_CONTRIB files will be recompiled,
+
+
+# ----------------------------------------------------------------------------------------
+# LIST OF HEADER FILES THAT REQUIRE LIBRARY COMPILATION WHEN MODIFIED
+# ----------------------------------------------------------------------------------------
 INCLUDES_SRC  =  $(wildcard ./DATA/*.h)
 INCLUDES_SRC +=  $(wildcard $(FEMUS_DIR)/include/*.h)
+INCLUDES_SRC +=  $(wildcard $(TURB_INCLUDE)/*.h)
 INCLUDES_CONTRIB  =  $(wildcard $(FEMUS_CONTRIB)/matrix/*.h)
 INCLUDES_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/parallel/*.h)
 
 
-
-# ----------------------------------------------------------
-# -------------------- LIBRARIES ---------------------------
-# ----------------------------------------------------------
-# specify library paths needed by FEMUS (we need PETSC and 
-# HDF5 libraries to compile FEMUS)
+# ----------------------------------------------------------------------------------------
+# PATHS TO NEEDED LIBRARIES
+# ----------------------------------------------------------------------------------------
 LFLAGS += -L$(HDF5_PATH)/lib/
 LFLAGS += -L$(PETSC_DIR)/lib/
 LFLAGS += -L$(MED_ROOT_DIR)/lib/salome/
 LFLAGS += -L$(med_ROOT_DIR)/lib/
 LFLAGS += -L$(MED_COUPL_DIR)/lib/
-# LFLAGS += -L${LIBMESH_PATH}/lib64/ 
-# and now specify the libraries' names
+
+
+# ----------------------------------------------------------------------------------------
+# NEEDED LIBRARIES
+# ----------------------------------------------------------------------------------------
 LIBS =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC 
-#      -lmesh_opt
 
 
+# ----------------------------------------------------------------------------------------
+# SOURCE FILES TO BE COMPILED
+# ----------------------------------------------------------------------------------------
+SRC_APP_FILES = $(sort $(notdir $(wildcard $(TURB_SOLVERS)/*.C )))
+SRC_APP_FILES += $(sort $(notdir $(wildcard $(TURB_UTILITY)/*.C )))
+SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_APP_FILES))
+OBJS_APP = $(addprefix $(OBJ_DIR), $(SRC_APP_OBJS))
 
-# ----------------------------------------------------------
-# ---------------- SOURCES and OBJECTS ---------------------
-# ----------------------------------------------------------
-# we divide the source files in two groups, the sources of
-# the application and of FEMUS (SRC) and the sources of the
-# contrib (SRC_CONTRIB). They are recompiled in different cases.
-# SRC := $(wildcard $(FEMUS_DIR)USER_APPL/$(FM_MYAPP)/SRC/*.C)
-SRC := $(wildcard $(FEMUS_DIR)/src/*.C)
-SRC_CONTRIB := $(wildcard $(FEMUS_CONTRIB)/matrix/*.C)
-SRC_CONTRIB += $(wildcard $(FEMUS_CONTRIB)/parallel/*.C)
-# SRC_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/Libmesh_cpp/*.C)
-# SRC_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/Libmesh_cpp/libmesh_problem/*.C)
-# now define the correspondig objects of the source files simply by
-# replacing the suffix .c of all words with the .o suffix.
-SRC_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC))
-CONTRIB_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_CONTRIB))
-# finally define the executable file name 
-MAIN = $(FEMUS_DIR)/lib/libfemus_3d_$(METHOD).so
+MAIN = $(FEMUS_DIR)/lib/libturb_2d_$(METHOD).so
 
-LIB_SRC_APP_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/src/*.C )))
-LIB_SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(LIB_SRC_APP_FILES))
-LIB_SRC_FEMUS_OBJS = $(addprefix $(FEMUS_DIR)/src/obj/, $(LIB_SRC_APP_OBJS))
 
 # --------------------------------------------------------
 # -------------- MAKE COMMANDS ---------------------------
@@ -117,7 +103,7 @@ all:    $(MAIN)
 # this is the rule for linking the objects to obtain the executable file.
 # There are two groups of objects, the SRC and the CONTRIB objects, which
 # are recompiled in different cases
-$(MAIN): $(LIB_SRC_FEMUS_OBJS) $(CONTRIB_OBJS)
+$(MAIN): $(OBJS_APP) 
 	@echo 
 	@echo "Linking "$@"..."
 	@echo 
@@ -135,20 +121,24 @@ $(MAIN): $(LIB_SRC_FEMUS_OBJS) $(CONTRIB_OBJS)
 # groups of objects. Note that the SRC_OBJS are recompiled if the
 # INCLUDES_SRC files change, while the CONTRIB_OBJS are recompiled if the
 # INCLUDES_CONTRIB files change.
-$(SRC_OBJS): $(INCLUDES_SRC)
-$(LIB_SRC_FEMUS_OBJS): $(INCLUDES_SRC)
-$(CONTRIB_OBJS): $(INCLUDES_CONTRIB)
+$(OBJS_APP): $(INCLUDES_SRC)
 %-$(METHOD).o : %.C
 	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
 	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # RULE FOR LIBRARY FILES
-$(FEMUS_DIR)/src/obj/%-$(METHOD).o : %.C
+obj/%-$(METHOD).o : %.C
 	@mkdir -p $(dir $@)
 	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
-	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@		
+	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
 	
-vpath %.C $(FEMUS_DIR)/src/
+
+
+vpath %.C $(FEMUS_DIR)/solvers/MGSolverTURB/solvers/
+vpath %.C $(FEMUS_DIR)/solvers/MGSolverTURB/utility/
+
+
+
 
 # Remark 1 
 # In this rule the automatic variables $< and $@ are used.
@@ -171,12 +161,7 @@ vpath %.C $(FEMUS_DIR)/src/
 
 # The other useful rules below are explained in the MAKEFILE uses, see above
 clean:
-	$(RM) $(MAIN)
-
-src_clean:
-	@rm -f ../../src/*.o ../../src/obj/*.o ../../contrib/matrix/*.o ../../contrib/parallel/*.o
-
-
+	$(RM) obj/*-$(METHOD).o *~ $(MAIN)
 
 # -------------   MAKE depend and depend file ------------------------
 # include the dependency list 
