@@ -28,8 +28,6 @@
 #include "Solverlib_conf.h"
 #include "MGFE_conf.h"
 
-#ifdef HAVE_MED
-
 namespace MEDCoupling {
 class MEDLoader;
 class MEDCouplingUMesh;
@@ -47,9 +45,6 @@ class MEDCouplingFieldDouble;
 #include "InterpKernelGeo2DNode.hxx"
 
 
-#endif
-
-#ifdef HAVE_MED
 MedUtils::MedUtils() {
   _proc=0;
 }
@@ -121,9 +116,10 @@ double MedUtils::Integrate(
     std::cout<<"\033[1;31m +++++++++ Attention! AxiBulk not valid with 3D geometry! Method converted to Bulk ++++++++++ \033[0m" <<std::endl;
     rad = 2;
   }
-  bool BulkMedium=_BulkMedium;
   
   IntCoefficients(rad);
+  
+  bool BulkMedium=_BulkMedium;
 
   const MEDCoupling::MEDCouplingMesh * Mesh = Field->getMesh();
   const int offset= Mesh->getNumberOfNodes();               // offset
@@ -437,7 +433,8 @@ MEDCoupling::MEDCouplingFieldDouble* MedUtils::GetCellField(const MEDCoupling::M
   CellArray->decrRef();
   return f;
 }
-#endif
+
+
 #endif
 
 // kate: indent-mode cstyle; indent-width 2; replace-tabs on; 

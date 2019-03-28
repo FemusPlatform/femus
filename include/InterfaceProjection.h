@@ -42,6 +42,11 @@ public:
            int procId,
             DomainType bdd = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
 	      );
+   InterfaceProjection (
+       const MEDCoupling::MEDCouplingUMesh * SourceMesh,    /**< Mesh support of the source geometry */
+       std::vector<double> coord,                           /**< Point of the desired field measurement */
+       int procId 
+);
 
    //! Destructor of the InterfaceProjection Class
   ~InterfaceProjection();
@@ -53,6 +58,12 @@ public:
      const MEDCoupling::MEDCouplingUMesh * TargetMesh, ///< Mesh support of the target geometry 
      int DomainType = Boundary,                        ///< Domain type of the mesh group (Boundary of Volume) 
      double XiEtaToll = 1.e-3                          ///< tolerance
+  );
+   
+   void FillParametersProbe (
+    const MEDCoupling::MEDCouplingUMesh * SourceMesh,  ///< Mesh support of the source geometry 
+    std::vector<double> coord,                         ///< Point of the desired field measurement
+    double XiEtaToll = 1.e-3                           ///< tolerance
   );
    
    //! Space Dimension of the solved geometry
@@ -88,6 +99,8 @@ public:
    //! Total number of cells in the source mesh
    int _SrcCells;
    int _AlreadyInitialized;
+   
+   int _OutOfDomain = 0;
    
    //! Vector where the gradient components of function F are stored
    std::vector<double> _dF;
@@ -303,6 +316,10 @@ int  npt_el=2
       double DefaultValue,
       const int order = 2
    );
+   
+   double InterpolatedFieldProbe ( const MEDCoupling::MEDCouplingFieldDouble* SourceField,  /**< Source mesh field containing the solution used for the interpolation */
+                                   const int order = 2
+                                 );
    
    
   /// \f$ \xi,\eta,\chi \f$ coordinates of the HEX8 vertices 

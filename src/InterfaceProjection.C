@@ -17,6 +17,7 @@
 // ================================================================================================
 InterfaceProjection::InterfaceProjection() : MedUtils() {
   __Filled=0;
+  _AlreadyInitialized=0;
 }
 
 
@@ -38,11 +39,23 @@ InterfaceProjection::InterfaceProjection (
     DomainType   vol_sur 
 ) : MedUtils() {
 
-   __Filled=0;
+    __Filled=0;
     _AlreadyInitialized=0;
     setProcId(procId);
     FillParameters ( SourceMesh,TargetMesh,vol_sur );
 }
+
+InterfaceProjection::InterfaceProjection (
+    const MEDCoupling::MEDCouplingUMesh * SourceMesh,
+    std::vector<double> coord,
+    int procId 
+) : MedUtils() {
+   __Filled=0;
+    _AlreadyInitialized=0;
+    setProcId(procId);
+    FillParametersProbe (SourceMesh, coord);
+}
+
 
 // ================================================================================================
 void InterfaceProjection::FillParameters (
@@ -534,6 +547,169 @@ void InterfaceProjection::FillParameters (
     CellBelonging->decrRef(); 
     return;
 }
+
+// ================================================================================================
+void InterfaceProjection::FillParametersProbe (
+    const MEDCoupling::MEDCouplingUMesh * SourceMesh,
+    std::vector<double> coord, 
+    double XiEtaToll
+) {
+    // Important!
+    // Update the map when interpolation between different element types is available  //
+    std::map<int,int> InterpCoordNodes;
+    InterpCoordNodes[27]=8;
+    InterpCoordNodes[9] =4;
+    InterpCoordNodes[3] =2;
+    InterpCoordNodes[10]=4;
+    InterpCoordNodes[6]=3;
+    InterpCoordNodes[7]=3;
+
+    if(__Filled==1){
+       __InMesh->decrRef();
+    }
+    __InMesh = SourceMesh->deepCopy();
+    __Filled = 1;
+    
+    std::string name = SourceMesh->getName();
+    _SrcCellNodes        = __InMesh->getNumberOfNodesInCell ( 0 );
+    _SrcCoordInterpNodes = InterpCoordNodes[_SrcCellNodes];
+    _SrcCells = __InMesh -> getNumberOfCells();
+    
+    
+    
+    INTERP_KERNEL::NormalizedCellType Type = __InMesh->getTypeOfCell ( 0 );
+    if ( Type==6 || Type==7 || Type==14 || Type==20 ) _FamilyType=0;
+    else _FamilyType=1;
+    
+    _SpaceDim            = __InMesh->getSpaceDimension();
+    _MeshDim             = __InMesh->getMeshDimension();
+
+// Number of nodes of source mesh per mesh element used for the calculation
+// of the target mesh point coordinates in the canonical element
+    
+    std::clock_t par_time1 = std::clock();
+
+    MEDCoupling::DataArrayDouble * XiEta1 = MEDCoupling::DataArrayDouble::New();
+    XiEta1->alloc ( 1,0 );
+    XiEta1->fillWithValue ( 0. );
+
+    MEDCoupling::DataArrayInt * BoundingNodes1 = MEDCoupling::DataArrayInt::New();
+    BoundingNodes1->alloc ( 1,_SrcCellNodes );
+    BoundingNodes1->fillWithValue ( -1 );
+
+    double Bbox[2*_SpaceDim];
+    SourceMesh->getBoundingBox ( Bbox );
+    double height = fabs ( Bbox[3] - Bbox[2] );
+    double width =  fabs ( Bbox[1] - Bbox[0] );
+
+    double pointA[2];
+    pointA[0] = Bbox[0] - 1.e4*width;
+    pointA[1] = Bbox[2] - 1.e4*height;
+    double pointB[2];
+    pointB[0] = Bbox[0] - 1.e4*width;
+    pointB[1] = Bbox[3] + 1.e4*height;
+
+    int SecMatrix[_SrcCells][4];
+
+    MEDCoupling::DataArrayInt *targetArray = MEDCoupling::DataArrayInt::New();
+    targetArray -> alloc ( 1,1 );
+    targetArray -> fillWithValue ( 1 );
+
+    MEDCoupling::DataArrayDouble *CellBelonging = MEDCoupling::DataArrayDouble::New();
+    CellBelonging -> alloc ( 1,1 );
+    CellBelonging -> fillWithValue ( -1 );
+
+    //***************************************************************
+    double TCbbox[2*DIMENSION];
+    double minmax[2*DIMENSION];
+    if ( _AlreadyInitialized==0 ) {
+        InitFe();
+        _AlreadyInitialized=1;
+    }
+    const int Quad4[8] = {-1, 1, 1,-1, -1,-1, 1, 1  }; // (xi,eta,zeta)
+    const int Edge2[2] = {-1, 1}; // (xi,eta,zeta)
+
+        std::clock_t par_time12 = std::clock();
+
+        //****** new med search
+
+//       elts ->     vector returning ids of found cells.
+        MEDCoupling::MCAuto<MEDCoupling::DataArrayInt> elts;
+        MEDCoupling::MCAuto<MEDCoupling::DataArrayInt> eltsIndex;
+        int dimm = coord.size();
+        double pos[dimm];
+        for ( int dim=0; dim<dimm; dim++ ) {
+            pos[dim] = coord[dim];    
+        }
+
+        std::map<int,int> MedLibmesh;
+        BuildCanonicalElementNodesMap ( _SrcCellNodes, MedLibmesh );
+
+//******************************************************************************
+//         __InMesh->getCellsContainingPoint ( pos, 1.e-5, elts );
+        __InMesh->getCellsContainingPoints ( pos, 1 ,1.e-5,elts,eltsIndex );
+        
+//         Calculation of number of cells that can contain the point
+        int NumPossibleCells = elts->getNbOfElems();  
+            
+        std::vector<int> SourceConn;
+            bool found = false;
+            
+            if ( NumPossibleCells>0 ) {
+                int iCount =0;
+                while ( !found && iCount < NumPossibleCells ) {
+                    _XiEtaChi.clear();
+                    int NewCell = elts->getIJ ( iCount,0 );
+                    std::cout<<"CHECKING CELL No " << NewCell <<"\n";
+                    __InMesh->getNodeIdsOfCell ( NewCell,SourceConn );
+
+                    for ( int SNode = 0; SNode<_SrcCellNodes; SNode++ ) {
+                        BoundingNodes1->setIJ ( 0, SNode, SourceConn[SNode] ); 
+                        CellBelonging->setIJ ( 0, 0, NewCell );
+                        if ( SNode <_SrcCoordInterpNodes ) {
+                            __InMesh -> getCoordinatesOfNode ( SourceConn[SNode],_CoordMatrix );    // only linear nodes
+                        }
+                    }
+                    XiEtaChiCalc ( pos );
+                    int Contained = IsNodeContained();
+                    if ( Contained==0 ) {
+                        found=false;
+                        _XiEtaChi.clear();
+                        _CoordMatrix.clear();
+                        SourceConn.clear();
+                    } else if ( Contained==1 ) found = true;
+                    iCount++;
+                } // end while
+
+                if ( !found ) {
+                    for ( int SNode = 0; SNode<_SrcCellNodes; SNode++ ) BoundingNodes1->setIJ ( 0, SNode, -1 );
+                } else {
+                    for ( int Mcomp=0; Mcomp<_MeshDim; Mcomp++ ) {
+                        XiEta1->setIJ ( 0, Mcomp, _XiEtaChi[Mcomp] );
+                    }
+                }
+                _CoordMatrix.clear();
+                _XiEtaChi.clear();
+            }
+            else {
+                _OutOfDomain = 1;
+            }
+            SourceConn.clear();
+   
+    targetArray->decrRef(); 
+
+    if(_BoundingNodes != NULL) _BoundingNodes->decrRef();
+    _BoundingNodes = BoundingNodes1;
+    if(_XiEta != NULL) _XiEta->decrRef();
+    _XiEta = XiEta1;
+
+    __BoundNodesPerCell = _SrcCellNodes;
+    
+    CellBelonging->decrRef(); 
+    return;
+}
+
+
 // ================================================================================================
 InterfaceProjection::~InterfaceProjection() {
     __InMesh->decrRef();
@@ -810,6 +986,9 @@ void InterfaceProjection::XiEtaChiCalc ( double NodePos[] ) {
                 }
             }
         }
+        if ( _MeshDim==1 ) {
+            InvHex[0] = 1/_d2F[0];
+        }
 
 
         // Calculating the variation of xi, eta, chi
@@ -845,7 +1024,6 @@ void InterfaceProjection::XiEtaChiCalc ( double NodePos[] ) {
         _dF.clear();
         _d2F.clear();
     }
-
     for ( int Mcomp=0; Mcomp<_MeshDim; Mcomp++ ) {
         _XiEtaChi.push_back ( XiEtaChi[Mcomp] );
     }
@@ -1392,6 +1570,67 @@ InterfaceProjection::InterpolatedField ( const MEDCoupling::MEDCouplingFieldDoub
     f->setName ( EqName );
     targetArray->decrRef();
     return f;
+}
+
+// Function that returns the value of a field (Field) on a desired point (coord) set by FillParametersProbe
+double InterfaceProjection::InterpolatedFieldProbe ( const MEDCoupling::MEDCouplingFieldDouble* SourceField,  const int order) {
+    
+    if(_OutOfDomain == 1){
+        std::cout<< "\033[038;5;" << 155 << ";1m "
+               << "WARNING: Cell not found for target point. Probably the selected point is out of the domain \n \033[0m";
+    }               
+   
+    const int NComp = SourceField->getNumberOfComponents();
+
+    MEDCoupling::DataArrayDouble *targetArray = MEDCoupling::DataArrayDouble::New();
+    targetArray -> alloc ( 1,NComp );
+    std::string EqName = SourceField->getName();
+
+        std::map<int,int> InterpCoordNodes;
+        InterpCoordNodes[27]=8;
+        InterpCoordNodes[9] =4;
+        InterpCoordNodes[3] =2;
+        InterpCoordNodes[10]=4;
+        InterpCoordNodes[6]=3;
+        InterpCoordNodes[7]=3;
+            // Vector where we store the ids of the source mesh nodes that are used for the interpolation of the solution on target node
+            std::vector<int> BoundingNodes;
+            std::vector<double> XiEtaChi;
+            double TrgValue;
+            double CanPos[_MeshDim];
+            GetInterNodes ( 0,  BoundingNodes );
+            GetXiEtaChi ( 0, XiEtaChi );
+
+            if ( BoundingNodes[0] != -1 ) {
+                for ( int dim=0; dim<_MeshDim; dim++ ) {
+                    CanPos[dim] = XiEtaChi[dim];
+                }
+                double val,phi;
+                for ( int iComp=0; iComp<NComp; iComp++ ) {
+
+
+                    if ( ( ( EqName=="NS0" || EqName=="FSI0" ||EqName=="FSIA0"||EqName=="NSA0" ) && iComp == _SpaceDim ) ||order==1 ) {
+                        TrgValue = 0.;
+                        for ( int phin = 0; phin< pow ( 2,DIMENSION ); phin ++ ) { /// only edge quad and hex
+                            double val = SourceField->getIJ ( BoundingNodes[phin], iComp );
+                            double phi = LinPhi ( phin, CanPos );
+                            TrgValue +=  val*phi;
+                        }
+                    } else {
+                        TrgValue = 0.;
+                        for ( int phin = 0; phin< __BoundNodesPerCell; phin ++ ) {
+                            double val = SourceField->getIJ ( BoundingNodes[phin], iComp );
+                            double phi = QuadPhi ( phin, CanPos );
+                            TrgValue +=  val*phi;
+                        }
+                    }
+                    targetArray->setIJ ( 0,iComp,TrgValue );
+                    BoundingNodes.clear();
+                    XiEtaChi.clear();
+                }
+            }
+    
+return TrgValue;
 }
 
 
