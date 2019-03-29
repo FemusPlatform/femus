@@ -188,8 +188,6 @@ function femus_FEMuS_compile_lib_opt {
   femus_application_configure opt
   # removing libfemus_2d.so
   make clean
-  # removing object files from femus/src
-  make src_clean
   make $1
   
   echo "Compiling femus library for 3D geometry "
@@ -197,12 +195,7 @@ function femus_FEMuS_compile_lib_opt {
   femus_application_configure opt
   # removing libfemus_2d.so
   make clean
-  # removing object files from femus/src
-  make src_clean
   make $1
-  
-  # cleaning after lib building
-  make src_clean
   
   cd $ACTUAL_DIR
   export METHOD=$OLD_METHOD

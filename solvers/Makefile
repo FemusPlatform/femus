@@ -1,16 +1,11 @@
-######### MAKEFILE FOR FEMUS APPLICATION ##################
-# ----------------------------------------------------------
-# --------------------- USES -------------------------------
-# ----------------------------------------------------------
-# make : compile the main application we are running
-# make gencase : compile the gencase
-# make clean : delete the objects files and the executable just in the app directory
-# make src_clean : delete everything compiled in femus
-# make resu_clean : delete the solutions in the app RESU dir, excluding mesh and matrixes
-# make all_clean : delete everything compiled in femus and clean the app RESU directory
+############################## MAKEFILE FOR FEMUS APPLICATION ############################
+
+# EXECUTABLE FILE NAME
+MAIN = $(FM_MYAPP)-$(METHOD)
 
 # DIRECTORY FOR LOCAL COMPILED OBJECT FILES
 OBJ_DIR = SRC/obj/
+
 # DIRECTORY FOR LIBRARY COMPILED OBJECT FILES
 LIB_OBJ_DIR = src/obj/
 
@@ -26,15 +21,8 @@ else
 endif
 
 
-# LIBMESH
-LIBMESH_INCLUDE=$(LIBMESH_PATH)/include/
-LIBMESH_CONTRIB=$(LIBMESH_PATH)/contrib/
-LIBMESH_LIB=$(LIBMESH_PATH)/lib64/
 
-CONTRIB_HDF5_INCPATH =  $(HDF5_PATH)/include
-FEMUS_CONTRIB        =  $(FEMUS_DIR)/contrib
-
-# INCLUDE DIRECTORIES ==================================================
+# INCLUDE DIRECTORIES --------------------------------------------------------------------
 # FEMUS - LOCAL
 INCLUDES =  -I./
 INCLUDES += -I./DATA/
@@ -47,16 +35,18 @@ INCLUDES += -I$(FEMUS_DIR)/solvers/EqMapFiller/
 INCLUDES += -I$(FEMUS_DIR)/solvers/ln_solvers/
 
 # FEMUS - CONTRIBS
+FEMUS_CONTRIB        =  $(FEMUS_DIR)/contrib
 INCLUDES += -I$(FEMUS_CONTRIB)/matrix/
 INCLUDES += -I$(FEMUS_CONTRIB)/parallel/
 
 # HDF5 - PETSC - MED
+CONTRIB_HDF5_INCPATH =  $(HDF5_PATH)/include
 INCLUDES += -I$(CONTRIB_HDF5_INCPATH)
 INCLUDES += -I$(PETSC_DIR)/include
 INCLUDES += -I${MED_PATH}/include/salome/ 
 INCLUDES += -I${med_PATH}/include/
 INCLUDES += -I${MED_COUPL_PATH}/include/
-# END INCLUDE ==========================================================
+# END INCLUDE ----------------------------------------------------------------------------
 
 
 # the files below are set in order to know when it is necessary to recompile.
@@ -69,7 +59,7 @@ INCLUDES_CONTRIB +=  $(wildcard $(FEMUS_CONTRIB)/parallel/*.h)
 
 
 
-# LIBRARY =============================================================
+# LIBRARY --------------------------------------------------------------------------------
 # FLAGS FOR STANDARD COMPILATION
 LFLAGS += -L$(HDF5_PATH)/lib/
 LFLAGS += -L$(PETSC_DIR)/lib/
@@ -77,41 +67,47 @@ LFLAGS += -L$(MED_PATH)/lib/salome/
 LFLAGS += -L$(med_PATH)/lib/
 LFLAGS += -L$(MED_COUPL_PATH)/lib/
 
-# FLAGS FOR COMPILATION WITH FEMUS LIBRARY
-LFLAGSAPP += -L$(HDF5_PATH)/lib/
-LFLAGSAPP += -L$(PETSC_DIR)/lib/
-LFLAGSAPP += -L$(MED_PATH)/lib/salome/
-LFLAGSAPP += -L$(med_PATH)/lib/
-LFLAGSAPP += -L$(MED_COUPL_PATH)/lib/ 
+# FEMUS LIBRARY DIRECTORY
 LFLAGSAPP += -L$(FEMUS_DIR)/lib/
 
 LIBS =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC 
-LIBSAPP =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
-	-linterpkernel -lmedcouplingremapper -lmedC 
-# END LIBRARY ==========================================================
+
+# FEMUS LIBRARY NAME (2D and 3D)
+FEMUS_LIB_2D = -lfemus_2d_$(METHOD)
+FEMUS_LIB_3D = -lfemus_3d_$(METHOD)
+
+# TURBULENCE LIBRARY NAME (2D AND 3D)
+TURB_LIB_2D = -lturb_2d_$(METHOD)
+TURB_LIB_3D = -lturb_3d_$(METHOD)
+
+TURB_SOLVERS_DIR = $(FEMUS_DIR)/solvers/MGSolverTURB/solvers/
+TURB_UTILITY_DIR = $(FEMUS_DIR)/solvers/MGSolverTURB/utility/
+FEMUS_LINK_SOLV_DIR = $(FEMUS_DIR)/solvers/ln_solvers/
+# END LIBRARY ----------------------------------------------------------------------------
 
 
-# EXECUTABLE FILE NAME
-MAIN = $(FM_MYAPP)-$(METHOD)
 
-# SOURCES AND OBJECTS ==================================================
-
-# NAMES OF SOURCE FILES - WITH PATHS
-SRC := $(wildcard ./SRC/*.C)
-SRC_FEMUS := $(wildcard $(FEMUS_DIR)/src/*.C)
-SRC_FILLER := $(wildcard $(FEMUS_DIR)/solvers/EqMapFiller/*.C)
-SRC_CONTRIB := $(wildcard $(FEMUS_CONTRIB)/matrix/*.C)
+# SOURCES AND OBJECTS --------------------------------------------------------------------
 
 # EQUATION MAP FILLER OBJECT FILE
 SRC_FILLER_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/solvers/EqMapFiller/*.C )))
 SRC_FILLER_OBJ = $(patsubst %.C, %-$(METHOD).o, $(SRC_FILLER_FILES))
 OBJ_FILLER = $(addprefix $(OBJ_DIR), $(SRC_FILLER_OBJ))
 
-# EQUATION MAP FILLER OBJECT FILE
-SRC_SOLVERS_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/solvers/ln_solvers/*.C )))
+# SOLVER FILES IN <ln_solvers> DIRECTORY
+SRC_SOLVERS_FILES = $(sort $(notdir $(wildcard $(FEMUS_LINK_SOLV_DIR)/*.C )))
 SRC_SOLVERS_OBJ = $(patsubst %.C, %-$(METHOD).o, $(SRC_SOLVERS_FILES))
 OBJ_SOLVERS = $(addprefix $(OBJ_DIR), $(SRC_SOLVERS_OBJ))
+
+# WHEN USING THE LIBRARY WE AVOID TO COMPILE TURBULENCE FILES
+LIB_SRC_SOLVERS_FILES = $(sort $(notdir $(wildcard $(FEMUS_LINK_SOLV_DIR)/*.C )))
+TURB_SOLVER_FILES = $(sort $(notdir $(wildcard $(TURB_SOLVERS_DIR)/*.C )))
+TURB_UTILITY_FILES = $(sort $(notdir $(wildcard $(TURB_UTILITY_DIR)/*.C )))
+LIB_SRC_SOLVERS_FILES := $(filter-out $(TURB_SOLVER_FILES), $(LIB_SRC_SOLVERS_FILES))
+LIB_SRC_SOLVERS_FILES := $(filter-out $(TURB_UTILITY_FILES), $(LIB_SRC_SOLVERS_FILES))
+LIB_SRC_SOLVERS_OBJ = $(patsubst %.C, %-$(METHOD).o, $(LIB_SRC_SOLVERS_FILES))
+LIB_OBJ_SOLVERS = $(addprefix $(OBJ_DIR), $(LIB_SRC_SOLVERS_OBJ))
 
 # LOCAL APP OBJECT FILES
 SRC_APP_FILES = $(sort $(notdir $(wildcard ./SRC/*.C )))
@@ -119,21 +115,19 @@ SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_APP_FILES))
 OBJS_APP = $(addprefix $(OBJ_DIR), $(SRC_APP_OBJS))
 
 # FEMUS AND CONTRIB OBJECT FILES
-SRC_FEMUS_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_FEMUS))
-
-# FEMUS AND CONTRIB OBJECT FILES
 LIB_SRC_APP_FILES = $(sort $(notdir $(wildcard $(FEMUS_DIR)/src/*.C )))
 LIB_SRC_APP_OBJS = $(patsubst %.C, %-$(METHOD).o, $(LIB_SRC_APP_FILES))
 LIB_SRC_FEMUS_OBJS = $(addprefix $(FEMUS_DIR)/src/obj/, $(LIB_SRC_APP_OBJS))
 
 # CONTRIB
+SRC_CONTRIB := $(wildcard $(FEMUS_CONTRIB)/matrix/*.C)
 CONTRIB_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_CONTRIB))
-# END SOURCE AND OBJECTS ================================================
+# END SOURCE AND OBJECTS -----------------------------------------------------------------
 
 
-# MAKE COMMANDS =========================================================
+# MAKE COMMANDS --------------------------------------------------------------------------
 # set PHONY variables to distinguish between file names 
-.PHONY: depend clean gencase
+.PHONY: depend clean gencase gencase_clean interpolator interpolator_clean resu_clean src_clean all_clean
 # this is the executable file rule, the one executed when you call make
 all:    $(MAIN)
 	@echo  $(MAIN) succesfully compiled!
@@ -156,7 +150,6 @@ $(MAIN): $(OBJS_APP)  $(LIB_SRC_FEMUS_OBJS) $(OBJ_FILLER) $(OBJ_SOLVERS) $(CONTR
 
 # DEPENDENCIES FOR RECOMPILATION
 $(OBJS_APP): $(INCLUDES_SRC)
-$(SRC_FEMUS_OBJS): $(INCLUDES_SRC)
 $(LIB_SRC_FEMUS_OBJS): $(INCLUDES_SRC)
 $(OBJ_FILLER): $(INCLUDES_SRC)
 $(CONTRIB_OBJS): $(INCLUDES_CONTRIB)
@@ -184,31 +177,31 @@ vpath %.C $(FEMUS_DIR)/src/
 vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
 vpath %.C $(FEMUS_DIR)/solvers/ln_solvers/
 
-# COMPILING WITH FEMUS LIBRARY
-withlib_2d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
+# COMPILING WITH FEMUS 2D LIBRARY
+withlib_2d: $(OBJS_APP) $(OBJ_FILLER) $(LIB_OBJ_SOLVERS)
 	@echo " with femus library"
 	@echo "Linking "$@"..."
 	@echo 
 	@echo $^          | tr " " "\n"
-	@echo $(LFLAGSAPP)   | tr " " "\n"
-	@echo $(LIBSAPP)     | tr " " "\n"
+	@echo $(LFLAGS) $(LFLAGSAPP)   | tr " " "\n"
+	@echo $(LIBS)     | tr " " "\n"
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_2d_$(METHOD) $(LIBSAPP)
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGS) $(LFLAGSAPP) $(FEMUS_LIB_2D) $(TURB_LIB_2D) $(LIBS)
 
-# COMPILING WITH FEMUS LIBRARY
-withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS)
+# COMPILING WITH FEMUS 3D LIBRARY
+withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(LIB_OBJ_SOLVERS)
 	@echo " with femus library"
 	@echo "Linking "$@"..."
 	@echo 
 	@echo $^          | tr " " "\n"
-	@echo $(LFLAGSAPP)   | tr " " "\n"
-	@echo $(LIBSAPP)     | tr " " "\n"
+	@echo $(LFLAGS) $(LFLAGSAPP)  | tr " " "\n"
+	@echo $(LIBS)     | tr " " "\n"
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_3d_$(METHOD) $(LIBSAPP)	
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGS) $(LFLAGSAPP) $(FEMUS_LIB_3D) $(TURB_LIB_3D) $(LIBS)	
 	
 vpath %.C ./SRC/
 vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
