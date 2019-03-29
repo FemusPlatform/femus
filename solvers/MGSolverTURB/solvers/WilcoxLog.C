@@ -37,6 +37,13 @@ MGSolWilcoxLog::MGSolWilcoxLog (
 
      _InvSigma = 0.5;
      _ExplicitNearWallDer[0] = _ExplicitNearWallDer[1] = 1;
+     
+     double k_lower_lim = _mgutils._TurbParameters->GetKlim();
+     double w_lower_lim = _mgutils._TurbParameters->GetWlim();
+    
+    _TurLowerLim[0] = log(k_lower_lim);
+    _TurLowerLim[1] = log(w_lower_lim);
+     
      return;
 }
 
@@ -69,8 +76,6 @@ void MGSolWilcoxLog::CalcAdvectiveAndDiffusiveTerms ( int i, int j, int el_ndof2
 
      }
      
-          _Adv = _Lap = _LapSupg = _LapMuTurb = _Cross[0] = _Cross[1] = _Log_Cross[0] = _Log_Cross[1] = 0.;
-
      return;
 }
 
@@ -81,11 +86,10 @@ void MGSolWilcoxLog::CalcSourceAndDiss ( int el_ndof2 )
      _y_dist = _ub_g[2][_FF_idx[DIST]];
 
      // function must be called using _kappa_g and not values from non linear iterations
-     _mgutils._TurbParameters->CalcDynTurSourceAndDiss ( _kappa_g, _y_dist, _sP, _mu_turb, _source, _diss );  // point wise source and diss
-
-     _mu_turb = max ( 0., _mu_turb );
+     double mut = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
+     _mgutils._TurbParameters->CalcDynTurSourceAndDiss ( _kappa_g, _y_dist, _sP, mut, _source, _diss );  // point wise source and diss
      _mu_turb = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
-
+     
      double kappa = exp ( _kappa_g[0] );
      const double k_lim = _mgutils._TurbParameters->GetKlim();
      kappa = ( kappa < k_lim ) ? k_lim : kappa;
@@ -120,7 +124,7 @@ void MGSolWilcoxLog::VelocityForSUPG (
           VEL[i]  = vel_g[i];
 
           if ( _ModifiedSupg ) {
-             VEL[i] -= _nueff * ( ( 1 - _dir ) * _T_dxg[0][i] + _dir * ( _T_dxg[1][i] ) );
+             VEL[i] -= _nueff * ( _T_dxg[_dir][i] );
           }
 
           mod2_vel += VEL[i] * VEL[i];

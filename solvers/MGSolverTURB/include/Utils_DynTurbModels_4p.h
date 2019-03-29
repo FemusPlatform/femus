@@ -17,10 +17,8 @@ struct Dyn4P:DYNturModels
   const double __C10;
 
   double _Rt, _Rd, _fmu, _fcorr, _Ret;
-  double _LowerKappa, _LowerOmega;
   
-    Dyn4P ():__CMU (0.09), __C20 (1.9), __C10 (1.5), _LowerKappa (1.e-7),
-    _LowerOmega (1.e-7)
+    Dyn4P ():__CMU (0.09), __C20 (1.9), __C10 (1.5)
   {
   };
 

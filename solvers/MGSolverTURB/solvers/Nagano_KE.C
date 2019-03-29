@@ -38,6 +38,13 @@ MGSolNaganoKE::MGSolNaganoKE (
     _InvSigma = 1. / 1.4;
     _ExplicitNearWallDer[0] = 0;
     _ExplicitNearWallDer[1] = 1;
+    
+    double k_lower_lim = _mgutils._TurbParameters->GetKlim();
+    double e_lower_lim = _mgutils._TurbParameters->GetElim();
+    
+    _TurLowerLim[0] = k_lower_lim;
+    _TurLowerLim[1] = e_lower_lim;
+    
     return;
 }
 

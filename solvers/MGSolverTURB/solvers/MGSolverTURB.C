@@ -264,8 +264,6 @@ void  MGSolTURB::GenMatRhs (
                         mu_turb[0] = 0.;
                     }
 
-//                    std::cout<<mu_turb[0]<<"  ";
-
                     x[_NoLevels - 1]->set ( kdof_top, mu_turb[0] );
                 }
 

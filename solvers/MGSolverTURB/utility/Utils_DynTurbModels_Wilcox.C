@@ -32,8 +32,9 @@ void DynWilcox_KW::CalcDynSourceTerms ( double * TurbVariables, double * SourceT
     if ( _Park==1 ) {
         prod_k = Park_KSource ( prod_k, _KappaAndOmega[0], VelGradMod );
     }
+        
     SourceTerms[0] = prod_k;
-    SourceTerms[1] = __AW * prod_k / MuT;
+    SourceTerms[1] = __AW * prod_k * _KappaAndOmega[1] / _KappaAndOmega[0];
     DissTerms[0]   = __BETAS*_KappaAndOmega[1];
     DissTerms[1]   = __BETAW*_KappaAndOmega[1];
 
@@ -65,7 +66,7 @@ void DynWilcox_logKW::CalcDynSourceTerms ( double * TurbVariables, double * Sour
         prod_k = Park_KSource ( prod_k, _KappaAndOmega[0], VelGradMod );
     }
     SourceTerms[0] = prod_k / _KappaAndOmega[0];
-    SourceTerms[1] = __AW * prod_k / ( MuT * _KappaAndOmega[1] );
+    SourceTerms[1] = __AW * prod_k / _KappaAndOmega[0];
     DissTerms[0]   = __BETAS*_KappaAndOmega[1];
     DissTerms[1]   = __BETAW*_KappaAndOmega[1];
 

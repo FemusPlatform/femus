@@ -37,6 +37,13 @@ MGSolNaganoKW::MGSolNaganoKW (
 
     _InvSigma = 1. / 1.4;
     _ExplicitNearWallDer[0] = _ExplicitNearWallDer[1] = 0;
+    
+    double k_lower_lim = _mgutils._TurbParameters->GetKlim();
+    double w_lower_lim = _mgutils._TurbParameters->GetWlim();
+    
+    _TurLowerLim[0] = k_lower_lim;
+    _TurLowerLim[1] = w_lower_lim;
+    
     return;
 }
 
@@ -84,12 +91,15 @@ void MGSolNaganoKW::CalcSourceAndDiss ( int el_ndof2 )
     _mu_turb = max ( 0., _mu_turb );
     _mu_turb = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
 
-    const double kappa = ( _kappa_g[0] > 0 ) ? _kappa_g[0] : 1.e-10  ;
+    const double k_lim = _mgutils._TurbParameters->GetKlim();
+    const double kappa = ( _kappa_g[0] > k_lim ) ? _kappa_g[0] : k_lim ;
     const double MuDurbin = kappa / ( sqrt ( _sP + 1.e-10 ) * _IRe ); // Durbin limit value
 
     _explicit_source[_dir] = _source[_dir];
-    _explicit_diss[_dir]   = 0.;
-    _implicit_diss[_dir]   = _diss[_dir];
+    _explicit_diss[0]   = 0.;
+    _explicit_diss[1]   = _diss[1] * _kappa_g[1];
+    _implicit_diss[0]   = _diss[0];
+    _implicit_diss[1]   = 0.;
     _implicit_source[_dir] = 0.;
 
     // Durbin correction -> mu turb and explicit source

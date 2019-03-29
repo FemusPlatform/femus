@@ -38,6 +38,12 @@ MGSolNaganoLog::MGSolNaganoLog (
      _InvSigma = 1. / 1.4;
      _ExplicitNearWallDer[0] = _ExplicitNearWallDer[1] = 1;
 
+     double k_lower_lim = _mgutils._TurbParameters->GetKlim();
+     double w_lower_lim = _mgutils._TurbParameters->GetWlim();
+    
+    _TurLowerLim[0] = log(k_lower_lim);
+    _TurLowerLim[1] = log(w_lower_lim);
+     
      return;
 }
 

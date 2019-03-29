@@ -68,6 +68,8 @@ protected:
   int _TimeDer;
   double _x_1ts[NDOF_FEM], _x_2ts[NDOF_FEM];
 
+  double _TurLowerLim[2];
+  
   // turbulence
   double _nueff;
   double _kappa_g[2];	   /**< reference kappa*/

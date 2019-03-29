@@ -17,11 +17,8 @@ struct DynWilcox:DYNturModels
   const double __BETAW = 3. / 40.;
   const double __BETAN = __BETAS - __BETAW;
 
-  double _LowerKappa, _LowerOmega;
-
     DynWilcox ():__AW (13. / 25.), __AN (1. - 13. / 25.), __BETAS (8. / 100.),
-    __BETAW (3. / 40.), __BETAN (8. / 100. - 3. / 40.), _LowerKappa (1.e-7),
-    _LowerOmega (1.e-7)
+    __BETAW (3. / 40.), __BETAN (8. / 100. - 3. / 40.)
   {
   };
 

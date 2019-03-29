@@ -21,8 +21,10 @@ struct DYNturModels {
 
     /// Vector used to store real \f$k\f$ and \f$\omega \f$ variables
     double _KappaAndOmega[2];
-
-    DYNturModels () :_Park ( 0 ), _YapCorr ( 0 )
+    
+    double _LowerKappa, _LowerOmega;
+    
+    DYNturModels () :_Park ( 0 ), _YapCorr ( 0 ), _LowerKappa (1.e-7), _LowerOmega (1.e-7)
     {
     };
 

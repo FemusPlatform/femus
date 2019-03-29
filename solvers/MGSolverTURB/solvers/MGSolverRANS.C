@@ -620,16 +620,13 @@ void MGSolRANS::MGUpdateStep()
 {
     x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );
 
-    if ( _dir==0 ) {
-        const double klim = log ( _mgutils._TurbParameters->GetKlim() );
-        int size = x[_NoLevels-1]->size();
-        for ( int i=0; i<size; i++ ) {
-            double k[1] = { ( * ( x[_NoLevels -1] ) ) ( i ) };
-            if ( k[0] < klim ) {
-                k[0] = klim;
-                x[_NoLevels-1]->set ( i, k[0] );
-            }
-        }
+    int size = x[_NoLevels-1]->size();
+    for ( int i=0; i<size; i++ ) {
+       double k[1] = { ( * ( x[_NoLevels -1] ) ) ( i ) };
+       if ( k[0] < _TurLowerLim[_dir] ) {
+          k[0] = _TurLowerLim[_dir];
+          x[_NoLevels-1]->set ( i, k[0] );
+       }
     }
 
     x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );

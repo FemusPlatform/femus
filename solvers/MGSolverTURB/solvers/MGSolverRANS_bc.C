@@ -186,7 +186,6 @@ void  MGSolRANS::bc_set (
                                 const double w_der_log = _IRe / ( WallDist );
                                 wall_der[1] = ( yplus < 2. ) ? w_der : w_der_log;
                                 wall_der[0] = ( yplus < 11. ) ? k_der : 0.;
-//                               wall_der[0] = k_der;
                             }
 
                             int nsides = _NodeOnNwallSides[lei_node];
@@ -194,11 +193,13 @@ void  MGSolRANS::bc_set (
                             const double FemBC = _ExplicitNearWallDer[_dir];
                             const double KemBC = 1 - _ExplicitNearWallDer[_dir];
 
-                            _FeM ( lei_node ) += FemBC * JxW_g2 * phii_g  * ( bc_alpha *  wall_der[_dir] * sign );
+                            double AggWallDerVal =  JxW_g2 * phii_g  * ( bc_alpha *  wall_der[_dir] * sign );
+                            
+                            _FeM ( lei_node ) += FemBC * AggWallDerVal ;
 
                             // Assemblying Matrix ---------------------------------
                             for ( int lsj_node = 0; lsj_node < elb_ndof2;  lsj_node++ ) {
-                                _KeM ( lei_node, sur_toply[lsj_node] ) += KemBC * JxW_g2 * bc_alpha * wall_der[_dir] * phii_g * _phi_g[2][lsj_node];
+                                _KeM ( lei_node, sur_toply[lsj_node] ) -= KemBC * AggWallDerVal * _phi_g[2][lsj_node];
                             }// END LOOP OVER BOUNDARY NODES
                         }
                     }// END LOOP OVER BOUNDARY TEST FUNCTIONS

@@ -37,6 +37,13 @@ MGSolWilcox::MGSolWilcox (
 
     _InvSigma = 0.5;
     _ExplicitNearWallDer[0] = _ExplicitNearWallDer[1] = 0;
+    
+     double k_lower_lim = _mgutils._TurbParameters->GetKlim();
+     double w_lower_lim = _mgutils._TurbParameters->GetWlim();
+    
+    _TurLowerLim[0] = k_lower_lim;
+    _TurLowerLim[1] = w_lower_lim;
+    
     return;
 }
 
@@ -76,14 +83,12 @@ void MGSolWilcox::CalcSourceAndDiss ( int el_ndof2 )
 {
 
     _y_dist = _ub_g[2][_FF_idx[DIST]];
-
-    // function must be called using _kappa_g and not values from non linear iterations
-    _mgutils._TurbParameters->CalcDynTurSourceAndDiss ( _kappa_g, _y_dist, _sP, _mu_turb, _source, _diss );  // point wise source and diss
-
-    _mu_turb = max ( 0., _mu_turb );
+    double mut = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
+    _mgutils._TurbParameters->CalcDynTurSourceAndDiss ( _kappa_g, _y_dist, _sP, mut, _source, _diss );  // point wise source and diss
     _mu_turb = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
-
-    const double kappa = ( _kappa_g[0] > 0 ) ? _kappa_g[0] : 1.e-10  ;
+    
+    const double k_lim = _mgutils._TurbParameters->GetKlim();
+    const double kappa = ( _kappa_g[0] > k_lim ) ? _kappa_g[0] : k_lim ;
     const double MuDurbin = kappa / ( sqrt ( _sP + 1.e-10 ) * _IRe ); // Durbin limit value
 
     _explicit_source[_dir] = _source[_dir];
@@ -93,7 +98,7 @@ void MGSolWilcox::CalcSourceAndDiss ( int el_ndof2 )
 
     // Durbin correction -> mu turb and explicit source
     if ( _mgutils._TurbParameters->_Durbin == 1 ) {
-        _explicit_source[_dir] /= ( _mu_turb + 1.e-10 );
+        _explicit_source[_dir] /= ( _mu_turb + 1. );
         _mu_turb = ( MuDurbin < _mu_turb ) ?  MuDurbin : _mu_turb;
         _explicit_source[_dir] *= _mu_turb;
     }

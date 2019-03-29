@@ -28,7 +28,6 @@ void TurbUtils::FillParameters() {
 
   read_file();
 
-  _klim = _wlim = _elim = _khlim = _whlim = _ehlim = 1.e-6;
   _SolveAlphaT = _SolveMuT = 0;
 
   std::cout << "\n ========================================================= \n"
@@ -233,6 +232,14 @@ void TurbUtils::FillParameters() {
   _ThermModel->SetYap ( _YapCorr );
   _ThermModel->SetPark ( _Park ); 
   _ThermModel->SetIPr(__IPr);    
+  
+  _klim = _DynModel->_LowerKappa;
+  _wlim = _DynModel->_LowerOmega;
+  _elim = _DynModel->_LowerOmega;
+  _khlim = _ThermModel->_LowerKappah;
+  _whlim = _ThermModel->_LowerKappah;
+  _ehlim = _ThermModel->_LowerOmegah;
+  
   return;
   }
 
@@ -348,7 +355,7 @@ double TurbUtils::CalcMuTurb ( double KappaAndOmega[], double dist, double vel_s
 
 void TurbUtils::CalcDynTurSourceAndDiss ( double KappaAndOmega[], double dist, double vel_sp, double & muturb, double source[2], double diss[2], double div_g ) {
   _MuTurb = _DynModel->CalcMuT ( KappaAndOmega, dist );
-  _DynModel->CalcDynSourceTerms ( KappaAndOmega, source, diss, _MuTurb, vel_sp, dist );
+  _DynModel->CalcDynSourceTerms ( KappaAndOmega, source, diss, muturb, vel_sp, dist );
   return;
   }
 

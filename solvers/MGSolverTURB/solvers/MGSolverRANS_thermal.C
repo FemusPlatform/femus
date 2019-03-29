@@ -57,7 +57,8 @@ MGSolRANS_thermal::MGSolRANS_thermal (
     _IRe = _muf / ( _rhof * _uref * _lref );
     _alpha = _kappa0 / ( _rhof * _cp0 );
     _IPrdl = _alpha / _IRe;
-
+    _qs = _mgutils._mat_prop["qs"] ;
+    
     for ( int k_index = 0; k_index < 30; k_index++ ) {
         _FF_idx[k_index] = -1;
     }
