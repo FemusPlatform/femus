@@ -7,7 +7,8 @@
 // ==================================
 
 // config files ------------------
-#include "UserT.h"
+#include "User_T.h"
+#include "Tparameters.h"
 #include "MGFE_conf.h"
 #include "MGSolverDA.h"
 

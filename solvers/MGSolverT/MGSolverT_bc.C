@@ -5,13 +5,9 @@
 // ============================================
 
 #include "MGSolverT.h"       // Navier-Stokes class header file
-#include "MGFE.h"          // Mesh class
+#include "MGFE.h"            // Mesh class
 
-// =========================================================================================
-/// This function sets the _bc_el with boundary condition flags.
-/// This function also assembles the surface integral to obtain the algebraic sytem.
-/// It is called by MGSolT::GenMatRhs in MGSolverT.C
-/// This function sets  the  functional defined (user write}
+
 void  MGSolT::bc_set (
     int sur_toply[],
     int el_ndof2,int elb_ndof2,int elb_ngauss,

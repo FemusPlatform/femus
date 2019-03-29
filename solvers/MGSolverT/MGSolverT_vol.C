@@ -50,8 +50,8 @@ void MGSolT::vol_integral (
                 vel_g[idim] =_ub_g[2][_FF_idx[NS_F]+idim];    // velocity field
                 
         if ( _FF_idx[ALPHA_T]>-1 )
-            _alpha_turb = _ub_g[2][_FF_idx[ALPHA_T]]*_IRe;
-            
+            _alpha_turb += _ub_g[2][_FF_idx[ALPHA_T]]*_IRe;
+                    
         rhocp =1.;
 
         double f_upwind = CalcFUpwind ( vel_g, _dphi_g[2], _alpha_turb, _nTdim, el_ndof2 );
