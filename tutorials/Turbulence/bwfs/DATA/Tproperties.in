@@ -1,0 +1,44 @@
+# ===============================================================
+/ #                         T SOLVER SETTINGS
+# ===============================================================
+# STEADY STATE - TIME DERIVATIVE
+# ---------------------------------------------------------------
+# SolveSteady=1 then only steady eqs (dflt:0; option:0(no),1) 
+  SolveSteady    0
+  TimeDer        2
+  NumRestartSol  2 
+# ---------------------------------------------------------------
+# SOLVER TYPE
+# ---------------------------------------------------------------
+  SolverType   BICGSTABM
+# GMRESM  BICGSTABM
+# ---------------------------------------------------------------
+# NUMERICAL STABILIZATION:
+# ---------------------------------------------------------------
+# Supg=1 : standard supg formulation (dflt:1; option:0,1(no))
+  Supg         1
+# Upwind=0: no standard upwind (dflt:0; option:0<Up<1000)  
+  Upwind       0
+  Prt                       0.85
+  InterpolatedAlphaTurb     1
+# ---------------------------------------------------------------
+# BOUNDARY CONDITIONS
+# The available boundary conditions are: 
+#  Kwall0         Dirichlet: zero wall value 
+#  Kwall          Dirichlet: wall value according to near wall behavior
+#  Kinlet         Dirichlet: inlet value based on turbulence intensity
+#  Kinsulation    Neumann:   zero derivative in boundary normal direction
+#  KrobinT        Neumann:   derivative value based on near wall behavior
+# 
+#  In order to set the boundary condition follow the example below
+#  Tgroup<Group Number>    <Boundary Condition for kh>,<Boundary Condition for wh>
+#        DTgroup10       KrobinT,Kwall
+#
+  Tgroup21     insulation
+  Tgroup22     insulation
+  Tgroup23     insulation
+  Tgroup24     heat_flux
+  Tgroup15     insulation
+  Tgroup16     Twall
+/ #######################################################################
+  

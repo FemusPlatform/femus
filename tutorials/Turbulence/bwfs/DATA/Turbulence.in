@@ -1,0 +1,52 @@
+# ======================================================
+/ #             TURBULENCE MODEL SETTINGS
+# ======================================================
+#
+# ------------------------------------------------------
+#                  DYNAMICAL TURBULENCE
+# Possible choices:
+# FirstDynamicEquation:  nagano_k
+#                        nagano_logk
+#                        wilcox_k
+#                        wilcox_logk
+#                        wilcox_nut
+#                         
+# SecondDynamicEquation: nagano_w
+#                        nagano_logw
+#                        nagano_e  
+#                        wilcox_w 
+#                        wilcox_logw    
+# !! if using thermal turbulence then use nagano k-w or logk-logw                 
+# ------------------------------------------------------
+# 
+#                  THERMAL TURBULENCE
+# Possible choices:
+# FirstDynamicEquation:  natural_kh
+#                        logarithmic_kh
+# SecondDynamicEquation: natural_omegah
+#                        logarithmic_omegah
+# ------------------------------------------------------
+#        FIXED WALL DISTANCE - FIRST MESH POINT 
+# Wall_dist: wall distance of the first mesh point
+# MaxNonLinearIt: maximum number of non linear iterations
+#
+# ......................................................
+# 
+  RANS_dynamic                nagano_log
+  RANS_thermal                nagano_logT
+  Diameter                    0.06
+  AvVelocity                  0.04
+  utau                        -1
+#
+# ......................................................
+# 
+# MODEL CORRECTIONS AND REALIZABILITY CONSTRAINS
+#
+  ParkCorrection    1
+  DurbinConstrain   1
+  YapCorrection     1
+  WallFunction      0
+#  
+  SolveMuT          0
+  SolveAlphaT       0
+/ #-------------------------------------------------------------- 

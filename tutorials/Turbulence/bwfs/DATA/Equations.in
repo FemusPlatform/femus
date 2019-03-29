@@ -1,0 +1,19 @@
+ # ===============================================================
+ / #                         SIMULATION SETTINGS
+ # =============================================================== 
+   MG_DA                      0
+   MG_NavierStokes            2
+   MG_Temperature             1
+   MG_DynamicalTurbulence     1
+   MG_ThermalTurbulence       1
+   MG_FluidStructure          0
+   MG_StructuralMechanics     0
+   MG_Displacement            0
+   MG_ColorFunction           0
+   MG_Laplacian               0
+   MG_Control                 0  
+   MG_AdjointNavierStokes     0
+   MG_AdjointTemperature      0
+   MG_AdjointTurbulence       0
+   MG_AdjointFluidStructure   0
+ / #--------------------------------------------------------------   

@@ -1,0 +1,81 @@
+# ===============================================================
+/ #                      TTBK SOLVER SETTINGS
+# ===============================================================
+#
+# ---------------------------------------------------------------
+# STEADY STATE SOLUTION
+# If 1 (yes) then steady state equation is solved - without temporal
+# derivative
+#
+  SolveSteady  0
+#
+# ---------------------------------------------------------------
+# NUMERICAL STABILIZATION: 
+# ...............................................................
+# CONSISTENT
+# Supg: standard supg formulation - streamwise upwind
+# 1 (yes) or 0 (no)
+# ModifiedSupg: turbulence transport equation adapted supg formulation
+#   no: simple supg
+#   supgc: supg with skew operator containing cross terms
+#   gls: Galerkin Least Squares
+#   sgs: Sub Grid Scale (or DWG, USFEM)
+#
+# Scpg: Shock capturing Petrov Galerkin - cross upwind 
+# 1 (yes) or 0 (no)
+#
+  Supg         1
+  ModifiedSupg supgc
+  Scpg         0  
+# ...............................................................
+# NON CONSISTENT1 (yes) or 0 (no)
+# 0 < UnderRelaxation < 1
+  Upwind                      0.
+  ReactionNumberBased         0
+  DynamicUnderRelaxation      0.
+# ...............................................................
+#
+  MaxNonLinearIterations    0
+#  
+  InterpolatedAlphaTurb     1
+  WallFunctionApproach      0
+  FractionalStep            0
+#
+# ---------------------------------------------------------------
+# INITIAL CONDITION
+# The available choices are:
+#  FlatProfile    yes/no
+#    yes          Inlet values set over the entire domain
+#    no           Values calculated as function of wall distance and utau
+# 
+  FlatProfile     1
+#  
+# ---------------------------------------------------------------
+# BOUNDARY CONDITIONS
+# The available boundary conditions are: 
+#  TKwall0         Dirichlet: zero wall value 
+#  TKwall          Dirichlet: wall value according to near wall behavior
+#  TKinlet         Dirichlet: inlet value based on turbulence intensity
+#  TKinsulation    Neumann:   zero derivative in boundary normal direction
+#  TKrobinT        Neumann:   derivative value based on near wall behavior
+# TKWallFuncGrad
+#  In order to set the boundary condition follow the example below
+#  DTgroup<Group Number>    <Boundary Condition for kh>,<Boundary Condition for wh>
+#        DTgroup10       KrobinT,Kwall
+#
+# 19,20,21,22,29,30,32,51,52,53,54
+#
+ TTgroup21k             TKinsulation
+ TTgroup22k             TKinsulation
+ TTgroup23k             TKinsulation
+ TTgroup24k             TKrobinT
+ TTgroup15k             TKinsulation
+ TTgroup16k             TKinsulation
+ #
+ TTgroup21w             TKinsulation
+ TTgroup22w             TKinsulation
+ TTgroup23w             TKinsulation
+ TTgroup24w             TKwall
+ TTgroup15w             TKinsulation
+ TTgroup16w             TKinsulation
+ / #######################################################################
