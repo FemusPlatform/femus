@@ -86,9 +86,8 @@ void MGSolNaganoKW::CalcSourceAndDiss ( int el_ndof2 )
     _y_dist = _ub_g[2][_FF_idx[DIST]];
 
     // function must be called using _kappa_g and not values from non linear iterations
-    _mgutils._TurbParameters->CalcDynTurSourceAndDiss ( _kappa_g, _y_dist, _sP, _mu_turb, _source, _diss );  // point wise source and diss
-
-    _mu_turb = max ( 0., _mu_turb );
+    double mut = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
+    _mgutils._TurbParameters->CalcDynTurSourceAndDiss ( _kappa_g, _y_dist, _sP, mut, _source, _diss );  // point wise source and diss
     _mu_turb = max ( 0., _ub_g[2][_FF_idx[MU_T]] );
 
     const double k_lim = _mgutils._TurbParameters->GetKlim();

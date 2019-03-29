@@ -66,7 +66,7 @@ void /**/MGSolRANS_thermal::vol_integral (
             _sT += T_dxg[idim] * T_dxg[idim];
         }
 
-        _alpha_turb =  _ub_g[2][_FF_idx[ALPHA_T]];
+        _alpha_turb =  max ( _ub_g[2][_FF_idx[ALPHA_T]], 0. );
 
         _Tkappa_g[0] = _ub_g[2][_FF_idx[KTT_F]];
         _Tkappa_g[1] = _ub_g[2][_FF_idx[KTT_F] + 1];

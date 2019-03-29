@@ -108,11 +108,7 @@ void MGSolNaganoLogT::VelocityForSUPG (
         VEL[i]  = vel_g[i];
 
         if ( _ModifiedSupg ) {
-//             if ( _NonLinearIt == 0 ) {
             VEL[i] -= _alpha_eff * ( ( 1 - _dir ) * _KH_der[i] + _dir * ( _WH_der[i] + 2.*_KH_der[i] ) );
-//             } else {
-//                 VEL[i] -= _alpha_eff * ( ( 1 - _dir ) * _kh_nl_dxg[i] + _dir * ( _wh_nl_dxg[i] + 2.*_KH_der[i] ) );
-//             }
         }
 
         mod2_vel += VEL[i] * VEL[i];
