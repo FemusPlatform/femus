@@ -20,7 +20,7 @@ void MGSolNS::ic_read (
 
     double walldist = min ( xp[0], 0.121 - xp[0] );
     double vert_vel = 0.;
-    if ( _NS_parameter._FlatProfile    == 0 && xp[0] < 0.121 - BDRY_TOLL && xp[1] < 1.e-10 ) {
+    if ( _NS_parameter._FlatProfile      == 0 && xp[0] < 0.121 - BDRY_TOLL && xp[1] < 1.e-10 ) {
         vert_vel = 0.002907 * _mgutils._TurbParameters->Musker ( walldist, 0.002907 );
     }
 
