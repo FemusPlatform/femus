@@ -706,9 +706,10 @@ case \"\${1}\" in
     echo \"Runs clang-format on source files\"
     ;;
   * )
-    for file in `git diff-index --cached --name-only HEAD` ; do
+    for file in \`git diff-index --cached --name-only HEAD\` ; do
 
-    extention=`sed 's/^\w\+.//' <<< \"\$file\"`
+    filename=\`basename \$file\`
+    extention=\`sed 's/^\w\+.//' <<< \"\$filename\"\`
 
       case \"\$extention\" in
       \"C\" ) 
