@@ -1,28 +1,29 @@
-red=`tput setaf 9`; bold=`tput bold `; green=`tput setaf 10`; reset=`tput sgr0`; NC=`tput sgr0`
-blue=`tput setaf 14`; 
-# SET OF FUNCTIONS FOR USING FEMUS CODE
+red =`tput setaf 9`;
+bold =`tput bold `;
+green =`tput setaf 10`;
+reset =`tput sgr0`;
+NC =`tput sgr0` blue =`tput setaf 14`;
+#SET OF FUNCTIONS FOR USING FEMUS CODE
 
-function  command_exists () {
-    type "$1" &> /dev/null ;
-}
+function command_exists() { type "$1" & > / dev / null; }
 
-function femus_guide {
-   femus_show_application_functions
-   femus_show_configure_functions
-   femus_show_compiling_functions
-   femus_show_tutorial_functions
-}
+function femus_guide{
+    femus_show_application_functions femus_show_configure_functions
+        femus_show_compiling_functions femus_show_tutorial_functions}
 
-function femus_show_configure_functions {
-  echo "------------------------------------------------------------"
-  echo "${green}List of functions for configuring femus applications${NC}"
-  echo "  ${red}femus_application_configure <method>${NC}: function to be called within application folder."
-  echo "     Application name, path and method (opt or dbg for compiling in optimized or debug mode) are set"
-  echo "  ${red}femus_link_solver_files${NC}: function for linking solver files inside femus/solvers/ln_solvers folder"
-}
+function femus_show_configure_functions{
+    echo
+    "------------------------------------------------------------" echo
+    "${green}List of functions for configuring femus applications${NC}" echo
+    "  ${red}femus_application_configure <method>${NC}: function to be called "
+    "within application folder." echo "     Application name, path and method "
+                                      "(opt or dbg for compiling in optimized "
+                                      "or debug mode) are set" echo
+    "  ${red}femus_link_solver_files${NC}: function for linking solver files "
+    "inside femus/solvers/ln_solvers folder"}
 
-
-function femus_application_configure () {
+function
+femus_application_configure() {
 
    echo "-------------------------------------------------------"
    echo "Configuring application"
@@ -40,18 +41,20 @@ function femus_application_configure () {
       opt | OPT) # optimized
           METHOD='opt'
           break
-          ;;
+          ;
+   ;
       dbg | DBG) # debug
           METHOD='dbg'
           break
-          ;;    
+          ;
+      ;
       *)  # unrecognized
           echo "Not available compilation method "$1
           echo "Rerun function femus_application_configure with valid method "
           echo "opt or dbg"
           return;
-          break
-          ;; 
+      break;
+      ;
     esac
    done 
    
@@ -61,325 +64,335 @@ function femus_application_configure () {
       "") # Application here
           APP_PATH=$PWD
           break
-          ;;
+          ;
+    ;
       *)  # Application ad path $1
           APP_PATH=$2
           break
-          ;; 
-    esac
-   done
-   
-   cd $APP_PATH
-   cd ../
-   local app_pre=$PWD
-   cd $APP_PATH
-   
-   export path_len=${#app_pre}
-   FM_MYAPP=${APP_PATH:$((path_len +1))}
-   
-   export HDF5_USE_FILE_LOCKING="FALSE"
-   
-   # Final print ===================================
-   echo "Application path is " $APP_PATH 
-   echo "Application name is "$FM_MYAPP
-   echo "Method is "$METHOD
-   echo "Application configured"
-   # ==========================================================
-   return;
+          ;
+      ;
+      esac done
+
+              cd $APP_PATH cd../
+          local app_pre = $PWD cd $APP_PATH
+
+          export path_len = ${#app_pre} FM_MYAPP = $ {
+      APP_PATH:
+        $((path_len + 1))
+      }
+
+      export HDF5_USE_FILE_LOCKING =
+          "FALSE"
+
+#Final print == == == == == == == == == == == == == == == == == =
+          echo "Application path is " $APP_PATH echo
+          "Application name is " $FM_MYAPP echo "Method is " $METHOD echo
+          "Application configured"
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == ==
+          return;
 }
 
-# ==================================================================================
-#                      COMPILE LIBRARY AND STANDARD APPLICATIONS
-# ==================================================================================
-function femus_show_compiling_functions {
-  echo "------------------------------------------------------------"
-  echo "${green}List of functions for compiling femus and  standard applications${NC}"
-  echo "  ${red}femus_FEMuS_compile_lib${NC}: compile femus source files as separate libraries for 2D and 3D geometries"
-  echo "  ${red}femus_gencase_compile_lib${NC}: compile standard gencase_2d and gencase_3d applications for QUAD 4/9 and HEX 8/27"
-  echo "     2D and 3D meshes"
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == ==
+#COMPILE LIBRARY AND STANDARD APPLICATIONS
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == ==
+function femus_show_compiling_functions{
+    echo "------------------------------------------------------------" echo
+         "${green}List of functions for compiling femus and  standard "
+         "applications${NC}" echo "  ${red}femus_FEMuS_compile_lib${NC}: "
+                                  "compile femus source files as separate "
+                                  "libraries for 2D and 3D geometries" echo
+         "  ${red}femus_gencase_compile_lib${NC}: compile standard gencase_2d "
+         "and gencase_3d applications for QUAD 4/9 and HEX 8/27" echo
+         "     2D and 3D meshes"}
+
+function femus_gencase_compile_lib{
+
+    OLD_METHOD = $METHOD export ACTUAL_DIR = $PWD
+
+    export MAIN_GENCASE_DIR =
+        $FEMUS_DIR / applications / gencase /
+        cd $MAIN_GENCASE_DIR
+
+# 2D gencase
+            echo
+        "${red}Now compiling standard gencase application for 2D "
+        "geometries" echo
+        "Standard gencase for quadrilateral elements${NC}" cd gencase_2d
+            femus_application_configure opt make clean make $1
+
+# 3D gencase
+                echo "${red}Now compiling standard gencase application for 3D "
+                     "geometries" echo
+        "Standard gencase for hexahedral elements${NC}" cd../
+        gencase_3d femus_application_configure opt make clean make $1
+
+            cd $ACTUAL_DIR export METHOD =
+            $OLD_METHOD femus_application_configure $METHOD
+
 }
 
+function femus_turbulence_compile_lib_opt{
 
+    OLD_METHOD = $METHOD export ACTUAL_DIR =
+        $PWD echo
+        "Compiling femus turb library for 2D geometry " cd $PLAT_CODES_DIR /
+        femus / applications /
+        lib_turb2D femus_application_configure opt
+#removing libturb_2d.so
+            make clean make $1
 
-function femus_gencase_compile_lib {
+                echo
+        "Compiling femus turb library for 3D geometry " cd $PLAT_CODES_DIR /
+        femus / applications /
+        lib_turb3D femus_application_configure opt
+#removing libturb_3d.so
+            make clean make $1
 
-  OLD_METHOD=$METHOD
-  export ACTUAL_DIR=$PWD
-  
-  export MAIN_GENCASE_DIR=$FEMUS_DIR/applications/gencase/
-  cd $MAIN_GENCASE_DIR
-  
-  # 2D gencase
-  echo "${red}Now compiling standard gencase application for 2D geometries"
-  echo "Standard gencase for quadrilateral elements${NC}"
-  cd gencase_2d
-  femus_application_configure opt 
-  make clean
-  make $1
-  
-  # 3D gencase
-  echo "${red}Now compiling standard gencase application for 3D geometries"
-  echo "Standard gencase for hexahedral elements${NC}"
-  cd ../gencase_3d
-  femus_application_configure opt 
-  make clean
-  make $1
+                cd $ACTUAL_DIR export METHOD =
+            $OLD_METHOD femus_application_configure $METHOD}
 
-  cd $ACTUAL_DIR
-  export METHOD=$OLD_METHOD
-  femus_application_configure $METHOD
-  
-}
+function femus_turbulence_compile_lib_dbg{
 
-function femus_turbulence_compile_lib_opt {
+    OLD_METHOD = $METHOD export ACTUAL_DIR =
+        $PWD echo
+        "Compiling femus turb library for 2D geometry " cd $PLAT_CODES_DIR /
+        femus / applications /
+        lib_turb2D femus_application_configure dbg
+#removing libturb_2d.so
+            make clean
+#removing object files from femus / src
+                make $1
 
-  OLD_METHOD=$METHOD
-  export ACTUAL_DIR=$PWD
-  echo "Compiling femus turb library for 2D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_turb2D
-  femus_application_configure opt
-  # removing libturb_2d.so
-  make clean
-  make $1
-  
-  echo "Compiling femus turb library for 3D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_turb3D
-  femus_application_configure opt
-  # removing libturb_3d.so
-  make clean
-  make $1
-  
-  cd $ACTUAL_DIR
-  export METHOD=$OLD_METHOD
-  femus_application_configure $METHOD
-}
+                    echo
+        "Compiling femus turb library for 3D geometry " cd $PLAT_CODES_DIR /
+        femus / applications /
+        lib_turb3D femus_application_configure dbg
+#removing libturb_3d.so
+            make clean
+#removing object files from femus / src
+                make $1
 
-function femus_turbulence_compile_lib_dbg {
+                    cd $ACTUAL_DIR export METHOD =
+            $OLD_METHOD femus_application_configure $METHOD}
 
-  OLD_METHOD=$METHOD
-  export ACTUAL_DIR=$PWD
-  echo "Compiling femus turb library for 2D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_turb2D
-  femus_application_configure dbg
-  # removing libturb_2d.so
-  make clean
-  # removing object files from femus/src
-  make $1
-  
-  echo "Compiling femus turb library for 3D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_turb3D
-  femus_application_configure dbg
-  # removing libturb_3d.so
-  make clean
-  # removing object files from femus/src
-  make $1
-  
-  cd $ACTUAL_DIR
-  export METHOD=$OLD_METHOD
-  femus_application_configure $METHOD
-}
+function femus_FEMuS_compile_lib_opt{
 
-function femus_FEMuS_compile_lib_opt {
+    OLD_METHOD = $METHOD export ACTUAL_DIR =
+        $PWD echo
+        "Compiling femus library for 2D geometry " cd $PLAT_CODES_DIR /
+        femus / applications /
+        lib_femus2D femus_application_configure opt
+#removing libfemus_2d.so
+            make clean make $1
 
-  OLD_METHOD=$METHOD
-  export ACTUAL_DIR=$PWD
-  echo "Compiling femus library for 2D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
-  femus_application_configure opt
-  # removing libfemus_2d.so
-  make clean
-  make $1
-  
-  echo "Compiling femus library for 3D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
-  femus_application_configure opt
-  # removing libfemus_2d.so
-  make clean
-  make $1
-  
-  cd $ACTUAL_DIR
-  export METHOD=$OLD_METHOD
-  femus_application_configure $METHOD
-}
+                echo
+        "Compiling femus library for 3D geometry " cd $PLAT_CODES_DIR /
+        femus / applications /
+        lib_femus3D femus_application_configure opt
+#removing libfemus_2d.so
+            make clean make $1
+
+                cd $ACTUAL_DIR export METHOD =
+            $OLD_METHOD femus_application_configure $METHOD}
 
 function femus_FEMuS_compile_lib_dbg {
 
-  OLD_METHOD=$METHOD
-  export ACTUAL_DIR=$PWD
-  echo "Compiling femus library for 2D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_femus2D
-  femus_application_configure dbg
-  # removing libfemus_2d.so
-  make clean
-  # removing object files from femus/src
-  make src_clean
-  make $1
-  
-  echo "Compiling femus library for 3D geometry "
-  cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
-  femus_application_configure dbg
-  # removing libfemus_2d.so
-  make clean
-  # removing object files from femus/src
-  make src_clean
-  make $1
-  
-  # cleaning after lib building
-  make src_clean
-  
-  cd $ACTUAL_DIR
-  export METHOD=$OLD_METHOD
-  femus_application_configure $METHOD
+  OLD_METHOD = $METHOD export ACTUAL_DIR =
+      $PWD echo "Compiling femus library for 2D geometry " cd $PLAT_CODES_DIR /
+      femus / applications /
+      lib_femus2D femus_application_configure dbg
+#removing libfemus_2d.so
+          make clean
+#removing object files from femus / src
+              make src_clean make $1
+
+                  echo
+      "Compiling femus library for 3D geometry " cd $PLAT_CODES_DIR /
+      femus / applications /
+      lib_femus3D femus_application_configure dbg
+#removing libfemus_2d.so
+          make clean
+#removing object files from femus / src
+              make src_clean make $1
+
+#cleaning after lib building
+                  make src_clean
+
+                      cd $ACTUAL_DIR export METHOD =
+          $OLD_METHOD femus_application_configure $METHOD
 }
 
-# ==================================================================================
-#                              RUN APPLICATIONS
-# ==================================================================================
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == ==
+#RUN APPLICATIONS
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == ==
 
 function femus_show_application_functions {
-  echo "------------------------------------------------------------"
-  echo "${green}List of functions for running applications${NC}"
-  echo "  ${red}femus_FEMuS_run <np>${NC}: compile actual application using np procs, and then run, using np procs"
-  echo "  ${red}femus_gencase_run <np>${NC}: compile gencase using np procs, and then run, using np procs"
-  echo "  ${red}femus_gencase_run_lib2D <np>${NC}: compile standard 2D gencase using np procs, and then run, using np procs"
-  echo "  ${red}femus_gencase_run_lib3D <np>${NC}: compile standard 3D gencase using np procs, and then run, using np procs"
-  echo "  ${red}femus_interpolator_run <np>${NC}: compile with np procs and then run, using np procs"
+  echo "------------------------------------------------------------" echo
+       "${green}List of functions for running applications${NC}" echo
+       "  ${red}femus_FEMuS_run <np>${NC}: compile actual application using np "
+       "procs, and then run, using np procs" echo
+       "  ${red}femus_gencase_run <np>${NC}: compile gencase using np procs, "
+       "and then run, using np procs" echo
+       "  ${red}femus_gencase_run_lib2D <np>${NC}: compile standard 2D gencase "
+       "using np procs, and then run, using np procs" echo
+       "  ${red}femus_gencase_run_lib3D <np>${NC}: compile standard 3D gencase "
+       "using np procs, and then run, using np procs" echo
+       "  ${red}femus_interpolator_run <np>${NC}: compile with np procs and "
+       "then run, using np procs"
 }
-# =================================================================================
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == =
 function femus_FEMuS_run {
 
-   if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
-   make -j$pp
-   
-   if [ "$?" != 0 ]; then
-      echo "${red}${bold}=============================================="
-      echo "             COMPILATION ERROR"
-      echo "==============================================${reset}"
-   else     
-     mpiexec -np $pp $FM_MYAPP-$METHOD 2> messages.log
-   fi
+  if
+    ["$1" == ""];
+  then pp = "1";
+  else pp = $1;
+  fi make - j$pp
+
+      if["$?" != 0];
+  then echo "${red}${bold}==============================================" echo
+            "             COMPILATION ERROR" echo "============================"
+                                                  "==================${"
+                                                  "reset}" else mpiexec -
+          np $pp $FM_MYAPP - $METHOD 2 >
+      messages.log fi
 }
 
-# =================================================================================
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == =
 function femus_gencase_run {
 
-   if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
-
-   if [ -d  $FEMUS_DIR/bin ]; then
-     echo "found bin directory "
-     if [ ! -f "$FEMUS_DIR/bin/gencase" ]; then
-       echo gencase not found make .....
-       make gencase -j$pp
-     fi
-     echo run gencase .. $FEMUS_DIR/bin/gencase
-     mpiexec -np $pp $FEMUS_DIR/bin/gencase 
-     
-   else
-     echo "${red} ======================================================= "
-     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
-     echo " CREATE bin DIRECTORY, THEN TYPE "
-     echo "      make gencase   "
-     echo "      femus_gencase_run <n proc> "
-     echo " ======================================================= ${reset}"
-   fi   
-}
-# =================================================================================
-function femus_gencase_run_lib2D {
-if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
-   if [ -d  $FEMUS_DIR/bin ]; then
-     echo "found bin directory "
-     
-     if [ ! -f "$FEMUS_DIR/bin/gencase_2d" ]; then
-       femus_gencase_compile_lib
-     fi
-     
-     mpiexec -np $pp gencase_2d 2> messages_gencase.log
-     
-   else
-     echo "${red} ======================================================= "
-     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
-     echo " CREATE bin DIRECTORY, THEN TYPE "
-     echo "      make gencase   "
-     echo "      femus_gencase_run <n proc> "
-     echo " ======================================================= ${reset}"
-   fi   
-}
-# =================================================================================
-function femus_gencase_run_lib3D {
-if [  "$1" == ""  ]; then pp="1" ;    else    pp=$1;    fi
-   if [ -d  $FEMUS_DIR/bin ]; then
-     echo "found bin directory "
-     
-     if [ ! -f "$FEMUS_DIR/bin/gencase_3d" ]; then
-       femus_gencase_compile_lib
-     fi
-     
-     mpiexec -np $pp gencase_3d 2> messages_gencase.log
-     
-   else
-     echo "${red} ======================================================= "
-     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
-     echo " CREATE bin DIRECTORY, THEN TYPE "
-     echo "      make gencase   "
-     echo "      femus_gencase_run <n proc> "
-     echo " ======================================================= ${reset}"
-   fi   
-}
-# =================================================================================
-function femus_interpolator_run {
-   if [ -d  $FEMUS_DIR/bin ]; then
-     echo "found bin directory "
-     mpiexec -np $1 Interpolator 2> messages_interpolator.log
-   else
-     echo "${red} ======================================================= "
-     echo " UNABLE TO FIND /USER_APPL/bin DIRECTORY  "
-     echo " CREATE bin DIRECTORY, THEN TYPE "
-     echo "      make interpolator   "
-     echo "      femus_interpolator_run <n proc> "
-     echo " ======================================================= ${reset}"
-   fi   
-}
-
-# ==================================================================================
-#                                  TUTORIALS
-# ==================================================================================
-
-function femus_show_tutorial_functions {
-  echo "------------------------------------------------------------"
-  echo "${green}List of functions for tutorial applications${NC}"
-  echo "  ${red}femus_show_tutorials${NC}: show all available tutorials"
-  echo "  ${red}femus_tutorial_run <path>${NC}: guided choice of tutorial for execution in <path> directory."
-  echo "     If <path> is not given then tutorial is run in actual position"
-}
-
-
-function femus_show_tutorials () {
-  if command_exists tree ; then
-    echo "Tutorial folder structure:"
-    echo "${red} Tutorial ${NC} - ${green} Class ${NC} - ${blue} Case ${NC}"
-    tree -d -L 2 $FEMUS_DIR/tutorials
-  else
-    echo "${red} tree utility not present ${NC}"
-    echo "Please install tree and re-run command"
-    return;
+  if
+    ["$1" == ""];
+  then pp = "1";
+  else pp = $1;
   fi
-  return;
+
+      if[-d $FEMUS_DIR / bin];
+  then echo "found bin directory " if[! - f "$FEMUS_DIR/bin/gencase"];
+  then echo gencase not found make.....make gencase -
+      j$pp fi echo run gencase..$FEMUS_DIR / bin / gencase mpiexec -
+      np $pp $FEMUS_DIR / bin /
+          gencase
+
+          else echo
+          "${red} ======================================================= " echo
+          " UNABLE TO FIND /USER_APPL/bin DIRECTORY  " echo
+          " CREATE bin DIRECTORY, THEN TYPE " echo "      make gencase   " echo
+          "      femus_gencase_run <n proc> " echo
+          " ======================================================= ${reset}" fi
+}
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == =
+function femus_gencase_run_lib2D {
+  if
+    ["$1" == ""];
+  then pp = "1";
+  else pp = $1;
+  fi if[-d $FEMUS_DIR / bin];
+  then echo "found bin directory "
+
+      if[! - f "$FEMUS_DIR/bin/gencase_2d"];
+  then femus_gencase_compile_lib fi
+
+              mpiexec -
+          np $pp gencase_2d 2 >
+      messages_gencase.log
+
+      else echo
+      "${red} ======================================================= " echo
+      " UNABLE TO FIND /USER_APPL/bin DIRECTORY  " echo
+      " CREATE bin DIRECTORY, THEN TYPE " echo "      make gencase   " echo
+      "      femus_gencase_run <n proc> " echo
+      " ======================================================= ${reset}" fi
+}
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == =
+function femus_gencase_run_lib3D {
+  if
+    ["$1" == ""];
+  then pp = "1";
+  else pp = $1;
+  fi if[-d $FEMUS_DIR / bin];
+  then echo "found bin directory "
+
+      if[! - f "$FEMUS_DIR/bin/gencase_3d"];
+  then femus_gencase_compile_lib fi
+
+              mpiexec -
+          np $pp gencase_3d 2 >
+      messages_gencase.log
+
+      else echo
+      "${red} ======================================================= " echo
+      " UNABLE TO FIND /USER_APPL/bin DIRECTORY  " echo
+      " CREATE bin DIRECTORY, THEN TYPE " echo "      make gencase   " echo
+      "      femus_gencase_run <n proc> " echo
+      " ======================================================= ${reset}" fi
+}
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == =
+function femus_interpolator_run {
+  if
+    [-d $FEMUS_DIR / bin];
+  then echo "found bin directory " mpiexec - np $1 Interpolator 2 >
+      messages_interpolator.log else echo
+      "${red} ======================================================= " echo
+      " UNABLE TO FIND /USER_APPL/bin DIRECTORY  " echo
+      " CREATE bin DIRECTORY, THEN TYPE " echo "      make interpolator   " echo
+      "      femus_interpolator_run <n proc> " echo
+      " ======================================================= ${reset}" fi
 }
 
-function femus_tutorial_run () {
-while :
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == ==
+#TUTORIALS
+#== == == == == == == == == == == == == == == == == == == == == == == == == == \
+    == == == == == == == == == == == == == == ==
+
+function femus_show_tutorial_functions{
+    echo "------------------------------------------------------------" echo
+         "${green}List of functions for tutorial applications${NC}" echo
+         "  ${red}femus_show_tutorials${NC}: show all available tutorials" echo
+         "  ${red}femus_tutorial_run <path>${NC}: guided choice of tutorial "
+         "for execution in <path> directory." echo
+         "     If <path> is not given then tutorial is run in actual position"}
+
+function
+femus_show_tutorials() {
+  if
+    command_exists tree;
+  then echo
+      "Tutorial folder structure:" echo
+      "${red} Tutorial ${NC} - ${green} Class ${NC} - ${blue} Case ${NC}" tree -
+      d -
+      L 2 $FEMUS_DIR / tutorials else echo
+          "${red} tree utility not present ${NC}" echo
+          "Please install tree and re-run command" return;
+  fi return;
+}
+
+function femus_tutorial_run() {
+  while :
 do
     case "$1" in
       -h | --help)
           display_help  # Call your function
           exit 0
-          ;;
+          ;
+  ;
       "")  # No more options
           echo "Tutorial will be run here"
           echo "Confirm your choice"
           select confirm in y n ;
-          
-          do
+
+      do
            case "$confirm" in
             y)
              break
@@ -415,7 +428,7 @@ export TUTORIAL_RUN
 export TUTORIAL_HOME=$FEMUS_DIR/tutorials/
 
 while :
-do
+             do
     case "$1" in
       -h | --help)
           display_help  # Call your function
@@ -512,7 +525,7 @@ export TUTORIAL_RUN
 export TUTORIAL_HOME=$FEMUS_DIR/tutorials/
 
    while :
-do
+      do
     case "$1" in
       -h | --help)
           display_help  # Call your function
@@ -552,8 +565,8 @@ done
          
    export TUTORIAL_CLASS
    export TUTORIAL_CASE
-   
-   # here class and case are chosen from user
+
+#here class and case are chosen from user
    femus_tutorial_class_select
       
    if [ "$TUTORIAL_CASE" == "all" ]; then
@@ -671,4 +684,19 @@ function femus_link_solver_files () {
       done
   done 
   
+}
+
+
+function femus_install_repo_format_code (){
+
+PRE_HOOK_FILE=$FEMUS_DIR/.git/hooks/pre-commit
+git clone https://github.com/andrewseidl/githook-clang-format.git clang_format_hook
+
+      cp clang_format_hook / clang -
+          format.hook $PRE_HOOK_FILE
+
+              chmod 777 $PRE_HOOK_FILE
+
+                  rm -
+          fr clang_format_hook
 }
