@@ -673,3 +673,61 @@ function femus_link_solver_files () {
   done 
   
 }
+
+
+function femus_install_repo_format (){
+
+PRE_HOOK_FORMAT=$FEMUS_DIR/.git/hooks/pre-commit
+
+if [ -f $PRE_HOOK_FORMAT ]; then
+  rm $PRE_HOOK_FORMAT
+fi
+
+touch $PRE_HOOK_FORMAT
+chmod 777 $PRE_HOOK_FORMAT
+
+echo "#!/bin/bash
+
+STYLE=\$(git config --get hooks.clangformat.style)
+if [ -n \"\${STYLE}\" ] ; then
+  STYLEARG=\"-style=\${STYLE}\"
+else
+  STYLEARG=\"\"
+fi
+
+format_file() {
+  file=\"\${1}\"
+  clang-format -i \${STYLEARG} \${1}
+  git add \${1}
+}
+
+case \"\${1}\" in
+  --about )
+    echo \"Runs clang-format on source files\"
+    ;;
+  * )
+    for file in `git diff-index --cached --name-only HEAD` ; do
+
+    extention=`sed 's/^\w\+.//' <<< \"\$file\"`
+
+      case \"\$extention\" in
+      \"C\" ) 
+         format_file \"\${file}\"
+         echo \"File \" \"\$file\" \" has been formatted using clang-format \"
+         break ;;
+      \"h\" ) 
+         format_file \"\${file}\"
+         echo \"File \" \"\$file\" \" has been formatted using clang-format \"
+         break ;;
+      * ) 
+         echo \"File \" \"\$file\" \" added without changing anything \"
+         git add \$file
+         break ;;
+      esac
+    done
+    ;;
+esac ">> $PRE_HOOK_FORMAT
+
+echo "Pre-commit hook file has been created"
+
+}
