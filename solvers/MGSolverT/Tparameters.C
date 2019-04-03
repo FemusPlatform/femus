@@ -1,8 +1,12 @@
 #include "Tparameters.h"
+
+#include "Equations_conf.h"
+
+#ifdef T_EQUATIONS
+
 #include "User_T.h"
 #include "MGUtils.h"
 #include <fstream>
-
 
 T_param::T_param()   {// SETTING DEFAULT VALUES
         _SolverType                  =GMRESM;
@@ -131,3 +135,5 @@ void T_param::read_file (
     fin.close();
     return;
 } 
+
+#endif
