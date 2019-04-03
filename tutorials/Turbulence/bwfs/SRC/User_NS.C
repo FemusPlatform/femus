@@ -44,9 +44,7 @@ void MGSolNS::ic_read(int bc_gam,  /**<1 */
 // BOUNDARY CONDITIONS
 // -------------------------------------------------------------------
 void MGSolNS::bc_read(int bc_gam,
-                      i
-
-                          nt bc_mat,
+                      int bc_mat,
                       double xp[], int bc_Neum[], int bc_flag[]) {
 
   bc_Neum[0] = outflow;
