@@ -1,4 +1,8 @@
-red=`tput setaf 9`; bold=`tput bold `; green=`tput setaf 10`; reset=`tput sgr0`; NC=`tput sgr0`
+red=`tput setaf 9`; 
+bold=`tput bold `; 
+green=`tput setaf 10`; 
+reset=`tput sgr0`;
+NC=`tput sgr0`;
 blue=`tput setaf 14`; 
 # SET OF FUNCTIONS FOR USING FEMUS CODE
 
@@ -7,13 +11,22 @@ function  command_exists () {
 }
 
 function femus_guide {
-   femus_show_application_functions
-   femus_show_configure_functions
-   femus_show_compiling_functions
-   femus_show_tutorial_functions
+   intern_femus_show_application_functions
+   intern_femus_show_configure_functions
+   intern_femus_show_compiling_functions
+   intern_femus_show_tutorial_functions
+   intern_femus_repo_functions
+}
+git commit -m "intern prefix added to some femus functions. femus + <tab> now shows only user available functions "
+function intern_femus_repo_functions {
+  echo "------------------------------------------------------------"
+  echo "${green}List of functions for using femus and github repo${NC}"
+  echo "  ${red}femus_install_repo_format${NC}: the function creates an executable pre-commit"
+  echo "     hook file inside femus/.git/ folder. The command is used to automatically format"
+  echo "     source files, added with \"git add\" function and before \"git commit\", using clang"
 }
 
-function femus_show_configure_functions {
+function intern_femus_show_configure_functions {
   echo "------------------------------------------------------------"
   echo "${green}List of functions for configuring femus applications${NC}"
   echo "  ${red}femus_application_configure <method>${NC}: function to be called within application folder."
@@ -91,7 +104,7 @@ function femus_application_configure () {
 # ==================================================================================
 #                      COMPILE LIBRARY AND STANDARD APPLICATIONS
 # ==================================================================================
-function femus_show_compiling_functions {
+function intern_femus_show_compiling_functions {
   echo "------------------------------------------------------------"
   echo "${green}List of functions for compiling femus and  standard applications${NC}"
   echo "  ${red}femus_FEMuS_compile_lib${NC}: compile femus source files as separate libraries for 2D and 3D geometries"
@@ -236,7 +249,7 @@ function femus_FEMuS_compile_lib_dbg {
 #                              RUN APPLICATIONS
 # ==================================================================================
 
-function femus_show_application_functions {
+function intern_femus_show_application_functions {
   echo "------------------------------------------------------------"
   echo "${green}List of functions for running applications${NC}"
   echo "  ${red}femus_FEMuS_run <np>${NC}: compile actual application using np procs, and then run, using np procs"
@@ -344,7 +357,7 @@ function femus_interpolator_run {
 #                                  TUTORIALS
 # ==================================================================================
 
-function femus_show_tutorial_functions {
+function intern_femus_show_tutorial_functions {
   echo "------------------------------------------------------------"
   echo "${green}List of functions for tutorial applications${NC}"
   echo "  ${red}femus_show_tutorials${NC}: show all available tutorials"
@@ -391,14 +404,14 @@ do
           done
           
           echo "__________________________________________"
-          femus_tutorial_copy $PWD
+          intern_femus_tutorial_copy $PWD
           break
           ;;
       *)  # No more options
           echo "Tutorial will be run in the following path"
           echo "path: "$1
           echo "__________________________________________"
-          femus_tutorial_copy $1
+          intern_femus_tutorial_copy $1
           break
           ;; 
     esac
@@ -506,7 +519,7 @@ echo "ALL TUTORIALS: COMPLETED RUN"
 }
 
 
-function femus_tutorial_copy () {
+function intern_femus_tutorial_copy () {
 
 export TUTORIAL_RUN
 export TUTORIAL_HOME=$FEMUS_DIR/tutorials/
@@ -554,7 +567,7 @@ done
    export TUTORIAL_CASE
    
    # here class and case are chosen from user
-   femus_tutorial_class_select
+   intern_femus_tutorial_class_select
       
    if [ "$TUTORIAL_CASE" == "all" ]; then
    
@@ -609,7 +622,7 @@ done
    return;
 }
 
-function femus_tutorial_class_select () {
+function intern_femus_tutorial_class_select () {
 
  export CLASSES=$(ls -l $FEMUS_DIR/tutorials | grep ^d | awk '{print $9}')
   
@@ -623,10 +636,10 @@ function femus_tutorial_class_select () {
    esac
   done
 
-  femus_tutorial_select_case $TUTORIAL_CLASS
+  intern_femus_tutorial_select_case $TUTORIAL_CLASS
 }
 
-function femus_tutorial_select_case () {
+function intern_femus_tutorial_select_case () {
  export CASES=$(ls -l $FEMUS_DIR/tutorials/$1 | grep ^d | awk '{print $9}')
   
  echo "Choose tutorial case for class $TUTORIAL_CLASS: " 
@@ -634,7 +647,7 @@ function femus_tutorial_select_case () {
   do
    case "$tut_case" in
     back_to_classes)
-       femus_tutorial_class_select
+       intern_femus_tutorial_class_select
     break;;   
     "all")
     echo " all tutorials of class $TUTORIAL_CLASS will be run"
