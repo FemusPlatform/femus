@@ -94,12 +94,19 @@ LIBS =  -lm  -lmesh_opt -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 # ----------------------------------------------------------
 # define the gencase source files and the include on which it depends
 SRCS := $(wildcard ./src/*.C)
-INCLUDES_SRCS :=  $(wildcard $(APP_PATH)/DATA/*.h)
+INCLUDES_SRCS :=  $(wildcard ./DATA/*.h)
 # now define the correspondig objects of the source files simply by
 # replacing the suffix .c of all words with the .o suffix.
-OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRCS))
+# OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRCS))
+
+OBJ_DIR = ./obj/
+SRC_FILES = $(sort $(notdir $(wildcard ./src/*.C )))
+SRC_OBJS = $(patsubst %.C, %-$(METHOD).o, $(SRC_FILES))
+OBJS_APP = $(addprefix $(OBJ_DIR), $(SRC_OBJS))
+
+
 # finally define the executable file 
-MAIN = gencase-$(METHOD)
+MAIN = $(FEMUS_DIR)/bin/gencase-$(METHOD)
 
 
 
@@ -110,12 +117,15 @@ MAIN = gencase-$(METHOD)
 # which could be in the directory and make rules
 .PHONY: depend clean
 # this is the executable file rule, the one executed when you call make
-all:    $(SRCS) $(MAIN)
+all:    $(SRC_FILES) $(MAIN)
 	@echo   $(MAIN) succesfully compiled!
 
+
 # this is the rule for linking the objects to obtain the executable file.
-$(MAIN): $(OBJS) 
-	@echo 
+$(MAIN): $(OBJS_APP) 
+	@echo $(SRCS)
+	@echo $(SRC_FILES)
+	@echo $(OBJS_APP)
 	@echo "Linking "$@"..."
 	@echo 
 	@echo $^                | tr " " "\n"
@@ -131,6 +141,21 @@ $(MAIN): $(OBJS)
 %-$(METHOD).o : %.C %.h $(INCLUDES_SRCS)
 	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
 	@$(CXX) $(CFLAGS) $(INCLUDES) -c $<  -o  $@ 
+	
+# RULE FOR LOCAL FILES AND EQUATION MAP FILLER
+obj/%.o : %.C
+	@mkdir -p $(dir $@)
+	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
+	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	
+obj/%-$(METHOD).o : %.C
+	@mkdir -p $(dir $@)
+	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
+	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	
+# vpath SETTINGS - WHERE TO LOOK FOR SOURCE FILES
+vpath %.C ./src/
+
 
 # Remark 1 
 # In this rule the automatic variables $< and $@ are used.
@@ -152,7 +177,7 @@ $(MAIN): $(OBJS)
 # 
 
 clean:
-	$(RM) ./src/*-$(METHOD).o *~ $(MAIN)
+	$(RM) ./src/*-$(METHOD).o *~ $(MAIN) *~ ./obj/*-$(METHOD).o
 	
 
 

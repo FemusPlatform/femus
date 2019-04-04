@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream> 
+#include <vector>
 
 // ===============================
 //  MGUtils Class functions

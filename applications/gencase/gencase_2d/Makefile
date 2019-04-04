@@ -177,7 +177,7 @@ vpath %.C ./src/
 # 
 
 clean:
-	$(RM) ./src/*-$(METHOD).o *~ $(MAIN)
+	$(RM) ./src/*-$(METHOD).o *~ $(MAIN) *~ ./obj/*-$(METHOD).o
 	
 
 
