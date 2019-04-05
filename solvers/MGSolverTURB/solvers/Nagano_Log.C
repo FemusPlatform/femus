@@ -121,21 +121,14 @@ void MGSolNaganoLog::VelocityForSUPG (
      double VEL[]
 )   // NUMERICAL STABILIZATION - UPWIND AND SUPG ===============================
 {
-
+     mod2_vel = 0.;
      for ( int i = 0; i < DIMENSION; i++ ) {
           VEL[i]  = vel_g[i];
-
           if ( _ModifiedSupg ) {
-               if ( _NonLinearIt == 0 ) {
-                    VEL[i] -= _nueff * ( ( 1 - _dir ) * _T_dxg[0][i] + _dir * ( _T_dxg[1][i] + 2.*_T_dxg[0][i] ) );
-               } else {
-                    VEL[i] -= _nueff * ( ( 1 - _dir ) * _T_nl_dxg[0][i] + _dir * ( _T_nl_dxg[1][i] + 2.*_T_dxg[0][i] ) );
-               }
+              VEL[i] -= _nueff * ( ( 1 - _dir ) * _T_dxg[0][i] + _dir * ( _T_dxg[1][i] + 2.*_T_dxg[0][i] ) );
           }
-
           mod2_vel += VEL[i] * VEL[i];
      }
-
      mod2_vel = sqrt ( mod2_vel );
 
      return;

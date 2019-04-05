@@ -7,7 +7,7 @@
 #include "MGSolverTURB.h"       // Navier-Stokes class header file
 #include "MGUtils.h"
 #include "TurbUtils.h"
-
+#include "MGMesh.h"
 #include "MGFE.h"          // Mesh class,double vel_g[]
 
 
@@ -132,6 +132,71 @@ void MGSolTURB::vol_integral (
     return;
 }
 
+
+void MGSolTURB::compute_y_plus (
+    const int el_ndof2,
+    const int el_ngauss,
+    double xx_qnds[],
+    const int unsteady,
+    const int mode,
+    int el_conn[],
+    int iel
+)   // ==============================================================================================
+{
+    double grad[DIMENSION] = {0., 0.};
+    grad[DIMENSION -1] = 0.;
+    double area = 0.;
+    for ( int qp = 0; qp < el_ngauss; qp++ ) {
+        double det2      = _fe[2]->Jac ( qp, xx_qnds, _InvJac2 ); // Jacobian
+        double JxW_g2    = det2 * _fe[2]->_weight1[_nTdim - 1][qp];   // weight
+        area += JxW_g2;
+
+        _fe[2]->get_dphi_gl_g ( _nTdim, qp, _InvJac2, _dphi_g[2] ); // global coord deriv
+
+        double der_dist[DIMENSION] = {0., 0.};
+        der_dist[DIMENSION -1] = 0.;
+
+
+        for ( int n = 0; n < el_ndof2; n++ ) {
+            for ( int dim = 0; dim<DIMENSION; dim++ ) {
+                der_dist[dim] += JxW_g2 * _data_eq[2].ub[_FF_idx[DIST]*el_ndof2 + n] * _dphi_g[2][n + dim*el_ndof2];
+            }
+        }
+        for ( int dim = 0; dim<DIMENSION; dim++ ) {
+            grad[dim] += JxW_g2 * der_dist[dim];
+        }
+    }
+    double norm[DIMENSION];
+    double mod = 0;
+    for ( int dim = 0; dim<DIMENSION; dim++ ) {
+        mod += grad[dim]*grad[dim];
+    }
+    mod = sqrt ( mod ) + 1.e-10;
+    for ( int dim = 0; dim<DIMENSION; dim++ ) {
+        norm[dim] = -grad[dim]/mod;
+    }
+
+
+    // calculation of utau from mid cell point values
+    double vel_mod =0., vel_norm = 0., vel_bound=0.;
+
+    for ( int dim = 0; dim < _nTdim; dim ++ ) {
+        double vel_d = _data_eq[2].ub[ ( _FF_idx[NS_F] + dim ) * NDOF_FEM + NDOF_FEM - 1];
+        vel_mod  += vel_d * vel_d;
+        vel_norm += vel_d * norm[dim];
+    }
+
+    vel_bound = sqrt ( vel_mod - vel_norm * vel_norm ) + 1.e-10;
+
+    double WallDist = _data_eq[2].ub[_FF_idx[DIST]*el_ndof2 + el_ndof2 -1];
+    double utau  = _mgutils._TurbParameters->CalcUtau ( vel_bound, WallDist );
+    
+    double yplus = WallDist * utau / _IRe;
+    
+    _mgmesh._yplus[iel] = yplus;
+            
+    return;
+}
 
 // ===============================================================================================
 void MGSolTURB::rhs_integral (

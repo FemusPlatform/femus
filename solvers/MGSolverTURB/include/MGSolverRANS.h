@@ -249,6 +249,7 @@ public:
 					       int InterpolationNode,
 					       int NumOfNodes,
 					       double f_upwind);
+  
   virtual void VelocityForSUPG (double &mod2_vel, double vel_g[],
 				double VEL[]);
 

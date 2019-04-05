@@ -210,11 +210,8 @@ void  MGSolTURB::GenMatRhs (
     const int nel_b = _mgmesh._off_el[0][Level + _NoLevels * _iproc]; // stop element
 
     _res = 0.;
-
+    
     for ( int iel = 0; iel < ( nel_e - nel_b ); iel++ ) {
-
-
-
         // set to zero matrix and rhs and center
         KeM.zero();
         FeM.zero();
@@ -321,9 +318,26 @@ void  MGSolTURB::GenMatRhs (
             }
 
         }
+        
+        if(_dir==1){
+            int WallEl = 0;
+            for ( int iside = 0; iside < el_sides; iside++ )  {
+                if ( el_neigh[iside] == -1 ) {
+                        int nodeid = _mgmesh._GeomEl._surf_top[elb_ndof[2] - 1 + NDOF_FEMB * iside]; // local nodes
+                        if ( _bc_bd[nodeid] % 2 == 0 ) {
+                            _bc_el[nodeid] = 0;
+                            WallEl = 1;
+                        }
+                }
+            }
+            if(WallEl == 1){
+                compute_y_plus( el_ndof2, el_ngauss, _xx_qnds, unsteady_flag, mode, el_conn, iel+nel_b );               
+            }                       
+        }
+        
 
     } // end of element loop
-
+    
     /// 5. clean
     el_dof_indices.clear();
     A[Level]->close();
@@ -337,6 +351,26 @@ void  MGSolTURB::GenMatRhs (
     std::cout << " Matrix Assembled(T)  for  Level " << Level << " dofs " << A[Level]->n() << "\n";
 #endif
 
+    if(_dir==1) {
+        int nProcs;
+        MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
+        int *shifts = new int[nProcs];
+        int *counts = new int[nProcs];
+        
+        for(int np=0; np<nProcs; np++){
+            const int nel_e = _mgmesh._off_el[0][Level + _NoLevels * np + 1]; // start element
+            const int nel_b = _mgmesh._off_el[0][Level + _NoLevels * np]; // stop element
+            shifts[np] = nel_b;
+            counts[np] = nel_e - nel_b;
+        }
+//         MPI_Gather(_mgmesh._yplus + nel_b, nel_e-nel_b, MPI_DOUBLE, _mgmesh._yplus, nel_e-nel_b, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+        // Gathering yplus values on proc 0 for printing 
+        MPI_Gatherv(_mgmesh._yplus + nel_b, nel_e-nel_b, MPI_DOUBLE, _mgmesh._yplus, counts, shifts, MPI_DOUBLE, 0, MPI_COMM_WORLD); 
+        delete [] shifts;
+        delete [] counts;
+    }
+    
     return;
 }
 

@@ -479,6 +479,10 @@ void MGEquationsSystem::print_soln_h5(const int t_flag // time flag
   if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
    if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) 
      _mgmesh.print_VolFrac_hf5(filename.str(),"Piece_VolFrac");
+   
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
+   if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0)    
+     _mgmesh.print_dist_hf5(filename.str(),_mgmesh._yplus,"YPLUS")  ;
   
   return;
 }
@@ -570,6 +574,19 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,int /*n
       << ":Piece_VolFrac\n";
   out << "</DataItem>\n" << "</Attribute>";
  }
+ 
+   if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
+   if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
+       out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
+  out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+  out << attr_file.str()
+//       femus_dir << "/" << output_dir << basesol << "."
+//       << setw(ndigits) << setfill('0') << t_step << ".h5"
+      << ":YPLUS\n";
+  out << "</DataItem>\n" << "</Attribute>";
+  }    
+
   
   
   out << "</Grid>\n" << "</Domain> \n" << "</Xdmf> \n";
@@ -704,9 +721,10 @@ void MGEquationsSystem::print_case_h5(const int t_init) {
   hid_t   file = H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT);
   mgmesh.print_subdom_hf5(filename.str())  ; // PID (n processor)
   if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
-    if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0)  
+    if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0) { 
       mgmesh.print_dist_hf5(filename.str(),mgmesh._dist,"DIST")  ; // PID (n processor)
- 
+      mgmesh.print_dist_hf5(filename.str(),mgmesh._yplus,"YPLUS")  ; // PID (n processor)
+    }
   H5Fclose(file);
 
   // loop over all systems ---------------------------
@@ -829,7 +847,18 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
         << 1 << "\" Format=\"HDF\">  \n";
     out << basecase << "."
         << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":DIST\n";
+        
+        
+        
     out << "</DataItem>\n" << "</Attribute>\n";
+    out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
+    out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+        << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
+        << 1 << "\" Format=\"HDF\">  \n";
+    out << basecase << "."
+        << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":YPLUS\n";
+    out << "</DataItem>\n" << "</Attribute>\n";
+    
    }
   }
 // #ifdef TWO_PHASE

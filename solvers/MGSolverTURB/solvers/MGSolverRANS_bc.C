@@ -181,11 +181,11 @@ void  MGSolRANS::bc_set (
                             if ( bc_alpha == 1 ) {
                                 double WallDist = _y_dist;
                                 int numod = _mgutils._TurbParameters->_numod;
-                                const double k_der = -1.* ( 2.* ( 1. - numod ) + 4.*numod ) * _IRe / ( WallDist );
-                                const double w_der = 2.*_IRe / ( WallDist );
+                                const double k_der = -2. * _IRe / ( WallDist );
+                                const double w_der =  2. * _IRe / ( WallDist );
                                 const double w_der_log = _IRe / ( WallDist );
                                 wall_der[1] = ( yplus < 2. ) ? w_der : w_der_log;
-                                wall_der[0] = ( yplus < 11. ) ? k_der : 0.;
+                                wall_der[0] = ( yplus < 15. ) ? k_der : 0.;
                             }
 
                             int nsides = _NodeOnNwallSides[lei_node];

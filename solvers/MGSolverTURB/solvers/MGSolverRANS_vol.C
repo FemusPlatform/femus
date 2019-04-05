@@ -33,28 +33,18 @@ void MGSolRANS::vol_integral (
         double det2      = _fe[2]->Jac ( qp, xx_qnds, _InvJac2 ); // Jacobian
         double JxW_g2    = det2 * _fe[2]->_weight1[_nTdim - 1][qp];   // weight
 
-        _fe[2]->get_phi_gl_g ( _nTdim, qp, _phi_g[2] );           // shape funct
-        _fe[2]->get_dphi_gl_g ( _nTdim, qp, _InvJac2, _dphi_g[2] ); // global coord deriv
-        _fe[2]->get_ddphi_gl_g ( _nTdim, qp, _InvJac2, _ddphi_g[2] ); // local second deriv
+        _fe[2]->get_phi_gl_g ( _nTdim, qp, _phi_g[2] );                 // shape funct
+        _fe[2]->get_dphi_gl_g ( _nTdim, qp, _InvJac2, _dphi_g[2] );     // global coord deriv
+        _fe[2]->get_ddphi_gl_g ( _nTdim, qp, _InvJac2, _ddphi_g[2] );   // local second deriv
 
-        interp_el_sol ( _xx_qnds, 0, _nTdim, _phi_g[2], el_ndof2, xyz_g );
         interp_el_sol ( _data_eq[2].ub, 0, _data_eq[2].indx_ub[_data_eq[2].n_eqs], _phi_g[2], el_ndof2, _ub_g[2] ); // quadratic
-
-        // DERIVATIVES OF NON LINEAR SOLUTION
-
         interp_el_sol ( _x_2ts, 0, 1, _phi_g[2], el_ndof2, x_2ts_g );
 
-        if ( _NonLinearIt == 1 ) {
-            interp_el_sol ( _tur_nl, 0, 2, _phi_g[2], el_ndof2, _kappa_nl_g );
-            interp_el_gdx ( _tur_nl, 0, 1, _dphi_g[2], el_ndof2, _T_nl_dxg[0] );
-            interp_el_gdx ( _tur_nl, 1, 1, _dphi_g[2], el_ndof2, _T_nl_dxg[1] );
-        }
         // DERIVATIVES OF OLD SOLUTION
-        interp_el_gdx ( _data_eq[2].ub, _FF_idx[K_F], 1, _dphi_g[2], el_ndof2, _T_dxg[0] );
-        interp_el_gdx ( _data_eq[2].ub, _FF_idx[K_F] + 1, 1, _dphi_g[2], el_ndof2, _T_dxg[1] );
-        interp_el_gddx ( _data_eq[2].ub, _FF_idx[K_F], 1, _ddphi_g[2], el_ndof2, _T_2dxg[0] );
+        interp_el_gdx ( _data_eq[2].ub, _FF_idx[K_F],      1, _dphi_g[2], el_ndof2, _T_dxg[0] );
+        interp_el_gdx ( _data_eq[2].ub, _FF_idx[K_F] + 1,  1, _dphi_g[2], el_ndof2, _T_dxg[1] );
+        interp_el_gddx ( _data_eq[2].ub, _FF_idx[K_F],     1, _ddphi_g[2], el_ndof2, _T_2dxg[0] );
         interp_el_gddx ( _data_eq[2].ub, _FF_idx[K_F] + 1, 1, _ddphi_g[2], el_ndof2, _T_2dxg[1] );
-
 
         interp_el_gdx ( _data_eq[2].ub, _FF_idx[MU_T], 1, _dphi_g[2], el_ndof2, _MuTurbDxg );
         for ( int l = 0; l < DIMENSION; l++ ) {
@@ -62,6 +52,7 @@ void MGSolRANS::vol_integral (
         }
 
         if ( _AxiSym == 1 ) {
+            interp_el_sol ( _xx_qnds, 0, _nTdim, _phi_g[2], el_ndof2, xyz_g );
             JxW_g2 *= xyz_g[0];
         }
 
@@ -73,23 +64,12 @@ void MGSolRANS::vol_integral (
         VelOnGaussAndTensorModulus ( mod2_vel, el_ndof2 );
         // this function calculates the source and diss terms for this equation
         CalcSourceAndDiss ( el_ndof2 );
-        
-        
-        double Source[2], Diss[2];
-        
-//         double mut = _MUTmodel->CalcMuT(_kappa_g, _y_dist);
-//          _MUTmodel->CalcSourceTerms(_kappa_g, Source, Diss, mut, _sP, _y_dist);
-//         std::cout<<"-------------------------------------------------------------------\n"; 
-//         std::cout<<"mut "<<mut<<"  "<<_mgutils._TurbParameters->CalcMuTurb(_kappa_g, _y_dist)<<std::endl;
-//         std::cout<<"dir 0 "<<setw(10)<<setprecision(6)<<std::scientific<<Source[0]<<" "<<setw(10)<<_source[0]<<"    "<<setw(10)<<Diss[0]<<" "<<setw(10)<<_diss[0]<<std::endl;
-//         std::cout<<"dir 1 "<<setw(10)<<setprecision(6)<<std::scientific<<Source[1]<<" "<<setw(10)<<_source[1]<<"    "<<setw(10)<<Diss[1]<<" "<<setw(10)<<_diss[1]<<std::endl;
+
         
         double tauc = 0., f_upwind = 0., h_eff = 1.e-21;
-        double ParVel[DIMENSION];
+        double ParVel[DIMENSION] = {0., 0.};
+        ParVel[DIMENSION-1]=0.;
 
-        for ( int i = 0; i < DIMENSION; i++ ) {
-            ParVel[i] = 0.;
-        }
 
         // STABILIZATION TERMS =====================================================
         f_upwind = CalcFUpwind ( _Vel_g, _dphi_g[2], _nueff, _nTdim, el_ndof2 );
@@ -99,34 +79,21 @@ void MGSolRANS::vol_integral (
         }
 
         /// d) Local (element) assemblying energy equation
-        double CylLap = 0, TimeDer = 0., Phi_supg = 0.;
-        double kem_ij;
+        double CylLap = 0, Phi_supg = 0., kem_ij;
 
         // =====================================================================================================================
         for ( int nEq=0; nEq<_EquationNodes.size(); nEq ++ ) {
             const int i = _EquationNodes[nEq];
             const double phii_g = _phi_g[2][i];
-            TimeDer = 0., Phi_supg = 0.;
+            Phi_supg = 0.;
 
             // NUMERICAL STABILIZATION FOR INTERIOR NODES
-//             if ( _bc_bound[i] == 1 && _SUPG ) {
             Phi_supg = CalcPhiSupg ( i, _Vel_g, ParVel, tauc, f_upwind, _implicit_diss[_dir], el_ndof2 );
-//             }
 
             // RIGHT HAND SIDE -----------------------------------------------------
             double SourceTerms = ( _explicit_source[_dir] - _explicit_diss[_dir] );
-
-            if ( _RANS_parameter._FractionalStep == 1 ) {
-                TimeDer = _kappa_nl_g[_dir] / _dt ;
-            } else {
-                TimeDer = ( T_1ts*_kappa_g[_dir] - T_2ts*x_2ts_g[0] ) / _dt ;
-            }
-
-            _FeM ( i ) += ( 1-_SolveSteady ) * JxW_g2 * ( phii_g + Phi_supg ) * ( TimeDer );
-
-            if ( _RANS_parameter._FractionalStep == 0 || _NodeOnNwallSides[i] > 1 ) {
-                _FeM ( i ) += JxW_g2 * ( phii_g + Phi_supg ) * ( SourceTerms );
-            }
+            double TimeDer = ( 1-_SolveSteady ) * ( T_1ts*_kappa_g[_dir] - T_2ts*x_2ts_g[0] ) / _dt ;
+            _FeM ( i ) += JxW_g2 * ( phii_g + Phi_supg ) * ( SourceTerms + TimeDer);            
 
             for ( int j = 0; j < el_ndof2; j++ ) { // INTERPOLATION OVER ELEMENT NODES
                 const double phij_g = _phi_g[2][j];
@@ -137,7 +104,7 @@ void MGSolRANS::vol_integral (
                     CylLap = _nueff * ( /* phij_g/xyz_g[0] - */_dphi_g[2][j] ) / xyz_g[0];
                 }
 
-                TimeDer = ( 1-_SolveSteady ) * T_0ts * ( phii_g + Phi_supg ) * phij_g / _dt;   // time term
+                double MatTimeDer = ( 1-_SolveSteady ) * T_0ts * ( phii_g + Phi_supg ) * phij_g / _dt;   // time term
 
                 kem_ij = ( phii_g + Phi_supg ) * (
                              + _Adv                                 // advection term
@@ -147,23 +114,14 @@ void MGSolRANS::vol_integral (
                          )
                          + (
                              _Lap                                   // diffusion
-                             - _LapSupg  * Phi_supg                 // lap_phi*Phi_supg
-                             - _LapMuTurb * Phi_supg                // grad_phi*grad_nut*Phi_supg
-                             - CylLap * ( Phi_supg )
+                             - Phi_supg * (
+                                _LapSupg                   // lap_phi*Phi_supg
+                               +_LapMuTurb                 // grad_phi*grad_nut*Phi_supg
+                               + CylLap
+                             )
                          );
 
-                if ( _NodeOnNwallSides[i] > 1 )
-                    kem_ij = ( phii_g + Phi_supg ) * (
-                                 + _Adv                                 // advection term
-                                 - _Cross[_dir]                         // Cross diffusion, for wD
-                                 - _Log_Cross[_dir]                     // Cross term for logarithmic models
-                             )
-                             + (
-                                 _Lap                                   // diffusion
-                                 - CylLap * ( Phi_supg )
-                             );
-
-                _KeM ( i, j ) += JxW_g2 * ( TimeDer + kem_ij );
+                _KeM ( i, j ) += JxW_g2 * ( MatTimeDer + kem_ij );
             }// END LOOP OVER ELEMENT NODES - j
         }// END LOOP OVER TEST FUNCTIONS - i
     }// END QUADRADURE LOOP - qp

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <sstream>
 #include <cmath>
+#include <ctime>
 
 #include "MeshExtended.h"
 #include "MGGeomEl.h"
@@ -35,6 +36,7 @@ MeshExtended::MeshExtended(
 
   if(_mgutils._FieldClass->_EquationsToAdd["MG_DynamicalTurbulence"]!=0) {
     _dist=new double [_off_el[0][_NoLevels*_n_subdom]];// distance
+    _yplus=new double [_off_el[0][_NoLevels*_n_subdom]];
     if(_mgutils._FieldClass->_EquationsToAdd["MG_DynamicalTurbulence"]!=0) {
        for(int  ilev=0; ilev<_NoLevels; ilev++)  B_dist(ilev);   // distance computing
     }
@@ -179,8 +181,23 @@ void  MeshExtended::B_dist(const  int Level) {
   std::cout<<"\n --------------------\033[0m"<<std::endl;
   // END WALL GROUPS DETERMINATION ==============================================
 
-  /// B) Element  Loop over the volume (n_elem)
+  
+  
+  
   for(int iproc=0; iproc < _n_subdom; iproc++) {
+    const int  nel_e = _off_el[0][Level+_NoLevels*iproc+1];     // first element of proc i+1
+    const int  nel_b = _off_el[0][Level+_NoLevels*iproc];       // first element of proc i
+
+    for(int  iel=0; iel < nel_e-nel_b; iel++) {
+        _yplus[iel+nel_b] = 0.;
+    }
+  }
+  
+  std::clock_t begin_time = std::clock();
+  
+  /// B) Element  Loop over the volume (n_elem)
+//   for(int iproc=0; iproc < _n_subdom; iproc++) {
+  int iproc = _iproc;
     const int  nel_e = _off_el[0][Level+_NoLevels*iproc+1];     // first element of proc i+1
     const int  nel_b = _off_el[0][Level+_NoLevels*iproc];       // first element of proc i
 
@@ -223,11 +240,15 @@ void  MeshExtended::B_dist(const  int Level) {
         }// END LOOP OVER BOUNDARY ELEMENTS  -----------------------------------------------------------
       }// END LOOP OVER PROCS --------------------------------------------------------------------------
       _dist[iel+nel_b]= sqrt(dminq); //cyl and annulus
-//       printf(" proc %d  level %d  iel+nelb %d, %g %g %g \n",(int)_iproc,Level, iel+nel_b,xm[0],xm[1], _dist[iel+nel_b]);
     }//end element loop
-  }
+//   }
 #ifdef PRINT_INFO
+  std::clock_t end_time = std::clock();
+  int clock_per_min = ( int ) 60 * CLOCKS_PER_SEC;
+  double secondi = double ( end_time - begin_time ) / CLOCKS_PER_SEC;
+
   std::cout<< "  MGMesh.C: Distance  function is assembled  for  Level "<< Level <<"\n";
+  std::cout<< "  Wall dist computed in "<<secondi<<" seconds \n";
 #endif
   return;
 }

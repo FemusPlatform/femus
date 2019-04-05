@@ -85,6 +85,7 @@ public:
     ///@}
     
     double *_dist; ///< Distance from a wall defined in B_dist
+    double *_yplus;
     double *_VolFrac; ///< Piecewise volume fraction field
     double * _ctrl_dom; // control domain
           

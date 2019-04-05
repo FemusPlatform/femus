@@ -182,8 +182,6 @@ void  MGSolRANS::GenMatRhs (
     const int nel_e = _mgmesh._off_el[0][Level + _NoLevels * _iproc + 1]; // start element
     const int nel_b = _mgmesh._off_el[0][Level + _NoLevels * _iproc]; // stop element
 
-    const int BoundLoop = ( ( _RANS_parameter._FractionalStep == 1 && _NonLinearIt == 0 ) ||  _RANS_parameter._FractionalStep == 0 ) ? 1 : 0;
-
     double GlobResidual = 0.;
 
     for ( int iel = 0; iel < ( nel_e - nel_b ); iel++ ) { // LOOP OVER MESH ELEMENTS
@@ -207,10 +205,6 @@ void  MGSolRANS::GenMatRhs (
             }
         }
 
-        for ( int dim = 0; dim < 2; dim++ ) { // SOLUTION OF NON LINEAR ITERATIONS
-            _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + dim]]->get_el_nonl_sol ( 0, 1, el_ndof[2], el_conn, offset, dim, _tur_nl );
-        }
-
         _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_1ts );
         _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_2ts );
 
@@ -218,14 +212,11 @@ void  MGSolRANS::GenMatRhs (
         /// 2. Boundary integration  (bc)
         // ----------------------------------------------------------------------------------
 
-        int ElemOnBoundary_flags = 0;
+
         for ( int k = 0; k < el_ndof[2]; k++ ) {
             int bc_node = _bc_vol[k] % 100;
             _bc_el[k] = ( bc_node / 10 == 0 ) ? 0 : 1;
             _bc_bound[k] = 1;
-            if ( bc_node != 11 ) {
-                ElemOnBoundary_flags=1;
-            }
         }
 
         _BoundElem = false;
@@ -276,36 +267,15 @@ void  MGSolRANS::GenMatRhs (
                             _xxb_qnds[idim * NDOF_FEMB + idof] = _xx_qnds[idim * NDOF_FEM + idofb];  // coordinates
                         }
                     }
-//                     int before = _WallElement;
-                    if ( BoundLoop == 1 ) {
-                        bc_set ( sur_toply, el_ndof[2], elb_ndof[2], elb_ngauss, el_conn );
-                    }
-//                     int after  = _WallElement;
-//                     if ( after * before == 0 && after + before > 0 ) {
-//                         _WallElement = ( after > before ) ? after : before;
-//                     }
-//                     if ( _RANS_parameter._WallFunctionApproach == 0 ) {
-//                         _WallElement = 0;
-//                     }
+                    bc_set ( sur_toply, el_ndof[2], elb_ndof[2], elb_ngauss, el_conn );
                 }
             }// =========================================================================================
         }
-
-        // Nodes on boundary but no element side on it
-//       if (ElemOnBoundary_flags == 1 && !_BoundElem ){
-//         for ( int k = 0; k < el_ndof[2]; k++ ) {
-//           int bc_node = _bc_vol[k] % 100;
-//           if(bc_node != 11) {_bc_el[k]=0;
-//           std::cout<<"iel "<<iel<<" node "<<el_conn[k]<<" bc_node "<<bc_node<<std::endl;}
-//           }
-//       }
 
         // ----------------------------------------------------------------------------------
         //   3. Volume integration
         // ----------------------------------------------------------------------------------
 
-
-//         _bc_el[i] != 0
         _EquationNodes.clear();
         for ( int i=0; i<el_ndof2; i++ )
             if ( _bc_el[i] != 0 ) {

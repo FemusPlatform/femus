@@ -164,6 +164,16 @@ public:
 		     const int unsteady /**< un/steady flag  */ ,
 		     const int mode /**<  rhs int flag */ ,
 		     int el_conn[]);
+  
+  void compute_y_plus (
+		     const int el_ndof2 /**< el dofs*/ ,
+		     const int el_ngauss /**< #pt gauss  */ ,
+		     double xx_qnds[] /**< el coords  */ ,
+		     const int unsteady /**< un/steady flag  */ ,
+		     const int mode /**<  rhs int flag */ ,
+		     int el_conn[],
+             int iel
+                      );
 
   void rhs_integral (DenseVectorM & FeM /**< Local rhs */ ,
 		     const int el_ndof2 /**< el dofs*/ ,
