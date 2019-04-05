@@ -656,6 +656,7 @@ void InterfaceProjection::FillParametersProbe (
             bool found = false;
             
             if ( NumPossibleCells>0 ) {
+                _OutOfDomain = 0;
                 int iCount =0;
                 while ( !found && iCount < NumPossibleCells ) {
                     _XiEtaChi.clear();

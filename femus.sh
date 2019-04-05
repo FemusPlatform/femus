@@ -284,8 +284,8 @@ function femus_gencase_run {
        echo gencase not found make .....
        make gencase -j$pp
      fi
-     echo run gencase .. $FEMUS_DIR/bin/gencase
-     mpiexec -np $pp $FEMUS_DIR/bin/gencase 
+     echo run gencase .. $FEMUS_DIR/bin/gencase-opt
+     mpiexec -np $pp $FEMUS_DIR/bin/gencase-opt 
      
    else
      echo "${red} ======================================================= "
