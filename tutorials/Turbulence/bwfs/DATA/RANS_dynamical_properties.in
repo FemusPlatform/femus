@@ -28,7 +28,7 @@
 # 1 (yes) or 0 (no)
 #
   Supg         1
-  ModifiedSupg no
+  ModifiedSupg supgc
   Scpg         0  
 # ...............................................................
 # NON CONSISTENT1 (yes) or 0 (no)
