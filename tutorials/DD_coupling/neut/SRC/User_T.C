@@ -6,7 +6,7 @@
 #ifdef T_EQUATIONS // 3D-2D Energy equation
 
 #include "MGSolverT.h"       
-#include "UserT.h"
+#include "User_T.h"
 
 // INITIAL CONDITION ---------------------------------------------------------------------
 void MGSolT::ic_read(

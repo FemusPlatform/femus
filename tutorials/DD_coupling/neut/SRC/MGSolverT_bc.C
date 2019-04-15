@@ -4,7 +4,7 @@
 #ifdef T_EQUATIONS // 3D-2D Energy equation
 // ============================================
 
-
+#include "Tparameters.h"
 #include "MGSolverT.h"       // Navier-Stokes class header file
 
 // local Femus class include -----------------------------------

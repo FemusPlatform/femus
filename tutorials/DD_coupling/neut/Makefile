@@ -107,6 +107,19 @@ LIBS =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC   -lgfortran
 LIBSAPP =  -lm  -lhdf5 -lpetsc -lmed -lmedloader -lmedcoupling \
 	-linterpkernel -lmedcouplingremapper -lmedC    -lgfortran
+	
+	
+# FEMUS LIBRARY NAME (2D and 3D)
+FEMUS_LIB_2D = -lfemus_2d_$(METHOD)
+FEMUS_LIB_3D = -lfemus_3d_$(METHOD)
+
+# TURBULENCE LIBRARY NAME (2D AND 3D)
+TURB_LIB_2D = -lturb_2d_$(METHOD)
+TURB_LIB_3D = -lturb_3d_$(METHOD)
+
+TURB_SOLVERS_DIR = $(FEMUS_DIR)/solvers/MGSolverTURB/solvers/
+TURB_UTILITY_DIR = $(FEMUS_DIR)/solvers/MGSolverTURB/utility/
+FEMUS_LINK_SOLV_DIR = $(FEMUS_DIR)/solvers/ln_solvers/
 # END LIBRARY ==========================================================
 
 DD_LINK := $(DD_PATH)/Utilib/src/*.o
@@ -202,6 +215,7 @@ $(FEMUS_DIR)/src/obj/%-$(METHOD).o : %.C
 	@echo "Compiling C++ (in "$(METHOD)" mode) "$<"..."
 	@$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@	
 	
+
 # vpath SETTINGS - WHERE TO LOOK FOR SOURCE FILES
 vpath %.C ./SRC/
 vpath %.C $(FEMUS_DIR)/src/
@@ -219,7 +233,7 @@ withlib_2d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS) $(DD_LINK)
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_2d $(LIBSAPP)
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) $(FEMUS_LIB_2D) $(TURB_LIB_2D) $(LIBSAPP)
 
 # COMPILING WITH FEMUS LIBRARY
 withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS) $(DD_LINK)
@@ -232,7 +246,7 @@ withlib_3d: $(OBJS_APP) $(OBJ_FILLER) $(OBJ_SOLVERS) $(DD_LINK)
 	@echo "with compiling flags" $(CFLAGS)
 	@echo "=========" $(MAIN) "==========="
 	@echo 
-	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) -lfemus_3d $(LIBSAPP)	
+	@$(CXX) $(CFLAGS) $(INCLUDES) -o $(MAIN) $^ $(LFLAGSAPP) $(FEMUS_LIB_3D) $(TURB_LIB_3D) $(LIBSAPP)	
 	
 vpath %.C ./SRC/
 vpath %.C $(FEMUS_DIR)/solvers/EqMapFiller/
