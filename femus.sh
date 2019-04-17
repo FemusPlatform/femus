@@ -743,3 +743,10 @@ esac ">> $PRE_HOOK_FORMAT
 echo "Pre-commit hook file has been created"
 
 }
+
+
+function femus_residual(){
+
+  tee >(grep -oP --line-buffered 'Cumulative Residual '$1' \K.*'  > residual_$1.dat)
+
+}

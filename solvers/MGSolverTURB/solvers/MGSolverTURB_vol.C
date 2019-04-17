@@ -192,7 +192,7 @@ void MGSolTURB::compute_y_plus (
     double utau  = _mgutils._TurbParameters->CalcUtau ( vel_bound, WallDist );
     
     double yplus = WallDist * utau / _IRe;
-    
+    yplus = (yplus > 5.e-2) ? yplus : 5.e-2; 
     _mgmesh._yplus[iel] = yplus;
             
     return;

@@ -94,6 +94,7 @@ protected:
   double _WallDist;
 
   double _InvSigma;
+  
   bool _SolveRANS;
   double _tur_nl[2 * NDOF_FEM];
     std::vector < int >_EquationNodes;
@@ -133,7 +134,12 @@ protected:
   bool _FlatProfile;
   int _AxiSym;
 
+  double _yplus;
+  
   int _ExplicitNearWallDer[2];	// 1: yes, 0:no
+  
+  double *_LevelResidual;
+  
 public:
   // ==========================================================================
   // =========         Constructor - Destructor  ==============================
@@ -259,6 +265,7 @@ public:
   void VelOnGaussAndTensorModulus (double &mod2_vel, int NumOfNodes);
   void FillBoundaryMap ();
   void SetUpFlags ();
+  
 };
 
 

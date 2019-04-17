@@ -21,44 +21,12 @@ void  MGSolRANS::bc_set (
 
     double det = _fe[2]->JacSur ( elb_ngauss - 1, _xxb_qnds, _InvJac2 ); // jacobian
     double Ipenalty = 1.;                             // Dirichlet bc flag
-    double utau, normal[DIMENSION], yplus, vel_mod, x_m[DIMENSION];
-    int sign;
+    double utau, yplus;
     const int FaceBD = _bc_vol[sur_toply[NDOF_FEMB - 1]] % 100;
 
-    {
-        // CALCULATION OF UTAU AND UNIT NORMAL VECTOR
-        double vel_norm, vel_bound;
-
-        for ( int idim = 0; idim < _nTdim; idim++ ) { // based on scalar product between v and each element side
-            x_m[idim] = 0.;
-
-            for ( int d = 0; d < NDOF_FEM; d++ ) {
-                x_m[idim] += _xx_qnds[idim * NDOF_FEM + d] / NDOF_FEM;
-            }
-        }
-
-        _fe[2]->normal_g ( _xxb_qnds, x_m, normal, sign );
-
-        vel_mod = vel_norm = 0.;
-
-        for ( int dim = 0; dim < _nTdim; dim ++ ) {
-            vel_mod  += _data_eq[2].ub[ ( _FF_idx[NS_F] + dim ) * NDOF_FEM + NDOF_FEM - 1] * _data_eq[2].ub[ ( _FF_idx[NS_F] + dim ) * NDOF_FEM + NDOF_FEM - 1];
-            vel_norm += _data_eq[2].ub[ ( _FF_idx[NS_F] + dim ) * NDOF_FEM + NDOF_FEM - 1] * normal[dim];
-        }
-
-        vel_bound = sqrt ( vel_mod - vel_norm * vel_norm );
-
-        double WallDist = _WallDist;
-
-        if ( _RANS_parameter._WallFunctionApproach == 1 ) {
-            WallDist = _y_dist;
-        }
-
-        utau  = _mgutils._TurbParameters->CalcUtau ( vel_bound, _y_dist );
-        yplus = WallDist * utau / _IRe;
-        vel_mod = sqrt ( vel_mod );
-    }
-
+    yplus = _yplus;
+    utau  = (yplus > 5.1e-2)?  _yplus * _IRe / _y_dist : 1. * _IRe / _y_dist;
+    
     _WallElement = 0;
     if ( _RANS_parameter._WallFunctionApproach == 1 ) {
         switch ( FaceBD ) {
@@ -68,7 +36,6 @@ void  MGSolRANS::bc_set (
             break;
         default:
             break;
-//             _WallElement = 0;
         }
     }
 
@@ -111,12 +78,8 @@ void  MGSolRANS::bc_set (
                 init_val[1] = _data_eq[2].ub[ ( _FF_idx[K_F]+1 ) * NDOF_FEM + lv_node];
 
                 if ( bc_wall == 1 ) { // DIRICHLET VALUES ON WALL BOUNDARIES
-                    double WallDistance = _WallDist;
-                    double kappa, omega;
-
-                    if ( _RANS_parameter._WallFunctionApproach == 1 ) {
-                        WallDistance = _y_dist;
-                    }
+                    double kappa =_data_eq[2].ub[_FF_idx[K_F] * NDOF_FEM + NDOF_FEM-1];
+                    double omega =_data_eq[2].ub[( _FF_idx[K_F]+1 ) * NDOF_FEM + NDOF_FEM-1];
 
                     _mgutils._TurbParameters->DynTurNearWallValues ( kappa, omega, _y_dist, utau );
                     
@@ -185,7 +148,7 @@ void  MGSolRANS::bc_set (
                                 const double w_der =  2. * _IRe / ( WallDist );
                                 const double w_der_log = _IRe / ( WallDist );
                                 wall_der[1] = ( yplus < 2. ) ? w_der : w_der_log;
-                                wall_der[0] = ( yplus < 15. ) ? k_der : 0.;
+                                wall_der[0] = ( yplus < 15. ) ? k_der : 0.;                                                        
                             }
 
                             int nsides = _NodeOnNwallSides[lei_node];
@@ -193,7 +156,7 @@ void  MGSolRANS::bc_set (
                             const double FemBC = _ExplicitNearWallDer[_dir];
                             const double KemBC = 1 - _ExplicitNearWallDer[_dir];
 
-                            double AggWallDerVal =  JxW_g2 * phii_g  * ( bc_alpha *  wall_der[_dir] * sign );
+                            double AggWallDerVal =  JxW_g2 * phii_g  * ( bc_alpha *  wall_der[_dir] );
                             
                             _FeM ( lei_node ) += FemBC * AggWallDerVal ;
 

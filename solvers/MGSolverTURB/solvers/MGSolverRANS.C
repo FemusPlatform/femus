@@ -106,7 +106,7 @@ MGSolRANS::MGSolRANS (
 
     _Restart = 0;
 
-
+    _LevelResidual = new double[_NoLevels];
     return;
 }
 
@@ -182,7 +182,7 @@ void  MGSolRANS::GenMatRhs (
     const int nel_e = _mgmesh._off_el[0][Level + _NoLevels * _iproc + 1]; // start element
     const int nel_b = _mgmesh._off_el[0][Level + _NoLevels * _iproc]; // stop element
 
-    double GlobResidual = 0.;
+    double ProcResidual = 0.;
 
     for ( int iel = 0; iel < ( nel_e - nel_b ); iel++ ) { // LOOP OVER MESH ELEMENTS
         // set to zero matrix and rhs and center
@@ -192,12 +192,12 @@ void  MGSolRANS::GenMatRhs (
         // ----------------------------------------------------------------------------------
         /// 1. Geometry and element  fields
         // ----------------------------------------------------------------------------------
+        
         _mgmesh.get_el_nod_conn ( 0, Level, iel, el_conn, _xx_qnds );
         _mgmesh.get_el_neighbor ( el_sides, 0, Level, iel, el_neigh );
 
         // set element-nodes variables  bc (bc_q_dofs)
-        get_el_dof_bc ( Level, iel + ndof_lev, el_ndof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
-
+        
         for ( int deg = 0; deg < 3; deg++ ) { // OLD SOLUTION
             for ( int eq = 0; eq < _data_eq[deg].n_eqs; eq++ ) {
                 _data_eq[deg].mg_eqs[eq]->get_el_sol ( 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq],
@@ -205,6 +205,8 @@ void  MGSolRANS::GenMatRhs (
             }
         }
 
+        get_el_dof_bc ( Level, iel + ndof_lev, el_ndof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
+        
         _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_1ts );
         _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_2ts );
 
@@ -222,7 +224,7 @@ void  MGSolRANS::GenMatRhs (
         _BoundElem = false;
         _WallElement = 0;
         _y_dist = _mgmesh._dist[ iel + nel_b];
-
+        _yplus = _mgmesh._yplus[ iel + nel_b];
         for ( int dir = 0; dir < _nTdim; dir++ ) {
             _NormMidCell[dir] = 0.;
         }
@@ -303,10 +305,8 @@ void  MGSolRANS::GenMatRhs (
             ElemResidual += RowResidual*RowResidual;
         }
 
-        GlobResidual += ElemResidual;
-//       if (fabs(ElemResidual) > 1.e-3)
-//         vol_stab ( el_ndof2, el_ngauss, mode, el_conn );
-//
+        ProcResidual += ElemResidual;
+
         // ----------------------------------------------------------------------------------
         //  4. add local to global
         // ----------------------------------------------------------------------------------
@@ -318,8 +318,13 @@ void  MGSolRANS::GenMatRhs (
 
     }// END LOOP OVER MESH ELEMENTS
 
-    std::cout<<"Cumulative Residual "<<sqrt ( GlobResidual ) <<std::endl;
+    
+    double GlobalResidual;
+    
+    MPI_Reduce(&ProcResidual, &GlobalResidual, 1, MPI_DOUBLE, MPI_SUM, 0,MPI_COMM_WORLD);
 
+    if(_iproc==0) _LevelResidual[Level] = sqrt ( GlobalResidual );
+        
     /// 5. clean
     el_dof_indices.clear();
     A[Level]->close();
@@ -492,6 +497,8 @@ void MGSolRANS::FractionalTimeStep (
     for ( int Level = 0 ; Level < _NoLevels - 1; Level++ ) {
         GenMatRhs ( time, Level, 0 );  // matrix
     }
+
+    
     std::clock_t end_time = std::clock();
     MGSolve ( 1.e-6, 40 );
     std::clock_t end_time2 = std::clock();
@@ -524,6 +531,15 @@ void MGSolRANS::StandardTimeStep (
     for ( int Level = 0 ; Level < _NoLevels - 1; Level++ ) {
         GenMatRhs ( time, Level, 0 );  // matrix
     }
+    
+        
+    if(_iproc==0){
+      std::cout<<"Cumulative Residual "<<_var_names[0].c_str()<<" ";
+      for ( int Level = _NoLevels-1 ; Level >= 0; Level-- )
+          std::cout<<_LevelResidual[Level]<<" ";
+      std::cout<<std::endl;    
+    }
+    
     std::clock_t end_time = std::clock();
     MGSolve ( 1.e-6, 40 );
     std::clock_t end_time2 = std::clock();
@@ -653,6 +669,7 @@ void MGSolRANS::FillBoundaryMap()
 
     return;
 }
+
 
 #endif
 // #endif // personal application

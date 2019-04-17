@@ -128,6 +128,10 @@ void NS_param::read_param (
 
   std::cout << " NSproperties.in: default value for _NS_parameter._SolverType  (in UserNS.h) \n";
 
+  if ( _FileMap ["SolverType"] != "" ) {
+      _SolverType = mgutils._SolverTypeMap[_FileMap["SolverType"]];
+      }
+  
   if ( _FileMap ["Supg"] != "" ) {
       _Supg = stoi ( _FileMap["Supg"] );
       }
