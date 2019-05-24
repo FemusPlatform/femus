@@ -245,6 +245,14 @@ function femus_FEMuS_compile_lib_dbg {
   femus_application_configure $METHOD
 }
 
+function femus_compile_all {
+femus_FEMuS_compile_lib_dbg
+femus_FEMuS_compile_lib_opt
+femus_turbulence_compile_lib_dbg
+femus_turbulence_compile_lib_opt
+femus_gencase_compile_lib
+}
+
 # ==================================================================================
 #                              RUN APPLICATIONS
 # ==================================================================================
