@@ -1,154 +1,164 @@
 // std libraries -----------------
-#include <math.h>
 #include <iomanip>
+#include <math.h>
 #include <sstream>
 
 // class
 #include "MGEquationsSystem.h"
 // local inlcudes ----------------------
-#include "MGUtils.h"
-#include "MGMesh.h"
 #include "MGFEMap.h"
+#include "MGMesh.h"
+#include "MGUtils.h"
 
 // conf files ------------------------------------------
-#include "Printinfo_conf.h"
-#include "MGFE_conf.h"
 #include "Domain_conf.h"
+#include "MGFE_conf.h"
+#include "Printinfo_conf.h"
 
 #include "MGGeomEl.h"
 #include "numeric_vectorM.h"
 
-
 // classes included in the map ---------
-
-
 
 // ====================================================
 /// This function constructs all the MGSystems
 MGEquationsSystem::MGEquationsSystem(
-  MGUtils& mgutils_in,// MGUtils pointer
-//   MGSystem& mgphys_in,// MGSystem pointer
-  MGMesh& mgmesh_in,  // MGMesh pointer
-  MGFEMap& mgfemap_in, // MGFEMap pointer
-  int np_data,
-  int ncell_data
-):MGSystem(mgutils_in,mgmesh_in,np_data,ncell_data),
-//   _mgutils(mgutils_in),
-//   _mgphys(mgphys_in),
-//   _mgmesh(mgmesh_in),
-  _mgfemap(mgfemap_in)   {// ====================================
+    MGUtils &mgutils_in, // MGUtils pointer
+                         //   MGSystem& mgphys_in,// MGSystem pointer
+    MGMesh &mgmesh_in,   // MGMesh pointer
+    MGFEMap &mgfemap_in, // MGFEMap pointer
+    int np_data, int ncell_data)
+    : MGSystem(mgutils_in, mgmesh_in, np_data, ncell_data),
+      //   _mgutils(mgutils_in),
+      //   _mgphys(mgphys_in),
+      //   _mgmesh(mgmesh_in),
+      _mgfemap(mgfemap_in) { // ====================================
 }
-
 
 // ====================================================
 MGEquationsSystem::~MGEquationsSystem() {
-  clean(); //deallocates the map of equations
-
+  clean(); // deallocates the map of equations
 }
 
 // ====================================================
 /// This function destroys all the MGSystems
 void MGEquationsSystem::clean() {
   /*
-   for(MGEquationsSystem::iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
-     delete eqn->second;
+   for(MGEquationsSystem::iterator eqn=_equations.begin(); eqn !=
+   _equations.end(); eqn++) { delete eqn->second;
    } */
   _equations.clear();
 }
 
-#ifdef   TWO_PHASE
-void  MGEquationsSystem::set_mgcc(MGSolCC & cc) {
-   // Reading operators
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
-    MGSolBase* mgsol = eqn->second;// get the pointer
-    mgsol -> set_mgcc(cc);          // set mgcc
+#ifdef TWO_PHASE
+void MGEquationsSystem::set_mgcc(MGSolCC &cc) {
+  // Reading operators
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second; // get the pointer
+    mgsol->set_mgcc(cc);            // set mgcc
   }
 }
 #endif
 // ====================================================
 /// This sets dof initial and boundary conditions and sets the operators
-void  MGEquationsSystem::setDofBcOpIc() {
+void MGEquationsSystem::setDofBcOpIc() {
 
   // Reading operators
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
-    MGSolBase* mgsol = eqn->second;// get the pointer
-     mgsol -> MGDofBcOp();          // init dof, GenBc, ReadOperators
-     mgsol -> GenIc();              // initial solution
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second; // get the pointer
+    mgsol->MGDofBcOp();             // init dof, GenBc, ReadOperators
+    mgsol->GenIc();                 // initial solution
   }
   return;
 }
 
-
-
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::eqnmap_steady_loop(
-   const int & nmax_step,  ///< number max of steps
-  const double & toll,  ///< tolerance
-  const double delta_t_step_in,  //   (in)
-  const int  & eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-  const int     &  eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int &nmax_step,         ///< number max of steps
+    const double &toll,           ///< tolerance
+    const double delta_t_step_in, //   (in)
+    const int
+        &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int
+        &eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
 ) {
   // Loop for time steps
-  int NoLevels=0;
-  double norm_new=1.e-20; double norm_old=1.e-20; double diff_norm=1.e-20;
-  double diff_norm_old=10000.;
- 
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-   
-    if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
-      NoLevels=mgsol->_NoLevels;
-      norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();
-//       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+  int NoLevels = 0;
+  double norm_new = 1.e-20;
+  double norm_old = 1.e-20;
+  double diff_norm = 1.e-20;
+  double diff_norm_old = 10000.;
+
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max) {
+      NoLevels = mgsol->_NoLevels;
+      norm_old += mgsol->x_old[NoLevels - 1]->l2_norm();
+      //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
   }
-  double time_step =delta_t_step_in;
-  double time=0;
+  double time_step = delta_t_step_in;
+  double time = 0;
 
-  for(int istep=1; istep<= nmax_step; istep++) {
+  for (int istep = 1; istep <= nmax_step; istep++) {
     //;*(istep);
-//     std::cout<<"\n  *** Solving steady iteration n ="<<istep<<" ** Time step= "<<time_step<< " ***"<< std::endl;
+    //     std::cout<<"\n  *** Solving steady iteration n ="<<istep<<" ** Time
+    //     step= "<<time_step<< " ***"<< std::endl;
 
-
-    // equation loop -----------------------------------------------------------------------
-    norm_new=1.e-20;
-    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-      MGSolBase* mgsol = eqn->second;
-//       if(_num_equations[eqn->first] <flag_state) {
-         if(_num_equations[eqn->first] >=eq_min && _num_equations[eqn->first] <= eq_max ) {
-         NoLevels=mgsol->_NoLevels;
-        mgsol ->set_dt(time_step);
-        mgsol -> MGTimeStep(time,delta_t_step_in);
-        norm_new += mgsol ->x_old[NoLevels-1]->l2_norm();
+    // equation loop
+    // -----------------------------------------------------------------------
+    norm_new = 1.e-20;
+    for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+      MGSolBase *mgsol = eqn->second;
+      //       if(_num_equations[eqn->first] <flag_state) {
+      if (_num_equations[eqn->first] >= eq_min &&
+          _num_equations[eqn->first] <= eq_max) {
+        NoLevels = mgsol->_NoLevels;
+        mgsol->set_dt(time_step);
+        mgsol->MGTimeStep(time, delta_t_step_in);
+        norm_new += mgsol->x_old[NoLevels - 1]->l2_norm();
       }
     }
-    diff_norm=fabs(norm_old-norm_new);
+    diff_norm = fabs(norm_old - norm_new);
     // ---------------------------------------------------------------------------------------
-    std::cout<<"\n step "<<istep <<": old norm="<< norm_old<< "; new norm="<< norm_new<<
-    "; err  ="<<  diff_norm/(norm_new)    << std::endl;
-    if(diff_norm/norm_old < toll) {  // diff_norm/norm_old < toll
-      std::cout<<"*** Steady state found on  n ="<<istep<<" ** Time step= "<<time_step<< " ***"<< std::endl;
+    std::cout << "\n step " << istep << ": old norm=" << norm_old
+              << "; new norm=" << norm_new
+              << "; err  =" << diff_norm / (norm_new) << std::endl;
+    if (diff_norm / norm_old < toll) { // diff_norm/norm_old < toll
+      std::cout << "*** Steady state found on  n =" << istep
+                << " ** Time step= " << time_step << " ***" << std::endl;
       break;
-    } else {            //   diff_norm/norm_old > toll
-      std::cout<<"\n  *** Steady state NOT found: relative norm difference is " << diff_norm;
-      if(diff_norm< diff_norm_old) {  // diff_norm< diff_norm_old -> step ok ----------------------
-        time_step  *=1.25;   std::cout<<", increasing  step to  "<< time_step<<std::endl;
+    } else { //   diff_norm/norm_old > toll
+      std::cout
+          << "\n  *** Steady state NOT found: relative norm difference is "
+          << diff_norm;
+      if (diff_norm < diff_norm_old) { // diff_norm< diff_norm_old -> step ok
+                                       // ----------------------
+        time_step *= 1.25;
+        std::cout << ", increasing  step to  " << time_step << std::endl;
       } // --------------
       else {
-        time_step  *=0.95; std::cout<<", reduce step  to  "<< time_step << std::endl;
+        time_step *= 0.95;
+        std::cout << ", reduce step  to  " << time_step << std::endl;
       }
-      diff_norm_old= diff_norm;  norm_old =norm_new;
-//       for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-//         MGSolBase* mgsol = eqn->second;
-// //         if(_num_equations[eqn->first] <flag_state) {
-//            if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
-//           mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
-//           norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();
-//           
-//         }
-//       }
-//       std::cout<<"\n  step end  "<<   diff_norm_old << "  "<< diff_norm <<" "<< norm_old<< "  "<< norm_new<< std::endl;
+      diff_norm_old = diff_norm;
+      norm_old = norm_new;
+      //       for(iterator eqn=_equations.begin(); eqn != _equations.end();
+      //       eqn++)  {
+      //         MGSolBase* mgsol = eqn->second;
+      // //         if(_num_equations[eqn->first] <flag_state) {
+      //            if(_num_equations[eqn->first] >= eq_min &&
+      //            _num_equations[eqn->first] <= eq_max ) {
+      //           mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+      //           norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();
+      //
+      //         }
+      //       }
+      //       std::cout<<"\n  step end  "<<   diff_norm_old << "  "<< diff_norm
+      //       <<" "<< norm_old<< "  "<< norm_new<< std::endl;
       time += time_step;
 
     } // end else  diff_norm/norm_old < toll
@@ -156,197 +166,245 @@ void MGEquationsSystem::eqnmap_steady_loop(
   return;
 }
 
-
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::set_uooold(
-  const int & vec_from,     ///<source vector to be copied       (in)
-  const int & vec_to,       ///<target vector                    (in)
-  const double & /*toll*/,  ///< tolerance                       (in)
-  const double delta_t_step_in,  ///                             (in)
-  const int  & eq_min,     ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-  const int  & eq_max      ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int &vec_from,          ///< source vector to be copied       (in)
+    const int &vec_to,            ///< target vector                    (in)
+    const double & /*toll*/,      ///< tolerance                       (in)
+    const double delta_t_step_in, ///                             (in)
+    const int
+        &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int
+        &eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
 ) {
   // loop for time steps
-   int NoLevels=0;
-  
-      for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-        MGSolBase* mgsol = eqn->second;
-          NoLevels=mgsol->_NoLevels;
-           if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
-             if (vec_from==3 && vec_to==0) mgsol->set_xooold2x();   
-              else  mgsol->set_vector(vec_from,vec_to);
-            }
-        }
+  int NoLevels = 0;
+
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    NoLevels = mgsol->_NoLevels;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max) {
+      if (vec_from == 3 && vec_to == 0)
+        mgsol->set_xooold2x();
+      else
+        mgsol->set_vector(vec_from, vec_to);
+    }
+  }
   return;
 }
 
 // =================================================================
 // ==========================================================================================
-/// This function performes all the MGSystem time step routines for control problem
+/// This function performes all the MGSystem time step routines for control
+/// problem
 void MGEquationsSystem::eqnmap_timestep_loop_control(
-   const int     &nmax_step,       ///< number max of steps                                (in)
-   const int     &it,              ///< tolerance                                          (in)
-   const double  &delta_t_step_in, ///< delta t timestep                                   (in)
-   const int     &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-   const int     &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
-   bool          &converged        ///< check if the solution converged (1->converged)     (in)
+    const int &nmax_step, ///< number max of steps (in)
+    const int &it, ///< tolerance                                          (in)
+    const double &delta_t_step_in, ///< delta t timestep (in)
+    const int
+        &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int
+        &eq_max,    ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    bool &converged ///< check if the solution converged (1->converged)     (in)
 ) {
 
   // Loop for time steps
-  int NoLevels=0;
-  double norm_new=1.e-20; double norm_old=1.e-20; double diff_norm=1.e-20;
-  double diff_norm_old=10000.; double toll=1.e-5;
- 
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-   
-    if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
-      NoLevels=mgsol->_NoLevels;
-      if (_num_equations[eqn->first]==0) {mgsol ->x_old[NoLevels - 1]->close(); norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();}
-//       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+  int NoLevels = 0;
+  double norm_new = 1.e-20;
+  double norm_old = 1.e-20;
+  double diff_norm = 1.e-20;
+  double diff_norm_old = 10000.;
+  double toll = 1.e-5;
+
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max) {
+      NoLevels = mgsol->_NoLevels;
+      if (_num_equations[eqn->first] == 0) {
+        mgsol->x_old[NoLevels - 1]->close();
+        norm_old += mgsol->x_old[NoLevels - 1]->l2_norm();
+      }
+      //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
   }
-  double time_step =delta_t_step_in;
-  double time=time_step*it;
+  double time_step = delta_t_step_in;
+  double time = time_step * it;
 
-  for(int istep=1; istep<= nmax_step; istep++) {
+  for (int istep = 1; istep <= nmax_step; istep++) {
     //;*(istep);
-    std::cout<<"\n  *** Solving steady iteration n ="<<istep<<" ** Time= "<<time<< " ***"<< std::endl;
+    std::cout << "\n  *** Solving steady iteration n =" << istep
+              << " ** Time= " << time << " ***" << std::endl;
 
-
-    // equation loop -----------------------------------------------------------------------
-    norm_new=1.e-20;
-    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-      MGSolBase* mgsol = eqn->second;
-        if(_num_equations[eqn->first] >=eq_min && _num_equations[eqn->first] <= eq_max ) {
-         NoLevels=mgsol->_NoLevels;
-        mgsol -> MGTimeStep(time,delta_t_step_in);
-        if (_num_equations[eqn->first]==0) norm_new += mgsol ->x_old[NoLevels-1]->l2_norm();
+    // equation loop
+    // -----------------------------------------------------------------------
+    norm_new = 1.e-20;
+    for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+      MGSolBase *mgsol = eqn->second;
+      if (_num_equations[eqn->first] >= eq_min &&
+          _num_equations[eqn->first] <= eq_max) {
+        NoLevels = mgsol->_NoLevels;
+        mgsol->MGTimeStep(time, delta_t_step_in);
+        if (_num_equations[eqn->first] == 0)
+          norm_new += mgsol->x_old[NoLevels - 1]->l2_norm();
       }
     }
-    diff_norm=fabs(norm_old-norm_new);
+    diff_norm = fabs(norm_old - norm_new);
     // ---------------------------------------------------------------------------------------
-    std::cout<<"\n step "<<istep <<": old norm="<< norm_old<< "; new norm="<< norm_new<<
-    "; err  ="<<  diff_norm/(norm_new)    << std::endl;
-    if(diff_norm/norm_old < toll) {  // diff_norm/norm_old < toll
-      std::cout<<"*** Steady state found on  n ="<<istep<<" ** Time step= "<<time<< " ***"<< std::endl;
-      converged=true;
+    std::cout << "\n step " << istep << ": old norm=" << norm_old
+              << "; new norm=" << norm_new
+              << "; err  =" << diff_norm / (norm_new) << std::endl;
+    if (diff_norm / norm_old < toll) { // diff_norm/norm_old < toll
+      std::cout << "*** Steady state found on  n =" << istep
+                << " ** Time step= " << time << " ***" << std::endl;
+      converged = true;
       break;
-    } else {            //   diff_norm/norm_old > toll
-      std::cout<<"\n  *** Steady state NOT found: relative norm difference is " << diff_norm/norm_old;
-      if (norm_new>1.e+8){ 
-          std::cout<<"\n  *** Steady state NOT found ABORTING and reducing control "<<endl;
-          break;
+    } else { //   diff_norm/norm_old > toll
+      std::cout
+          << "\n  *** Steady state NOT found: relative norm difference is "
+          << diff_norm / norm_old;
+      if (norm_new > 1.e+8 || std::isnan(norm_new)) {
+        std::cout
+            << "\n  *** Steady state NOT found ABORTING and reducing control "
+            << endl;
+        break;
       }
-//       if(diff_norm< diff_norm_old) {  // diff_norm< diff_norm_old -> step ok ----------------------
-//         time_step  *=1.25;   std::cout<<", increasing  step to  "<< time_step<<std::endl;
-//       } // --------------
-//       else {
-//         time_step  *=0.95; std::cout<<", reduce step  to  "<< time_step << std::endl;
-//       }
-      diff_norm_old= diff_norm;  norm_old =norm_new;
+      //       if(diff_norm< diff_norm_old) {  // diff_norm< diff_norm_old ->
+      //       step ok ----------------------
+      //         time_step  *=1.25;   std::cout<<", increasing  step to  "<<
+      //         time_step<<std::endl;
+      //       } // --------------
+      //       else {
+      //         time_step  *=0.95; std::cout<<", reduce step  to  "<< time_step
+      //         << std::endl;
+      //       }
+      diff_norm_old = diff_norm;
+      norm_old = norm_new;
       time += time_step;
 
     } // end else  diff_norm/norm_old < toll
   }
   return;
 }
-/// This function performes all the MGSystem time step routines for control problem
+/// This function performes all the MGSystem time step routines for control
+/// problem
 void MGEquationsSystem::eqnmap_timestep_loop_control(
-   const int           &nmax_step,       ///< number max of steps                                (in)
-   const int           &it,              ///< tolerance                                          (in)
-   const double        &delta_t_step_in, ///< delta t timestep                                   (in)
-   const int           &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
-   const int           &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
-   std::vector<double> controlled_eq,    ///< vector whose compontents are the flags of the equations that have to converge     
-   bool                &converged,       ///< check if the solution converged (1->converged)     (in)
-   const double        &toll             ///< tolerance                                          (in)
+    const int &nmax_step, ///< number max of steps (in)
+    const int &it, ///< tolerance                                          (in)
+    const double &delta_t_step_in, ///< delta t timestep (in)
+    const int
+        &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int
+        &eq_max, ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    std::vector<double> controlled_eq, ///< vector whose compontents are the
+                                       ///< flags of the equations that have to
+                                       ///< converge
+    bool &converged,   ///< check if the solution converged (1->converged) (in)
+    const double &toll ///< tolerance (in)
 ) {
-  int conv_dim=controlled_eq.size();
-    // Loop for time steps
-  int NoLevels=0;
-  double norm_new[conv_dim];double norm_old[conv_dim];double diff_norm[conv_dim];double diff_norm_old[conv_dim];
+  int conv_dim = controlled_eq.size();
+  // Loop for time steps
+  int NoLevels = 0;
+  double norm_new[conv_dim];
+  double norm_old[conv_dim];
+  double diff_norm[conv_dim];
+  double diff_norm_old[conv_dim];
   double err_rel[conv_dim];
-  for(int i=0; i<conv_dim; i++) {
-     norm_new[i]=norm_old[i]=diff_norm[i]=err_rel[i]=1.e-20;
-     diff_norm_old[i]=10000;
-  } 
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-    if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) {
-      NoLevels=mgsol->_NoLevels;
-      //norm_old[_num_equations[eqn->first]]+= mgsol ->x_old[NoLevels-1]->l2_norm();
-      for(int i=0; i<conv_dim;i++) 
-       if (_num_equations[eqn->first]==controlled_eq[i]) {mgsol ->x_old[NoLevels - 1]->close(); norm_old[i] += mgsol ->x_old[NoLevels-1]->l2_norm();}
+  for (int i = 0; i < conv_dim; i++) {
+    norm_new[i] = norm_old[i] = diff_norm[i] = err_rel[i] = 1.e-20;
+    diff_norm_old[i] = 10000;
+  }
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max) {
+      NoLevels = mgsol->_NoLevels;
+      // norm_old[_num_equations[eqn->first]]+= mgsol
+      // ->x_old[NoLevels-1]->l2_norm();
+      for (int i = 0; i < conv_dim; i++)
+        if (_num_equations[eqn->first] == controlled_eq[i]) {
+          mgsol->x_old[NoLevels - 1]->close();
+          norm_old[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+        }
       // mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
   }
-  double time_step =delta_t_step_in;
-  double time=time_step*it;
+  double time_step = delta_t_step_in;
+  double time = time_step * it;
 
-  for(int istep=1; istep<= nmax_step; istep++) {
+  for (int istep = 1; istep <= nmax_step; istep++) {
     //;*(istep);
-    std::cout<<"\n  *** Solving steady iteration n ="<<istep<<" ** Time= "<<time<< " ***"<< std::endl;
+    std::cout << "\n  *** Solving steady iteration n =" << istep
+              << " ** Time= " << time << " ***" << std::endl;
 
-
-    // equation loop -----------------------------------------------------------------------
-    for(int i=0; i<conv_dim;i++) norm_new[i]=1.e-20;
-    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-      MGSolBase* mgsol = eqn->second;
-        if(_num_equations[eqn->first] >=eq_min && _num_equations[eqn->first] <= eq_max ) {
-         NoLevels=mgsol->_NoLevels;
-         mgsol -> MGTimeStep(time,delta_t_step_in);
-         //norm_new[_num_equations[eqn->first]]+= mgsol ->x_old[NoLevels-1]->l2_norm();
-         for(int i=0; i<conv_dim;i++) 
-         if (_num_equations[eqn->first]==controlled_eq[i]) {
-           norm_new[i] += mgsol ->x_old[NoLevels-1]->l2_norm();
-           diff_norm[i]=fabs(norm_old[i]-norm_new[i]);
-           err_rel[i]=diff_norm[i]/norm_old[i];
+    // equation loop
+    // -----------------------------------------------------------------------
+    for (int i = 0; i < conv_dim; i++)
+      norm_new[i] = 1.e-20;
+    for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+      MGSolBase *mgsol = eqn->second;
+      if (_num_equations[eqn->first] >= eq_min &&
+          _num_equations[eqn->first] <= eq_max) {
+        NoLevels = mgsol->_NoLevels;
+        mgsol->MGTimeStep(time, delta_t_step_in);
+        // norm_new[_num_equations[eqn->first]]+= mgsol
+        // ->x_old[NoLevels-1]->l2_norm();
+        for (int i = 0; i < conv_dim; i++)
+          if (_num_equations[eqn->first] == controlled_eq[i]) {
+            norm_new[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+            diff_norm[i] = fabs(norm_old[i] - norm_new[i]);
+            err_rel[i] = diff_norm[i] / norm_old[i];
           }
-        }
+      }
     }
-    //diff_norm=fabs(norm_old-norm_new);
+    // diff_norm=fabs(norm_old-norm_new);
     // ---------------------------------------------------------------------------------------
-            for ( int i=0; i<conv_dim; i++ ) {
-                std::cout<<"\n step "<<istep <<" equation " <<controlled_eq[i]
-                <<": old norm="<< norm_old[i]<< "; new norm="<< norm_new[i]
-                <<"; err  ="<< err_rel[i]     << std::endl;
-            }
-            bool flag=true;
-            for ( int i=0; i<conv_dim; i++ ) {
-                if ( err_rel[i]>toll ) {
-                    flag=false;
-                    diff_norm_old[i]= diff_norm[i];
-                    norm_old[i] =norm_new[i];
-                    time += time_step;
-                }
-                if ( norm_new[i]>1.e+8 ) {
-                    std::cout<<"\n  *** Steady state NOT found ABORTING and reducing control "<<endl;
-                    break;
-                }
-            }
-            if ( flag==true ) {
-                std::cout<<"*** Steady state found on  n ="<<istep<<" ** Time step= "<<time<< " ***"<< std::endl;
-                converged=true;
-                break;
-            }
+    for (int i = 0; i < conv_dim; i++) {
+      std::cout << "\n step " << istep << " equation " << controlled_eq[i]
+                << ": old norm=" << norm_old[i] << "; new norm=" << norm_new[i]
+                << "; err  =" << err_rel[i] << std::endl;
     }
+    bool flag = true;
+    for (int i = 0; i < conv_dim; i++) {
+      if (err_rel[i] > toll) {
+        flag = false;
+        diff_norm_old[i] = diff_norm[i];
+        norm_old[i] = norm_new[i];
+        time += time_step;
+      }
+      if (norm_new[i] > 1.e+8) {
+        std::cout
+            << "\n  *** Steady state NOT found ABORTING and reducing control "
+            << endl;
+        break;
+      }
+    }
+    if (flag == true) {
+      std::cout << "*** Steady state found on  n =" << istep
+                << " ** Time step= " << time << " ***" << std::endl;
+      converged = true;
+      break;
+    }
+  }
   return;
 }
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::eqnmap_timestep_loop(
-  const double time,             // real time
-  const int delta_t_step_in,     // integer time
-    const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-      const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    const double time,         // real time
+    const int delta_t_step_in, // integer time
+    const int &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int &eq_max  ///< eq max to solve -> enum  FIELDS (equations_conf.h)
 ) {
   // loop for time steps
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-     if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) 
-    mgsol -> MGTimeStep(time,delta_t_step_in);
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max)
+      mgsol->MGTimeStep(time, delta_t_step_in);
   }
   return;
 }
@@ -354,73 +412,72 @@ void MGEquationsSystem::eqnmap_timestep_loop(
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::eqnmap_timestep_loop_and_update(
-  const double time,             // real time
-  const int delta_t_step_in,     // integer time
-  const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-  const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    const double time,         // real time
+    const int delta_t_step_in, // integer time
+    const int &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int &eq_max  ///< eq max to solve -> enum  FIELDS (equations_conf.h)
 ) {
   // loop for time steps
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-     if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) 
-    mgsol -> MGTimeStep_no_up(time,delta_t_step_in);
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max)
+      mgsol->MGTimeStep_no_up(time, delta_t_step_in);
   }
-    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-     if(_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max ) 
-    mgsol -> MGUpdateStep();
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max)
+      mgsol->MGUpdateStep();
   }
   return;
 }
 
 // ==========================================================================================
 /// This function sets the controlled domain
-void MGEquationsSystem::eqnmap_ctrl_domain(
-     const double xMin,
-     const double xMax,
-     const double yMin,
-     const double yMax,
-     const double zMin,
-     const double zMax
-) {
+void MGEquationsSystem::eqnmap_ctrl_domain(const double xMin, const double xMax,
+                                           const double yMin, const double yMax,
+                                           const double zMin,
+                                           const double zMax) {
   // loop for time steps
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-    mgsol->set_ctrl_dom(xMin,xMax,yMin,yMax,zMin,zMax);
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    mgsol->set_ctrl_dom(xMin, xMax, yMin, yMax, zMin, zMax);
   }
   return;
 }
 
 // ==========================================================================================
 /// This function returns a value from the systems
-double MGEquationsSystem::GetValue(const int & ff,int flag) {
+double MGEquationsSystem::GetValue(const int &ff, int flag) {
   // loop for time steps
   double val;
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-    if(_num_equations[eqn->first] == ff) 
-        val=mgsol->GetValue(flag);
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] == ff)
+      val = mgsol->GetValue(flag);
   }
   return val;
 }
 // ==========================================================================================
 /// This function returns a value from the systems
-void MGEquationsSystem::SetValue(const int & ff,double value) {
+void MGEquationsSystem::SetValue(const int &ff, double value) {
   // loop for time steps
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-    if(_num_equations[eqn->first] == ff) 
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] == ff)
       mgsol->SetValue(value);
   }
   return;
 }
 // ==========================================================================================
 /// This function returns a set of values from the systems
-void MGEquationsSystem::SetValueVector(const int & ff,std::vector<double> value) {
+void MGEquationsSystem::SetValueVector(const int &ff,
+                                       std::vector<double> value) {
   // loop for time steps
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-    if(_num_equations[eqn->first] == ff) 
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] == ff)
       mgsol->SetValueVector(value);
   }
   return;
@@ -428,17 +485,17 @@ void MGEquationsSystem::SetValueVector(const int & ff,std::vector<double> value)
 // ==========================================================================================
 /// This function prints xdmf and hdf5 file
 void MGEquationsSystem::print_soln(const int t_step // time step
-                                  ) {
+) {
 
-  const int    iproc =_mgmesh._iproc;
-  if(iproc==0) {  // print only one processor
+  const int iproc = _mgmesh._iproc;
+  if (iproc == 0) { // print only one processor
 
-    print_soln_h5(t_step);                   // print sol h5
-    int n_lines=0,n_cells=0;
-// #ifdef TWO_PHASE  // --------- cc ----------------
-//     print_h5CC(file,t_flag,n_lines,n_lines); // print CC
-// #endif // ----------------- cc --------------------
-    print_soln_xmf(t_step,n_lines,n_cells);  // print xdmf file
+    print_soln_h5(t_step); // print sol h5
+    int n_lines = 0, n_cells = 0;
+    // #ifdef TWO_PHASE  // --------- cc ----------------
+    //     print_h5CC(file,t_flag,n_lines,n_lines); // print CC
+    // #endif // ----------------- cc --------------------
+    print_soln_xmf(t_step, n_lines, n_cells); // print xdmf file
   }
 
   return;
@@ -447,149 +504,174 @@ void MGEquationsSystem::print_soln(const int t_step // time step
 // =================================================================
 /// This function prints the attributes into the corresponding hdf5 file
 void MGEquationsSystem::print_soln_h5(const int t_flag // time flag
-                                     ) {
+) {
 
   const int NoLevels = (int)(_mgutils._geometry["nolevels"]);
-  const int ndigits  = stoi(_mgutils._sim_config["ndigits"]);
+  const int ndigits = stoi(_mgutils._sim_config["ndigits"]);
 
   // file  ---------------------------------------------
   // file name
   std::ostringstream filename;
-  filename << _mgutils._inout_dir << _mgutils.get_file("BASESOL") << "." << setw(ndigits) << setfill('0') << t_flag << ".h5";
+  filename << _mgutils._inout_dir << _mgutils.get_file("BASESOL") << "."
+           << setw(ndigits) << setfill('0') << t_flag << ".h5";
   // open file for hf5 storage
-  hid_t   file= H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT);
+  hid_t file = H5Fcreate(filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
+                         H5P_DEFAULT);
   H5Fclose(file);
 
   // print all systems ---------------------------
-  MGEquationsSystem::const_iterator pos=_equations.begin();
-  MGEquationsSystem::const_iterator pos_e=_equations.end();
-  for(; pos!=pos_e; pos++)    {
-    MGSolBase *mgsol=pos->second;
-    mgsol->print_u(filename.str(),NoLevels-1);
-    if (_mgutils._sim_config["MG_ControlTemperature"]!="")
-      if(stoi(_mgutils._sim_config["MG_ControlTemperature"])!=0)
-        mgsol->print_weight_med("mesh_sol.med",NoLevels-1);
+  MGEquationsSystem::const_iterator pos = _equations.begin();
+  MGEquationsSystem::const_iterator pos_e = _equations.end();
+  for (; pos != pos_e; pos++) {
+    MGSolBase *mgsol = pos->second;
+    mgsol->print_u(filename.str(), NoLevels - 1);
+    if (_mgutils._sim_config["MG_ControlTemperature"] != "")
+      if (stoi(_mgutils._sim_config["MG_ControlTemperature"]) != 0)
+        mgsol->print_weight_med("mesh_sol.med", NoLevels - 1);
   }
-// printing cell system data (MGSystem-> printdata)
-  for(int idata=0; idata<_n_data[0]+_n_data[1]; idata++) {
+  // printing cell system data (MGSystem-> printdata)
+  for (int idata = 0; idata < _n_data[0] + _n_data[1]; idata++) {
     std::ostringstream dir_name;
     dir_name << "DATA" << idata;
-    print_data_view(filename.str(),idata,dir_name.str());
+    print_data_view(filename.str(), idata, dir_name.str());
   }
-  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
-   if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) 
-     _mgmesh.print_VolFrac_hf5(filename.str(),"Piece_VolFrac");
-   
-  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
-   if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0)    
-     _mgmesh.print_dist_hf5(filename.str(),_mgmesh._yplus,"YPLUS")  ;
-  
+  if (_mgutils._sim_config["MG_ImmersedBoundary"] != "")
+    if (stoi(_mgutils._sim_config["MG_ImmersedBoundary"]) != 0)
+      _mgmesh.print_VolFrac_hf5(filename.str(), "Piece_VolFrac");
+
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"] != "")
+    if (stoi(_mgutils._sim_config["MG_DynamicalTurbulence"]) != 0)
+      _mgmesh.print_dist_hf5(filename.str(), _mgmesh._yplus, "YPLUS");
+
   return;
 }
 
 // ===================================================================
 /// It prints the attributes in  Xdmf format for one time step
-void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,int /*n_cells*/) {
+void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,
+                                       int /*n_cells*/) {
 
   const int NoLevels = (int)(_mgutils._geometry["nolevels"]);
-  const int ndigits  = stoi(_mgutils._sim_config["ndigits"]);
+  const int ndigits = stoi(_mgutils._sim_config["ndigits"]);
 
   //  Mesh ----------------------
-  const MGMesh& mgmesh=_mgmesh;
-  int n_nodes    = mgmesh._NoNodes[NoLevels-1];
-  int n_elements    = mgmesh._NoElements[0][NoLevels-1];
+  const MGMesh &mgmesh = _mgmesh;
+  int n_nodes = mgmesh._NoNodes[NoLevels - 1];
+  int n_elements = mgmesh._NoElements[0][NoLevels - 1];
 
   // get parameters
-  std::string inout_dir  = _mgutils._inout_dir;
-  std::string basesol    = _mgutils.get_file("BASESOL");
-  std::string basemesh   = _mgutils.get_file("BASEMESH");
-  std::string contrib_dir= _mgutils.get_file("CONTRIB_DIR");
-//   std::string aux_xdmf   = _mgutils.get_file("AUX_XDMF");
-  std::string connlin    = _mgutils.get_file("CONNLIN");
-  std::string   basecase = _mgutils.get_file("BASECASE");
+  std::string inout_dir = _mgutils._inout_dir;
+  std::string basesol = _mgutils.get_file("BASESOL");
+  std::string basemesh = _mgutils.get_file("BASEMESH");
+  std::string contrib_dir = _mgutils.get_file("CONTRIB_DIR");
+  //   std::string aux_xdmf   = _mgutils.get_file("AUX_XDMF");
+  std::string connlin = _mgutils.get_file("CONNLIN");
+  std::string basecase = _mgutils.get_file("BASECASE");
   const double dt = stod(_mgutils._sim_config["dt"]);
 
   // files
-//   std::ostringstream conn_file; // connectivity file (mesh_conn_lin.h5)
-//   conn_file /* <<femus_dir  <<  "/" << appl_dir << "/"  << myapp << "/" << input_dir */ << basemesh;
+  //   std::ostringstream conn_file; // connectivity file (mesh_conn_lin.h5)
+  //   conn_file /* <<femus_dir  <<  "/" << appl_dir << "/"  << myapp << "/" <<
+  //   input_dir */ << basemesh;
   std::ostringstream topol_file; // topology file file (mesh_conn_lin.h5)
-  topol_file  << basemesh   << connlin <<".h5";
-//   conn_file << ".h5";
+  topol_file << basemesh << connlin << ".h5";
+  //   conn_file << ".h5";
   std::ostringstream coord_time_file; // connectivity file (mesh_conn_lin.h5)
-  coord_time_file /*<<femus_dir  << "/"<< output_dir << "/"*/ << basemesh << "." << std::setw(ndigits) << std::setfill('0') << t_step << ".h5";
+  coord_time_file /*<<femus_dir  << "/"<< output_dir << "/"*/ << basemesh << "."
+                                                              << std::setw(
+                                                                     ndigits)
+                                                              << std::setfill(
+                                                                     '0')
+                                                              << t_step
+                                                              << ".h5";
 
   std::ostringstream filename; //  solution file xmf
-  filename << inout_dir  << basesol << "." << setw(ndigits) << setfill('0') << t_step;
+  filename << inout_dir << basesol << "." << setw(ndigits) << setfill('0')
+           << t_step;
   std::ostringstream casefilename; //  solution file xmf
-  casefilename << basecase << "." << setw(ndigits) << setfill('0') << 0 <<".h5";
+  casefilename << basecase << "." << setw(ndigits) << setfill('0') << 0
+               << ".h5";
 
-  std::ostringstream attr_file;//  solution file h5
+  std::ostringstream attr_file; //  solution file h5
   /* attr_file << filename.str()<< ".h5"; */
-  attr_file << basesol << "." << setw(ndigits) << setfill('0') << t_step<< ".h5";
+  attr_file << basesol << "." << setw(ndigits) << setfill('0') << t_step
+            << ".h5";
   filename << ".xmf";
 
   // solution file  xmf
   std::ofstream out(filename.str().c_str());
   std::cout << " Solution written to= " << filename.str().c_str() << std::endl;
-//  ++++++++++++ Header ++++++++++++++
+  //  ++++++++++++ Header ++++++++++++++
   out << "<?xml version=\"1.0\" ?> \n";
-//   out << "<!DOCTYPE Xdmf SYSTEM ";
-//   out <<  "\"" << aux_xdmf << "\" > \n";
-  out << "<Xdmf> \n" << "<Domain> \n"<< "<Grid Name=\"Mesh\"> \n";
+  //   out << "<!DOCTYPE Xdmf SYSTEM ";
+  //   out <<  "\"" << aux_xdmf << "\" > \n";
+  out << "<Xdmf> \n"
+      << "<Domain> \n"
+      << "<Grid Name=\"Mesh\"> \n";
   // time
-  const double restartime = (stoi(_mgutils._sim_config["restart"]) != 0) ?  stod(_mgutils._sim_config["restartime"]) : 0.0;
-  const int t_in =stoi(_mgutils._sim_config["itime"]);
-  out << "<Time Value =\"" << restartime + (t_step-t_in)*dt << "\" /> \n";
+  const double restartime = (stoi(_mgutils._sim_config["restart"]) != 0)
+                                ? stod(_mgutils._sim_config["restartime"])
+                                : 0.0;
+  const int t_in = stoi(_mgutils._sim_config["itime"]);
+  out << "<Time Value =\"" << restartime + (t_step - t_in) * dt << "\" /> \n";
   // +++++ Topology ++++++++++
-  _mgmesh.print_xmf_topology(out,topol_file.str(),NoLevels-1,0);
+  _mgmesh.print_xmf_topology(out, topol_file.str(), NoLevels - 1, 0);
   // +++++++  Geometry +++++++++++++++++
-  _mgmesh.print_xmf_geometry(out,coord_time_file/*conn_file*/.str(),NoLevels-1,0);
+  _mgmesh.print_xmf_geometry(out, coord_time_file /*conn_file*/.str(),
+                             NoLevels - 1, 0);
   // ++++  Attributes ++++++++++++
-  MGEquationsSystem::const_iterator pos1   = _equations.begin();
+  MGEquationsSystem::const_iterator pos1 = _equations.begin();
   MGEquationsSystem::const_iterator pos1_e = _equations.end();
-  for(; pos1!=pos1_e; pos1++)   {
-    MGSolBase *mgsol=pos1->second;
-    mgsol->print_xml_attrib(out,n_nodes,n_elements*NSUBDOM,attr_file.str());
+  for (; pos1 != pos1_e; pos1++) {
+    MGSolBase *mgsol = pos1->second;
+    mgsol->print_xml_attrib(out, n_nodes, n_elements * NSUBDOM,
+                            attr_file.str());
   }
-//   print_xml_attrib(out,n_elements,n_nodes,attr_file.str());
-//   printining cell attributes
-  if(_n_data[0]+_n_data[1]>0) { print_xml_attrib(out,n_elements,n_nodes,attr_file.str()); }
+  //   print_xml_attrib(out,n_elements,n_nodes,attr_file.str());
+  //   printining cell attributes
+  if (_n_data[0] + _n_data[1] > 0) {
+    print_xml_attrib(out, n_elements, n_nodes, attr_file.str());
+  }
 
-  if (_mgutils._sim_config["MG_FluidStructure"]!="")
-    if(stoi(_mgutils._sim_config["MG_FluidStructure"])!=0)
-       print_xml_mat(out,n_nodes,n_elements*NSUBDOM,casefilename.str());
+  if (_mgutils._sim_config["MG_FluidStructure"] != "")
+    if (stoi(_mgutils._sim_config["MG_FluidStructure"]) != 0)
+      print_xml_mat(out, n_nodes, n_elements * NSUBDOM, casefilename.str());
   // #ifdef TWO_PHASE
-//   // print of CC
-//   print_xmfCC(out,t_step,n_lines,n_cells);
-// #endif
-  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
-    if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0){
-  // ----------------------------------------------------------
-  out << "<Attribute Name=\"Piece_VolFrac\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-  out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
-  out << attr_file.str()
-//       femus_dir << "/" << output_dir << basesol << "."
-//       << setw(ndigits) << setfill('0') << t_step << ".h5"
-      << ":Piece_VolFrac\n";
-  out << "</DataItem>\n" << "</Attribute>";
- }
- 
-   if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
-   if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
-       out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-  out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
-  out << attr_file.str()
-//       femus_dir << "/" << output_dir << basesol << "."
-//       << setw(ndigits) << setfill('0') << t_step << ".h5"
-      << ":YPLUS\n";
-  out << "</DataItem>\n" << "</Attribute>";
-  }    
+  //   // print of CC
+  //   print_xmfCC(out,t_step,n_lines,n_cells);
+  // #endif
+  if (_mgutils._sim_config["MG_ImmersedBoundary"] != "")
+    if (stoi(_mgutils._sim_config["MG_ImmersedBoundary"]) != 0) {
+      // ----------------------------------------------------------
+      out << "<Attribute Name=\"Piece_VolFrac\" AttributeType=\"Scalar\" "
+             "Center=\"Cell\">\n";
+      out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+          << n_elements * NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+      out << attr_file.str()
+          //       femus_dir << "/" << output_dir << basesol << "."
+          //       << setw(ndigits) << setfill('0') << t_step << ".h5"
+          << ":Piece_VolFrac\n";
+      out << "</DataItem>\n"
+          << "</Attribute>";
+    }
 
-  
-  
-  out << "</Grid>\n" << "</Domain> \n" << "</Xdmf> \n";
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"] != "")
+    if (stoi(_mgutils._sim_config["MG_DynamicalTurbulence"]) != 0) {
+      out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" "
+             "Center=\"Cell\">\n";
+      out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+          << n_elements * NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+      out << attr_file.str()
+          //       femus_dir << "/" << output_dir << basesol << "."
+          //       << setw(ndigits) << setfill('0') << t_step << ".h5"
+          << ":YPLUS\n";
+      out << "</DataItem>\n"
+          << "</Attribute>";
+    }
+
+  out << "</Grid>\n"
+      << "</Domain> \n"
+      << "</Xdmf> \n";
   out.close();
   return;
 }
@@ -597,80 +679,95 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,int /*n
 // ========================================================================
 /// This function read the solution for all the system (restart)
 void MGEquationsSystem::read_soln(const int t_step) {
-// --------------------------------------------------------------
-  const int ndigits  = stoi(_mgutils._sim_config["ndigits"]);
-//   const int ndigits  = _mgutils.get_par("ndigits");
-  const  int restart_lev_flag = stoi(_mgutils._sim_config["restart_lev"]);
+  // --------------------------------------------------------------
+  const int ndigits = stoi(_mgutils._sim_config["ndigits"]);
+  //   const int ndigits  = _mgutils.get_par("ndigits");
+  const int restart_lev_flag = stoi(_mgutils._sim_config["restart_lev"]);
 
   // open file -----------------------------
   std::ostringstream namefile;
   namefile << _mgutils._inout_dir << _mgutils.get_file("BASESOL") << "."
            << setw(ndigits) << setfill('0') << t_step << ".xmf";
 
-#ifdef PRINT_INFO // --------  info ------------------ 
+#ifdef PRINT_INFO // --------  info ------------------
   std::cout << "\n MGEquationsSystem::read_soln: Reading time  from "
             << namefile.str().c_str();
-#endif  // -------------------------------------------
-  std::ifstream in ; in.open(namefile.str().c_str());  //associate the file stream with the name of the file
-  if(!in.is_open()) { std::cout << " MGCase: restart .xmf file not found "  << std::endl; abort(); }
+#endif // -------------------------------------------
+  std::ifstream in;
+  in.open(namefile.str()
+              .c_str()); // associate the file stream with the name of the file
+  if (!in.is_open()) {
+    std::cout << " MGCase: restart .xmf file not found " << std::endl;
+    abort();
+  }
 
   // reading time from xmf file --------------
-  std::string buf="";  while(buf != "<Time") { in >> buf; }
-  in >> buf >> buf;  buf=buf.substr(2,buf.size()-3);
-//create an istringstream from a string
-  std::istringstream buffer(buf); double restart_time;  buffer >> restart_time;
+  std::string buf = "";
+  while (buf != "<Time") {
+    in >> buf;
+  }
+  in >> buf >> buf;
+  buf = buf.substr(2, buf.size() - 3);
+  // create an istringstream from a string
+  std::istringstream buffer(buf);
+  double restart_time;
+  buffer >> restart_time;
 
-  //add parameter to system
-//   _mgutils.set_par("restartime",restart_time);
-  _mgutils.set_sim_par("restartime",std::to_string(restart_time));
+  // add parameter to system
+  //   _mgutils.set_par("restartime",restart_time);
+  _mgutils.set_sim_par("restartime", std::to_string(restart_time));
   // ---------------------------------------------------
   // reading data from  sol.N.h5
   // ---------------------------------------------------
   // file name -----------------------------------------
-  namefile.str("");  //empty string
-  namefile << _mgutils._inout_dir << _mgutils.get_file("BASESOL")
-           << "." << setw(ndigits) << setfill('0') << t_step << ".h5";
+  namefile.str(""); // empty string
+  namefile << _mgutils._inout_dir << _mgutils.get_file("BASESOL") << "."
+           << setw(ndigits) << setfill('0') << t_step << ".h5";
 
-#ifdef PRINT_INFO  // --------------- info ---------------
+#ifdef PRINT_INFO // --------------- info ---------------
   std::cout << "\n MGEquationsSystem::read_soln: Reading from file "
             << namefile.str().c_str() << std::endl;
 #endif // ---------------------------------------------
   // loop reading over the variables ---------------------
-  for(MGEquationsSystem::const_iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
-    MGSolBase *mgsol=eqn->second;
-    mgsol->read_u(namefile.str(),restart_lev_flag);
+  for (MGEquationsSystem::const_iterator eqn = _equations.begin();
+       eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    mgsol->read_u(namefile.str(), restart_lev_flag);
   } //  loop --------------------------------------------------------
 
-// #ifdef TWO_PHASE
-//   readCC(t_step);
-// //   _mgsys.get_mgcc()->read_fine ( t_init,_mgsys.get_mgcc()->_Nlev-1 );
-// //   readCC ( t_step );
-// #endif
+  // #ifdef TWO_PHASE
+  //   readCC(t_step);
+  // //   _mgsys.get_mgcc()->read_fine ( t_init,_mgsys.get_mgcc()->_Nlev-1 );
+  // //   readCC ( t_step );
+  // #endif
 
   return;
 }
 
-
 // ========================================================================
-/// This function print data from single class equation to the mesh system  on vect_data
+/// This function print data from single class equation to the mesh system  on
+/// vect_data
 void MGEquationsSystem::print_mesh_data(double vect_data[]) {
-// --------------------------------------------------------------
+  // --------------------------------------------------------------
 
   // loop reading/printing over the equation ---------------------
-  int count=0;
-//   eqn=_equations.begin();
-  for(MGEquationsSystem::const_iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
-    if(_mgutils.get_file("MESHNUMBER")=="mesh1") {
-      if(count==1) {
-        MGSolBase *mgsol=eqn->second;
-        mgsol->print_ext_data(vect_data); // compute from a system/mesh to vect_data
+  int count = 0;
+  //   eqn=_equations.begin();
+  for (MGEquationsSystem::const_iterator eqn = _equations.begin();
+       eqn != _equations.end(); eqn++) {
+    if (_mgutils.get_file("MESHNUMBER") == "mesh1") {
+      if (count == 1) {
+        MGSolBase *mgsol = eqn->second;
+        mgsol->print_ext_data(
+            vect_data); // compute from a system/mesh to vect_data
       }
       count++;
     }
-    if(_mgutils.get_file("MESHNUMBER")=="mesh2") {
-      if(count==0) {
-        MGSolBase *mgsol=eqn->second;
-        mgsol->print_ext_data(vect_data); // compute from a system/mesh to vect_data
+    if (_mgutils.get_file("MESHNUMBER") == "mesh2") {
+      if (count == 0) {
+        MGSolBase *mgsol = eqn->second;
+        mgsol->print_ext_data(
+            vect_data); // compute from a system/mesh to vect_data
       }
       count++;
     }
@@ -684,23 +781,19 @@ void MGEquationsSystem::print_mesh_data(double vect_data[]) {
 /// This function prints initial and boundary data in xdmf+hdf5 format
 void MGEquationsSystem::print_case(const int t_init) {
 
-  const int    iproc =_mgmesh._iproc;
+  const int iproc = _mgmesh._iproc;
 
-  if(iproc==0) {  // print only one processor
+  if (iproc == 0) {        // print only one processor
     print_case_h5(t_init); // ic+bc print format h5
 
-    int n_lines=0,n_cells=0; // for VOF
-// #ifdef TWO_PHASE
-//     print_h5CC(hid_t file,t_init,&n_lines,&n_cells);
-// #endif
-    print_case_xmf(t_init,n_lines,n_cells); // xml format
+    int n_lines = 0, n_cells = 0; // for VOF
+                                  // #ifdef TWO_PHASE
+    //     print_h5CC(hid_t file,t_init,&n_lines,&n_cells);
+    // #endif
+    print_case_xmf(t_init, n_lines, n_cells); // xml format
   }
   return;
 }
-
-
-
-
 
 // =============================================================================
 /// This function prints initial and boundary data in hdf5 fromat
@@ -708,124 +801,137 @@ void MGEquationsSystem::print_case(const int t_init) {
 void MGEquationsSystem::print_case_h5(const int t_init) {
 
   const int NoLevels = (int)(_mgutils._geometry["nolevels"]);
-  const int ndigits  = stoi(_mgutils._sim_config["ndigits"]);
+  const int ndigits = stoi(_mgutils._sim_config["ndigits"]);
   std::string output_dir = _mgutils._inout_dir;
-  std::string   basecase = _mgutils.get_file("BASECASE");
+  std::string basecase = _mgutils.get_file("BASECASE");
   //  Mesh ---- ---------------------------------------------
-  const MGMesh& mgmesh = _mgmesh;
+  const MGMesh &mgmesh = _mgmesh;
 
   // file ---------------------------------------
   std::ostringstream filename; // file name
-  filename << output_dir << basecase << "." << setw(ndigits) << setfill('0') << t_init << ".h5";
+  filename << output_dir << basecase << "." << setw(ndigits) << setfill('0')
+           << t_init << ".h5";
 
-  hid_t   file = H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT);
-  mgmesh.print_subdom_hf5(filename.str())  ; // PID (n processor)
-  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
-    if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0) { 
-      mgmesh.print_dist_hf5(filename.str(),mgmesh._dist,"DIST")  ; // PID (n processor)
-      mgmesh.print_dist_hf5(filename.str(),mgmesh._yplus,"YPLUS")  ; // PID (n processor)
+  hid_t file = H5Fcreate(filename.str().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
+                         H5P_DEFAULT);
+  mgmesh.print_subdom_hf5(filename.str()); // PID (n processor)
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"] != "")
+    if (stoi(_mgutils._sim_config["MG_DynamicalTurbulence"]) != 0) {
+      mgmesh.print_dist_hf5(filename.str(), mgmesh._dist,
+                            "DIST"); // PID (n processor)
+      mgmesh.print_dist_hf5(filename.str(), mgmesh._yplus,
+                            "YPLUS"); // PID (n processor)
     }
   H5Fclose(file);
 
   // loop over all systems ---------------------------
-  MGEquationsSystem::const_iterator pos   = _equations.begin();
+  MGEquationsSystem::const_iterator pos = _equations.begin();
   MGEquationsSystem::const_iterator pos_e = _equations.end();
-  for(; pos!=pos_e; pos++) {
-    MGSolBase *mgsol=pos->second;
-    mgsol->print_u(filename.str(),NoLevels-1);   // initial solution
-    mgsol->print_bc(filename.str(),NoLevels-1); // boundary condition
+  for (; pos != pos_e; pos++) {
+    MGSolBase *mgsol = pos->second;
+    mgsol->print_u(filename.str(), NoLevels - 1);  // initial solution
+    mgsol->print_bc(filename.str(), NoLevels - 1); // boundary condition
   }
 
   return;
 }
 
-
-
 // ====================================================================
 /// It prints the Xdmf file to read the initial and boundary conditions
-void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
+void MGEquationsSystem::print_case_xmf(const int t_init, const int /*n_lines*/,
                                        const int /*n_cells*/) {
 
   // file ----------------------------------------------
-  std::string inout_dir  = _mgutils._inout_dir;
-  std::string   basecase = _mgutils.get_file("BASECASE");
-  std::string   basemesh = _mgutils.get_file("BASEMESH");
-  std::string  contrib_dir = _mgutils.get_file("CONTRIB_DIR");
-  std::string  aux_xdmf = _mgutils.get_file("AUX_XDMF");
-  std::string  connlin = _mgutils.get_file("CONNLIN");
+  std::string inout_dir = _mgutils._inout_dir;
+  std::string basecase = _mgutils.get_file("BASECASE");
+  std::string basemesh = _mgutils.get_file("BASEMESH");
+  std::string contrib_dir = _mgutils.get_file("CONTRIB_DIR");
+  std::string aux_xdmf = _mgutils.get_file("AUX_XDMF");
+  std::string connlin = _mgutils.get_file("CONNLIN");
   const int NoLevels = (int)(_mgutils._geometry["nolevels"]);
-  const int ndigits  = stoi(_mgutils._sim_config["ndigits"]);
+  const int ndigits = stoi(_mgutils._sim_config["ndigits"]);
 
   // files
   std::ostringstream conn_file; // connectivity file (mesh_conn_lin.h5)
   conn_file << basemesh;
   std::ostringstream topol_file; // topology file file (mesh_conn_lin.h5)
-  topol_file << conn_file.str() << connlin <<".h5";
+  topol_file << conn_file.str() << connlin << ".h5";
   conn_file << ".h5";
   std::ostringstream filename; //  solution file xmf
-  filename <<  inout_dir  << basecase << "." << setw(ndigits) << setfill('0') <<  t_init<< ".xmf";
+  filename << inout_dir << basecase << "." << setw(ndigits) << setfill('0')
+           << t_init << ".xmf";
 
   //  Mesh ---- ---------------------------------------------
-  const MGMesh&    mgmesh = _mgmesh;
-  int n_nodes    = mgmesh._NoNodes[NoLevels-1];
-  int n_elements = mgmesh._NoElements[0][NoLevels -1];
-  std::string var_name[3];    std::string var_type[3];
+  const MGMesh &mgmesh = _mgmesh;
+  int n_nodes = mgmesh._NoNodes[NoLevels - 1];
+  int n_elements = mgmesh._NoElements[0][NoLevels - 1];
+  std::string var_name[3];
+  std::string var_type[3];
 
   //   File xdmf -------------------------------
   std::ofstream out(filename.str().c_str());
   out << "<?xml version=\"1.0\" ?> \n";
   out << "<!DOCTYPE Xdmf SYSTEM ";
-  out <<  "\"" <<  aux_xdmf << "\" \n";
-//    out << " [ <!ENTITY HeavyData \"\"> ] ";
+  out << "\"" << aux_xdmf << "\" \n";
+  //    out << " [ <!ENTITY HeavyData \"\"> ] ";
   out << ">\n";
-  out << "<Xdmf> \n" << "<Domain> \n" << "<Grid Name=\"Mesh\"> \n";
+  out << "<Xdmf> \n"
+      << "<Domain> \n"
+      << "<Grid Name=\"Mesh\"> \n";
   // +++++ Topology ++++++++++
-  _mgmesh.print_xmf_topology(out,topol_file.str(),NoLevels-1,0);
+  _mgmesh.print_xmf_topology(out, topol_file.str(), NoLevels - 1, 0);
   // +++++++  Geometry +++++++++++++++++
-  _mgmesh.print_xmf_geometry(out,conn_file.str(),NoLevels-1,0);
+  _mgmesh.print_xmf_geometry(out, conn_file.str(), NoLevels - 1, 0);
 
   // ++++  Attributes for each system +++++++++++++++++++
-  MGEquationsSystem::const_iterator pos1=_equations.begin();
-  MGEquationsSystem::const_iterator pos1_e=_equations.end();
-  for(; pos1!=pos1_e; pos1++)   {
-    MGSolBase *mgsol=pos1->second;
-    for(int ivar=0; ivar<mgsol->_nvars[1]+mgsol->_nvars[2]; ivar++)     {
+  MGEquationsSystem::const_iterator pos1 = _equations.begin();
+  MGEquationsSystem::const_iterator pos1_e = _equations.end();
+  for (; pos1 != pos1_e; pos1++) {
+    MGSolBase *mgsol = pos1->second;
+    for (int ivar = 0; ivar < mgsol->_nvars[1] + mgsol->_nvars[2]; ivar++) {
 
       // Volume and boundary conditions
       var_name[0] = mgsol->_var_names[ivar];
-      var_name[1] =var_name[0]+"bd";
-      var_name[2] =var_name[0]+"vl";
-      var_type[0] ="Float";
-      var_type[1] ="Float";
-      var_type[2] ="Float";
-      for(int ibvar=0; ibvar<3; ibvar++) {
-        out << "<Attribute Name=\""<< var_name[ibvar] <<"\" AttributeType=\"Scalar\" Center=\"Node\">\n";
-        out << "<DataItem  DataType=\""<< var_type[ibvar].c_str()
-            << "\" Precision=\"8\" Dimensions=\"" << n_nodes << "  "
-            << 1 << "\" Format=\"HDF\">  \n";
-        out <</* femus_dir << "/" << output_dir <<*/ basecase << "."
+      var_name[1] = var_name[0] + "bd";
+      var_name[2] = var_name[0] + "vl";
+      var_type[0] = "Float";
+      var_type[1] = "Float";
+      var_type[2] = "Float";
+      for (int ibvar = 0; ibvar < 3; ibvar++) {
+        out << "<Attribute Name=\"" << var_name[ibvar]
+            << "\" AttributeType=\"Scalar\" Center=\"Node\">\n";
+        out << "<DataItem  DataType=\"" << var_type[ibvar].c_str()
+            << "\" Precision=\"8\" Dimensions=\"" << n_nodes << "  " << 1
+            << "\" Format=\"HDF\">  \n";
+        out << /* femus_dir << "/" << output_dir <<*/ basecase << "."
             << setw(ndigits) << setfill('0') << t_init << ".h5"
             << ":" << var_name[ibvar].c_str() << "\n";
-        out << "</DataItem>\n" << "</Attribute>\n";
+        out << "</DataItem>\n"
+            << "</Attribute>\n";
       }
     }
-    for(int ivar=0; ivar<mgsol->_nvars[0]; ivar++)     {
+    for (int ivar = 0; ivar < mgsol->_nvars[0]; ivar++) {
       // Volume and boundary conditions
-      var_name[0] = mgsol->_var_names[mgsol->_nvars[1]+mgsol->_nvars[2]+ivar];
-      var_name[1] =var_name[0]+"bd";
-      var_name[2] =var_name[0]+"vl";
-      var_type[0] ="Float";
-      var_type[1] ="Int";
-      var_type[2] ="Int";
-      for(int ibvar=0; ibvar<1; ibvar++) { // only initial condition ->var_name[0]
-        out << "<Attribute Name=\""<< var_name[ibvar] <<"\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-        out << "<DataItem  DataType=\""<< var_type[ibvar].c_str()
-            << "\" Precision=\"8\" Dimensions=\"" << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
-            << 1 << "\" Format=\"HDF\">  \n";
-        out << basecase << "."
-            << setw(ndigits) << setfill('0') << t_init << ".h5"
+      var_name[0] =
+          mgsol->_var_names[mgsol->_nvars[1] + mgsol->_nvars[2] + ivar];
+      var_name[1] = var_name[0] + "bd";
+      var_name[2] = var_name[0] + "vl";
+      var_type[0] = "Float";
+      var_type[1] = "Int";
+      var_type[2] = "Int";
+      for (int ibvar = 0; ibvar < 1;
+           ibvar++) { // only initial condition ->var_name[0]
+        out << "<Attribute Name=\"" << var_name[ibvar]
+            << "\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
+        out << "<DataItem  DataType=\"" << var_type[ibvar].c_str()
+            << "\" Precision=\"8\" Dimensions=\""
+            << n_elements * _mgmesh._GeomEl.n_se[0] << "  " << 1
+            << "\" Format=\"HDF\">  \n";
+        out << basecase << "." << setw(ndigits) << setfill('0') << t_init
+            << ".h5"
             << ":" << var_name[ibvar].c_str() << "\n";
-        out << "</DataItem>\n" << "</Attribute>\n";
+        out << "</DataItem>\n"
+            << "</Attribute>\n";
       }
     }
   }
@@ -833,70 +939,75 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
   // ----------------------------------------------------------
   out << "<Attribute Name=\"PID\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
   out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-      << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
-      << 1 << "\" Format=\"HDF\">  \n";
-  out << basecase << "."
-      << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":PID\n";
-  out << "</DataItem>\n" << "</Attribute>\n";
-  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!=""){
-    if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
-    // ----------------------------------------------------------
-    out << "<Attribute Name=\"DIST\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-    out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-        << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
-        << 1 << "\" Format=\"HDF\">  \n";
-    out << basecase << "."
-        << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":DIST\n";
-        
-        
-        
-    out << "</DataItem>\n" << "</Attribute>\n";
-    out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-    out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-        << n_elements*_mgmesh._GeomEl.n_se[0] << "  "
-        << 1 << "\" Format=\"HDF\">  \n";
-    out << basecase << "."
-        << setw(ndigits) << setfill('0')<< t_init << ".h5" << ":YPLUS\n";
-    out << "</DataItem>\n" << "</Attribute>\n";
-    
-   }
+      << n_elements * _mgmesh._GeomEl.n_se[0] << "  " << 1
+      << "\" Format=\"HDF\">  \n";
+  out << basecase << "." << setw(ndigits) << setfill('0') << t_init << ".h5"
+      << ":PID\n";
+  out << "</DataItem>\n"
+      << "</Attribute>\n";
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"] != "") {
+    if (stoi(_mgutils._sim_config["MG_DynamicalTurbulence"]) != 0) {
+      // ----------------------------------------------------------
+      out << "<Attribute Name=\"DIST\" AttributeType=\"Scalar\" "
+             "Center=\"Cell\">\n";
+      out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+          << n_elements * _mgmesh._GeomEl.n_se[0] << "  " << 1
+          << "\" Format=\"HDF\">  \n";
+      out << basecase << "." << setw(ndigits) << setfill('0') << t_init << ".h5"
+          << ":DIST\n";
+
+      out << "</DataItem>\n"
+          << "</Attribute>\n";
+      out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" "
+             "Center=\"Cell\">\n";
+      out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+          << n_elements * _mgmesh._GeomEl.n_se[0] << "  " << 1
+          << "\" Format=\"HDF\">  \n";
+      out << basecase << "." << setw(ndigits) << setfill('0') << t_init << ".h5"
+          << ":YPLUS\n";
+      out << "</DataItem>\n"
+          << "</Attribute>\n";
+    }
   }
-// #ifdef TWO_PHASE
-//   // print of CC
-//   print_xmfCC(out, t_init,n_lines,n_cells);
-// #endif
-  out << "</Grid>\n"<< "</Domain> \n" << "</Xdmf> \n";
+  // #ifdef TWO_PHASE
+  //   // print of CC
+  //   print_xmfCC(out, t_init,n_lines,n_cells);
+  // #endif
+  out << "</Grid>\n"
+      << "</Domain> \n"
+      << "</Xdmf> \n";
   out.close();
 
   return;
 }
 
 // ============================================================================
- double  MGEquationsSystem::System_functional(
-  const int  & ff,                 ///< initial time iteration
-  double parameter,
-  double    &  control                   ///< step time
-){
-   double value=0.;
-    for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++)  {
-    MGSolBase* mgsol = eqn->second;
-    if(_num_equations[eqn->first] == ff) {
-      const int NoLevels=mgsol->_NoLevels;
-      value +=mgsol->MGFunctional(parameter,control);
-      std::cout << "  functional " <<_num_equations[eqn->first] <<"\n -----";
+double
+MGEquationsSystem::System_functional(const int &ff, ///< initial time iteration
+                                     double parameter,
+                                     double &control ///< step time
+) {
+  double value = 0.;
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] == ff) {
+      const int NoLevels = mgsol->_NoLevels;
+      value += mgsol->MGFunctional(parameter, control);
+      std::cout << "  functional " << _num_equations[eqn->first] << "\n -----";
     }
   }
-   
+
   return value;
- }
+}
 // #ifdef TWO_PHASE
 // // ==================================================
 // ///readCC
 // void MGCase::readCC(const int flag_print) {
 //
 //   std::ostringstream filename;
-//   filename <<"output/ccf." << setw(_ndig) << setfill('0') << flag_print << EXT_H5;
-//   hid_t  file_id = H5Fopen(filename.str().c_str(),H5F_ACC_RDWR, H5P_DEFAULT);
+//   filename <<"output/ccf." << setw(_ndig) << setfill('0') << flag_print <<
+//   EXT_H5; hid_t  file_id = H5Fopen(filename.str().c_str(),H5F_ACC_RDWR,
+//   H5P_DEFAULT);
 //
 //   hid_t dtset = H5Dopen(file_id, "/cres", H5P_DEFAULT);
 //   hid_t filespace = H5Dget_space(dtset);
@@ -905,7 +1016,8 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   double *ccf = (new double[dims[0]]); double *xf = (new double[4*dims[0]]);
 //   double *yf = (new double[4*dims[0]]); double *zf = (new double[4*dims[0]]);
 //
-//   hid_t status=H5Dread(dtset,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,ccf);
+//   hid_t
+//   status=H5Dread(dtset,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,ccf);
 //   H5Dclose(dtset);
 //   dtset = H5Dopen(file_id, "/X1", H5P_DEFAULT);
 //   status=H5Dread(dtset,H5T_NATIVE_DOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,xf);
@@ -945,12 +1057,12 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   // ============
 //   // coarse color function
 //   // ============
-//   out << "<Attribute Name=\"CC\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-//   out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\"" << n_elements*nvrt << "  " << 1 <<
+//   out << "<Attribute Name=\"CC\" AttributeType=\"Scalar\"
+//   Center=\"Cell\">\n"; out << "<DataItem  DataType=\"Float\" Precision=\"8\"
+//   Dimensions=\"" << n_elements*nvrt << "  " << 1 <<
 //       "\" Format=\"HDF\">  \n";
-//   out << "sol." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":CC" << "\n";
-//   out << "</DataItem>\n";
-//   out << "</Attribute>\n";
+//   out << "sol." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":CC"
+//   << "\n"; out << "</DataItem>\n"; out << "</Attribute>\n";
 //   // Grid Collection end
 //   out << "</Grid> \n";
 //
@@ -960,18 +1072,20 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   out << "<Grid Name=\"Interf\"> \n";
 //   out << "<Time Value =\"" << t_step*dt << "\" /> \n";
 //   // +++++ Topology ++++++++++
-//   out << "<Topology Type=\""<< btype << "\"   Dimensions=\""<<  n_lines <<    "\"> \n";
-//   out << "<DataStructure DataType=\"Int\" Dimensions=\""<< n_lines <<"  "<< DIMENSION <<
+//   out << "<Topology Type=\""<< btype << "\"   Dimensions=\""<<  n_lines <<
+//   "\"> \n"; out << "<DataStructure DataType=\"Int\" Dimensions=\""<< n_lines
+//   <<"  "<< DIMENSION <<
 //       "\" Format=\"HDF\">  \n";
-//   out  << "sol." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":" << "intconn" << "\n";
-//   out << "</DataStructure> \n" << "</Topology> \n";
+//   out  << "sol." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":" <<
+//   "intconn" << "\n"; out << "</DataStructure> \n" << "</Topology> \n";
 //   // +++++++  Geometry +++++++++++++++++
 //   out << "<Geometry Type=\"X_Y_Z\"> \n";
 //   for(int ix=1; ix<4; ix++) {
-//     out << "<DataStructure DataType=\"Float\" Precision=\"8\" Dimensions=\"" << n_lines*DIMENSION << "  " << 1 <<
+//     out << "<DataStructure DataType=\"Float\" Precision=\"8\" Dimensions=\""
+//     << n_lines*DIMENSION << "  " << 1 <<
 //         "\" Format=\"HDF\">  \n";
-//     out <<  "sol." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":" << "intX" <<ix<< "\n";
-//     out << "</DataStructure> \n";
+//     out <<  "sol." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":"
+//     << "intX" <<ix<< "\n"; out << "</DataStructure> \n";
 //   }
 //   out << " </Geometry>\n";
 //   // Grid Collection end
@@ -982,24 +1096,27 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   out << "<Grid Name=\"ccf\"> \n";
 //   out << "<Time Value =\"" << t_step*dt << "\" /> \n";
 //   // +++++ Topology ++++++++++
-//   out << "<Topology Type=\""<< mtype << "\"   Dimensions=\""<<  n_cells <<    "\"> \n";
-//   out << "<DataStructure DataType=\"Int\" Dimensions=\""<< n_cells <<"  "<< nvrt <<
+//   out << "<Topology Type=\""<< mtype << "\"   Dimensions=\""<<  n_cells <<
+//   "\"> \n"; out << "<DataStructure DataType=\"Int\" Dimensions=\""<< n_cells
+//   <<"  "<< nvrt <<
 //       "\" Format=\"HDF\">  \n";
-//   out  << "ccf." << setw(_ndig) << setfill('0') << t_step << EXT_H5 <<":" << "conn" << "\n";
-//   out << "</DataStructure> \n" << "</Topology> \n";
+//   out  << "ccf." << setw(_ndig) << setfill('0') << t_step << EXT_H5 <<":" <<
+//   "conn" << "\n"; out << "</DataStructure> \n" << "</Topology> \n";
 //   // +++++++  Geometry +++++++++++++++++
 //   out << "<Geometry Type=\"X_Y_Z\"> \n";
 //   for(int ix=1; ix<4; ix++) {
-//     out << "<DataStructure DataType=\"Float\" Precision=\"8\" Dimensions=\"" << n_cells*nvrt << "  " << 1 <<
+//     out << "<DataStructure DataType=\"Float\" Precision=\"8\" Dimensions=\""
+//     << n_cells*nvrt << "  " << 1 <<
 //         "\" Format=\"HDF\">  \n";
-//     out <<  "ccf." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":X" <<ix<<"\n";
-//     out << "</DataStructure> \n";
+//     out <<  "ccf." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":X"
+//     <<ix<<"\n"; out << "</DataStructure> \n";
 //   }
 //   out << " </Geometry>\n";
 //   // ccf
-//   out  << "<Attribute Name=\"ccf\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
-//   out  << "<DataItem Dimensions=\""<< n_cells << "\" NumberType=\"Float\" Precision=\"8\" Format=\"HDF\"> \n ";
-//   out << "ccf." << setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":" << "ccf" << "\n";
+//   out  << "<Attribute Name=\"ccf\" AttributeType=\"Scalar\"
+//   Center=\"Cell\">\n"; out  << "<DataItem Dimensions=\""<< n_cells << "\"
+//   NumberType=\"Float\" Precision=\"8\" Format=\"HDF\"> \n "; out << "ccf." <<
+//   setw(_ndig) << setfill('0') << t_step << EXT_H5 << ":" << "ccf" << "\n";
 //   out << "</DataItem>\n" << "</Attribute>\n";
 //
 //   return;
@@ -1044,21 +1161,24 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   print_Dhdf5(file,name,dimsf,xcoord);
 // //   dataspace = H5Screate_simple ( 2, dimsf, NULL );
 // //   dataset = H5Dcreate ( file, "intX1",  H5T_NATIVE_DOUBLE,
-// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT
+// );
 // //   status = H5Dwrite ( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
 // //                       H5P_DEFAULT, xcoord );
 // //   H5Dclose ( dataset );
 //   name="intX2";
 //   print_Dhdf5(file,name,dimsf,ycoord);
 // //   dataset = H5Dcreate ( file, "intX2",  H5T_NATIVE_DOUBLE,
-// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT
+// );
 // //   status = H5Dwrite ( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
 // //                       H5P_DEFAULT, ycoord );
 // //   H5Dclose ( dataset );
 //   name="intX3";
 //   print_Dhdf5(file,name,dimsf,zcoord);
 // //   dataset = H5Dcreate ( file, "intX3",  H5T_NATIVE_DOUBLE,
-// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT
+// );
 // //   status = H5Dwrite ( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
 // //                       H5P_DEFAULT, zcoord );
 // //   H5Dclose ( dataset );
@@ -1081,8 +1201,9 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   //  ccf
 //   // ==========
 //   std::ostringstream filename;
-//   filename << "output/ccf." << setw(_ndig) << setfill('0') << flag_print << EXT_H5;
-//   hid_t file1= H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC, H5P_DEFAULT,H5P_DEFAULT);
+//   filename << "output/ccf." << setw(_ndig) << setfill('0') << flag_print <<
+//   EXT_H5; hid_t file1= H5Fcreate(filename.str().c_str(),H5F_ACC_TRUNC,
+//   H5P_DEFAULT,H5P_DEFAULT);
 //
 //   // ccf
 //   const int n_cells=mgcc->get_nef();
@@ -1100,19 +1221,22 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //   name="X1";  print_Dhdf5(file1,name,dimsf,xcoord);
 // //   dataspace = H5Screate_simple ( 2, dimsf, NULL );
 // //   dataset = H5Dcreate ( file1, "X1",  H5T_NATIVE_DOUBLE,
-// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT
+// );
 // //   status = H5Dwrite ( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
 // //                       H5P_DEFAULT, xcoord );
 // //   H5Dclose ( dataset );
 //   name="X2";  print_Dhdf5(file1,name,dimsf,ycoord);
 // //   dataset = H5Dcreate ( file1, "X2",  H5T_NATIVE_DOUBLE,
-// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT
+// );
 // //   status = H5Dwrite ( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
 // //                       H5P_DEFAULT, ycoord );
 // //   H5Dclose ( dataset );
 //   name="X3";  print_Dhdf5(file1,name,dimsf,zcoord);
 // //   dataset = H5Dcreate ( file1, "X3",  H5T_NATIVE_DOUBLE,
-// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+// //                         dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT
+// );
 // //   status = H5Dwrite ( dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
 // //                       H5P_DEFAULT, zcoord );
 // //   H5Dclose ( dataset );
@@ -1137,85 +1261,88 @@ void MGEquationsSystem::print_case_xmf(const int t_init,const int /*n_lines*/,
 //
 // #endif
 
-void MGEquationsSystem::get_eqs_names(std::vector<string> &FieldsNames){
-  
-  for(MGEquationsSystem::iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++){
+void MGEquationsSystem::get_eqs_names(std::vector<string> &FieldsNames) {
+
+  for (MGEquationsSystem::iterator eqn = _equations.begin();
+       eqn != _equations.end(); eqn++) {
     FieldsNames.push_back(eqn->first);
-//     std::cout<<" MGEquationsSystem::get_eqs_names "<< eqn->first <<std::endl;
+    //     std::cout<<" MGEquationsSystem::get_eqs_names "<< eqn->first
+    //     <<std::endl;
   }
-  return ;
+  return;
 }
 
 // =============================================================================
 /// This function prints initial and boundary data in hdf5 fromat
 /// in the file case.h5
 void MGEquationsSystem::movemesh() {
-  std::cout<<"Now we try to move mesh"<<std::endl;
-  MGSolBase* mgsoldsx    =  get_eqs("SDSX");
-  MGSolBase* mgsoldsy    =  get_eqs("SDSY");
-  #if DIMENSION==3
-   MGSolBase* mgsoldsz    =  get_eqs("SDSZ");
+  std::cout << "Now we try to move mesh" << std::endl;
+  MGSolBase *mgsoldsx = get_eqs("SDSX");
+  MGSolBase *mgsoldsy = get_eqs("SDSY");
+#if DIMENSION == 3
+  MGSolBase *mgsoldsz = get_eqs("SDSZ");
 #endif
-//   (mgsolt->x_old[NoLevels-1])->localize(*mgsolt ->x_oold[NoLevels-1]);
-  
-      const int flag_moving_mesh = (int)(_mgutils._geometry["moving_mesh"]);
-          
-      const int NoLevels = (int)(_mgutils._geometry["nolevels"]);
-      
-    const int n_nodes=_mgmesh._NoNodes[NoLevels-1];
-    const int n_elem=_mgmesh._NoElements[0][NoLevels-1];
-      
-    if ( flag_moving_mesh ) {
-        /// E) mesh update
+  //   (mgsolt->x_old[NoLevels-1])->localize(*mgsolt ->x_oold[NoLevels-1]);
 
-//         mgsoldsx->x_old[NoLevels-1]->localize(*x_new);
-        const int n_nodes=_mgmesh._NoNodes[NoLevels-1];
-        int offsetp=0*n_nodes;
-        
-                for ( int inode=0; inode<n_nodes; inode++ ) {
-                  offsetp=0*n_nodes;
-            double disp= (*mgsoldsx->x_old[NoLevels-1])(inode)-(*mgsoldsx->x_oold[NoLevels-1])(inode);
-//             _mgmesh._xyz[inode+offsetp] += disp; // cerroni
-            _mgmesh._xyz[inode+offsetp]=  _mgmesh._xyzo[inode+offsetp]+(*mgsoldsx->x_old[NoLevels-1])(inode);
-            _mgmesh._dxdydz[inode+offsetp] = disp;
-            offsetp=1*n_nodes;
-            disp= (*mgsoldsy->x_old[NoLevels-1])(inode)-(*mgsoldsy->x_oold[NoLevels-1])(inode);
-//             _mgmesh._xyz[inode+offsetp] += disp; cerroni
-            _mgmesh._dxdydz[inode+offsetp] = disp;
-              _mgmesh._xyz[inode+offsetp]=  _mgmesh._xyzo[inode+offsetp]+(*mgsoldsy->x_old[NoLevels-1])(inode);
-            
-#if DIMENSION==3
-             offsetp=2*n_nodes;
-                      disp= (*mgsoldsz->x_old[NoLevels-1])(inode)-(*mgsoldsz->x_oold[NoLevels-1])(inode);
-//             _mgmesh._xyz[inode+offsetp] += disp; cerroni
-            _mgmesh._dxdydz[inode+offsetp] = disp;
-              _mgmesh._xyz[inode+offsetp]=  _mgmesh._xyzo[inode+offsetp]+(*mgsoldsz->x_old[NoLevels-1])(inode);
+  const int flag_moving_mesh = (int)(_mgutils._geometry["moving_mesh"]);
+
+  const int NoLevels = (int)(_mgutils._geometry["nolevels"]);
+
+  const int n_nodes = _mgmesh._NoNodes[NoLevels - 1];
+  const int n_elem = _mgmesh._NoElements[0][NoLevels - 1];
+
+  if (flag_moving_mesh) {
+    /// E) mesh update
+
+    //         mgsoldsx->x_old[NoLevels-1]->localize(*x_new);
+    const int n_nodes = _mgmesh._NoNodes[NoLevels - 1];
+    int offsetp = 0 * n_nodes;
+
+    for (int inode = 0; inode < n_nodes; inode++) {
+      offsetp = 0 * n_nodes;
+      double disp = (*mgsoldsx->x_old[NoLevels - 1])(inode) -
+                    (*mgsoldsx->x_oold[NoLevels - 1])(inode);
+      //             _mgmesh._xyz[inode+offsetp] += disp; // cerroni
+      _mgmesh._xyz[inode + offsetp] = _mgmesh._xyzo[inode + offsetp] +
+                                      (*mgsoldsx->x_old[NoLevels - 1])(inode);
+      _mgmesh._dxdydz[inode + offsetp] = disp;
+      offsetp = 1 * n_nodes;
+      disp = (*mgsoldsy->x_old[NoLevels - 1])(inode) -
+             (*mgsoldsy->x_oold[NoLevels - 1])(inode);
+      //             _mgmesh._xyz[inode+offsetp] += disp; cerroni
+      _mgmesh._dxdydz[inode + offsetp] = disp;
+      _mgmesh._xyz[inode + offsetp] = _mgmesh._xyzo[inode + offsetp] +
+                                      (*mgsoldsy->x_old[NoLevels - 1])(inode);
+
+#if DIMENSION == 3
+      offsetp = 2 * n_nodes;
+      disp = (*mgsoldsz->x_old[NoLevels - 1])(inode) -
+             (*mgsoldsz->x_oold[NoLevels - 1])(inode);
+      //             _mgmesh._xyz[inode+offsetp] += disp; cerroni
+      _mgmesh._dxdydz[inode + offsetp] = disp;
+      _mgmesh._xyz[inode + offsetp] = _mgmesh._xyzo[inode + offsetp] +
+                                      (*mgsoldsz->x_old[NoLevels - 1])(inode);
 #endif
-        }
-        
-//         mgsoldsx->x_old[NoLevels-1]->localize(*mgsoldsx ->x_oold[NoLevels-1]);
-//         mgsoldsy->x_old[NoLevels-1]->localize(*mgsoldsy ->x_oold[NoLevels-1]);
-//         #if DIMENSION==3
-//         mgsoldsz->x_old[NoLevels-1]->localize(*mgsoldsz ->x_oold[NoLevels-1]);
-// #endif
-
     }
+
+    //         mgsoldsx->x_old[NoLevels-1]->localize(*mgsoldsx
+    //         ->x_oold[NoLevels-1]);
+    //         mgsoldsy->x_old[NoLevels-1]->localize(*mgsoldsy
+    //         ->x_oold[NoLevels-1]); #if DIMENSION==3
+    //         mgsoldsz->x_old[NoLevels-1]->localize(*mgsoldsz
+    //         ->x_oold[NoLevels-1]);
+    // #endif
+  }
 }
 
- 
+void MGEquationsSystem::init(const std::vector<FIELDS> &pbName) {
 
-void MGEquationsSystem::init(const std::vector<FIELDS> & pbName)  {
-
-  for(iterator eqn=_equations.begin(); eqn != _equations.end(); eqn++) {
-    MGSolBase* mgsol = eqn->second;// get the pointer
-//     mgsol -> set_ext_fields(pbName);          // init ext fields
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second; // get the pointer
+    //     mgsol -> set_ext_fields(pbName);          // init ext fields
   }
-    
+
   return;
 }
 
-
-
-// kate: indent-mode cstyle; indent-width 2; replace-tabs on; 
-
-
+// kate: indent-mode cstyle; indent-width 2; replace-tabs on;
