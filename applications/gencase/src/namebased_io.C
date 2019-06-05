@@ -518,14 +518,14 @@ void NameBasedIO::write_equation_systems (const std::string& filename,
     {
       if (filename.rfind(".xda") < filename.size())
         {
-          es.write(filename,WRITE,
+          es.write(filename,
                    EquationSystems::WRITE_DATA |
                    EquationSystems::WRITE_ADDITIONAL_DATA);
           return;
         }
       else if (filename.rfind(".xdr") < filename.size())
         {
-          es.write(filename,ENCODE,
+          es.write(filename,
                    EquationSystems::WRITE_DATA |
                    EquationSystems::WRITE_ADDITIONAL_DATA);
           return;
