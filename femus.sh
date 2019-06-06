@@ -116,6 +116,7 @@ function intern_femus_show_compiling_functions {
 
 function femus_gencase_compile_lib {
 
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
   OLD_METHOD=$METHOD
   export ACTUAL_DIR=$PWD
   
@@ -128,7 +129,7 @@ function femus_gencase_compile_lib {
   cd gencase_2d
   femus_application_configure opt 
   make clean
-  make $1
+  make -j$np
   
   # 3D gencase
   echo "${red}Now compiling standard gencase application for 3D geometries"
@@ -136,7 +137,7 @@ function femus_gencase_compile_lib {
   cd ../gencase_3d
   femus_application_configure opt 
   make clean
-  make $1
+  make -j$np
 
   cd $ACTUAL_DIR
   export METHOD=$OLD_METHOD
@@ -146,6 +147,7 @@ function femus_gencase_compile_lib {
 
 function femus_turbulence_compile_lib_opt {
 
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
   OLD_METHOD=$METHOD
   export ACTUAL_DIR=$PWD
   echo "Compiling femus turb library for 2D geometry "
@@ -153,14 +155,14 @@ function femus_turbulence_compile_lib_opt {
   femus_application_configure opt
   # removing libturb_2d.so
   make clean
-  make $1
+  make -j$np
   
   echo "Compiling femus turb library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_turb3D
   femus_application_configure opt
   # removing libturb_3d.so
   make clean
-  make $1
+  make -j$np
   
   cd $ACTUAL_DIR
   export METHOD=$OLD_METHOD
@@ -169,6 +171,7 @@ function femus_turbulence_compile_lib_opt {
 
 function femus_turbulence_compile_lib_dbg {
 
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
   OLD_METHOD=$METHOD
   export ACTUAL_DIR=$PWD
   echo "Compiling femus turb library for 2D geometry "
@@ -177,7 +180,7 @@ function femus_turbulence_compile_lib_dbg {
   # removing libturb_2d.so
   make clean
   # removing object files from femus/src
-  make $1
+  make -j$np
   
   echo "Compiling femus turb library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_turb3D
@@ -185,7 +188,7 @@ function femus_turbulence_compile_lib_dbg {
   # removing libturb_3d.so
   make clean
   # removing object files from femus/src
-  make $1
+  make -j$np
   
   cd $ACTUAL_DIR
   export METHOD=$OLD_METHOD
@@ -194,6 +197,7 @@ function femus_turbulence_compile_lib_dbg {
 
 function femus_FEMuS_compile_lib_opt {
 
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
   OLD_METHOD=$METHOD
   export ACTUAL_DIR=$PWD
   echo "Compiling femus library for 2D geometry "
@@ -201,14 +205,14 @@ function femus_FEMuS_compile_lib_opt {
   femus_application_configure opt
   # removing libfemus_2d.so
   make clean
-  make $1
+  make -j$np
   
   echo "Compiling femus library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
   femus_application_configure opt
   # removing libfemus_2d.so
   make clean
-  make $1
+  make -j$np
   
   cd $ACTUAL_DIR
   export METHOD=$OLD_METHOD
@@ -217,6 +221,7 @@ function femus_FEMuS_compile_lib_opt {
 
 function femus_FEMuS_compile_lib_dbg {
 
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
   OLD_METHOD=$METHOD
   export ACTUAL_DIR=$PWD
   echo "Compiling femus library for 2D geometry "
@@ -226,7 +231,7 @@ function femus_FEMuS_compile_lib_dbg {
   make clean
   # removing object files from femus/src
   make src_clean
-  make $1
+  make -j$np
   
   echo "Compiling femus library for 3D geometry "
   cd $PLAT_CODES_DIR/femus/applications/lib_femus3D
@@ -235,7 +240,7 @@ function femus_FEMuS_compile_lib_dbg {
   make clean
   # removing object files from femus/src
   make src_clean
-  make $1
+  make -j$np
   
   # cleaning after lib building
   make src_clean
@@ -246,11 +251,14 @@ function femus_FEMuS_compile_lib_dbg {
 }
 
 function femus_compile_all {
-femus_FEMuS_compile_lib_dbg
-femus_FEMuS_compile_lib_opt
-femus_turbulence_compile_lib_dbg
-femus_turbulence_compile_lib_opt
-femus_gencase_compile_lib
+
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
+  
+  femus_FEMuS_compile_lib_dbg $np
+  femus_FEMuS_compile_lib_opt $np
+  femus_turbulence_compile_lib_dbg $np
+  femus_turbulence_compile_lib_opt $np
+  femus_gencase_compile_lib $np
 }
 
 # ==================================================================================
