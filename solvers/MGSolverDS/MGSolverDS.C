@@ -66,7 +66,7 @@ MGSolDS::MGSolDS(
 
     // READ PARAMETERS FROM CLASS DS_parameter
     _DS_parameter.read_param(_mgutils);
-
+    _NumRestartSol = 2;
 
     /// A) reading parameters  for field coupling (in _FF_idx[])
     _nDSdim=DIMENSION;
@@ -330,9 +330,8 @@ void MGSolDS::MGTimeStep(
 #endif
 
         /// D) Update of the old solution at the top Level  (MGSolDS::OldSol_update),
-        x_oold[_NoLevels-1]->zero();
-        x_old[_NoLevels-1]->localize(*x_oold[_NoLevels-1]);
-        x[_NoLevels-1]->localize(*x_old[_NoLevels-1]);
+        _x_olds[_NoLevels-1][0]->localize(*_x_olds[_NoLevels-1][1]);
+        x[_NoLevels-1]->localize(*_x_olds[_NoLevels-1][0]);
         const int flag_moving_mesh = _mgutils._geometry["moving_mesh"];
         if (flag_moving_mesh==1)  MoveMesh(_NoLevels-1);
     }
@@ -363,7 +362,7 @@ void  MGSolDS::MoveMesh(
                 const int ivar =0;
                 for(int in=0; in<NDOF_FEM; in++) {
                     int gl_i=_mgmesh._el_map[0][ e_indx+in];
-                    double val= (*x_old[Level])(_node_dof[Level][gl_i+ivar*offset]);
+                    double val= (*_x_olds[Level][0])(_node_dof[Level][gl_i+ivar*offset]);
                     disp[Level]->set(_node_dof[Level][ _mgmesh._el_map[0][ e_indx+in]],val);
                 }
             } //end solid if
@@ -371,7 +370,7 @@ void  MGSolDS::MoveMesh(
                 const int ivar =0;
                 for(int in=0; in<NDOF_P; in++) {
                     int gl_i=_mgmesh._el_map[0][ e_indx+in];
-                    double val= (*x_old[Level])(_node_dof[Level][gl_i+ivar*offset]);
+                    double val= (*_x_olds[Level][0])(_node_dof[Level][gl_i+ivar*offset]);
                     sol_c[in]= val;
                 }
                 for(int in=0; in<NDOF_FEM; in++) {    // mid-points
@@ -392,7 +391,7 @@ void  MGSolDS::MoveMesh(
                     const int ivar =0;
                     for(int in=0; in<NDOF_FEM; in++) {
                         int gl_i=_mgmesh._el_map[0][ e_indx+in];
-                        double val= (*x_old[Level])(_node_dof[Level][gl_i+ivar*offset]);
+                        double val= (*_x_olds[Level][0])(_node_dof[Level][gl_i+ivar*offset]);
                         disp[Level]->set(_node_dof[Level][ _mgmesh._el_map[0][ e_indx+in]],val);
                     }
                 } //end solid if

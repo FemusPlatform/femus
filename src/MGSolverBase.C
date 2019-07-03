@@ -64,14 +64,12 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
     _Dim =new int[_NoLevels];                          // matrix and vect  dim
     A.resize (_NoLevels);
     x.resize (_NoLevels);    // matrix vect sol
-    x_old.resize (_NoLevels);
-    x_oold.resize (_NoLevels); // old solution
+
     x_nonl.resize (_NoLevels); // non linear solution
     disp.resize (_NoLevels); // displacement for mesh
     disp_old.resize (_NoLevels); // displacement for mesh
     disp_oold.resize (_NoLevels); // displacement for mesh
-    x_ooold.resize (_NoLevels); // vector for multiple uses
-    x_oooold.resize (_NoLevels); // vector for multiple uses
+
     b.resize (_NoLevels);
     res.resize (_NoLevels);  // rhs
     disp_ooold.resize(_NoLevels);
@@ -79,6 +77,8 @@ MGSolBase::MGSolBase (MGEquationsSystem &e_map_in, // equation map
     Rst.resize (_NoLevels);
     Prl.resize (_NoLevels);   // Projector and restrictor
 
+    _x_olds.resize(_NoLevels);
+    
     // dof info ---------------
     _node_dof= new int*[_NoLevels+1];  // dof (+1)
 //   bc= new int*[_NoLevels];           // bc
@@ -110,13 +110,10 @@ MGSolBase::~MGSolBase (
 ) {
 // ===================================================
     // clear substructrures
-    clear();
+    
     A.clear();
     x.clear();        //  A and x
-    x_old.clear();
-    x_oold.clear();  //  old solutions
-    x_ooold.clear();  //  ooold solutions
-    x_ooold.clear();  //  oooold solutions
+
     x_nonl.clear(); // nonlinear solution tmp
     disp.clear(); // displacement for mesh
     disp_old.clear(); // displacement for mesh
@@ -126,6 +123,13 @@ MGSolBase::~MGSolBase (
     res.clear();      //  rhs and residual vector
     Rst.clear();
     Prl.clear();    // Restrictor and projector
+
+    for(int i=0; i<_NoLevels; i++)
+        _x_olds[i].clear();
+    _x_olds.clear();
+    
+    clear();
+    
 //   _attrib.clear();                // Cell properties
     delete [] _Dim;                 // dimension system Ax=b
     delete[] _bc[0];
@@ -147,10 +151,7 @@ void MGSolBase::clear (
         delete x[Level];             //  A and x  at Level
         delete b[Level];
         delete res[Level];             //  old solutions  at Level
-        delete x_old[Level];
-        delete x_oold[Level];
-        delete x_ooold[Level];
-        delete x_oooold[Level];
+
         delete x_nonl[Level];    //  rhs and residual vector
         delete disp[Level];
         delete disp_old[Level];
@@ -390,7 +391,9 @@ void  MGSolBase::get_el_sol (
         for (int ivar=0; ivar<nvars; ivar++) {  //ivar is like idim
 
             const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
-            uold[id + (ivar+kvar0) *NDOF_FEM]= ( (*x_old[_NoLevels-1]) (kdof_top)); // element sol
+//             uold[id + (ivar+kvar0) *NDOF_FEM]= ( (*x_old[_NoLevels-1]) (kdof_top)); // element sol
+            uold[id + (ivar+kvar0) *NDOF_FEM]= ( (*_x_olds[_NoLevels-1][0]) (kdof_top)); // element sol
+            
         } // end quadratic ------------------------------------------------
     }
     return;
@@ -413,7 +416,8 @@ void  MGSolBase::get_el_sol_piece (
         // quadratic -------------------------------------------------
         for (int ivar=0; ivar<nvars; ivar++) {  //ivar is like idim
             const int  kdof_top = _node_dof[_NoLevels-1][iel*el_nds+id+ (ivar+ivar0) *offset]; // dof from top level
-            uold[ id + (ivar+kvar0) *NDOF_FEM]= ( (*x_old[_NoLevels-1]) (kdof_top)); // element sol
+//             uold[ id + (ivar+kvar0) *NDOF_FEM]= ( (*x_old[_NoLevels-1]) (kdof_top)); // element sol
+            uold[ id + (ivar+kvar0) *NDOF_FEM]= ( (*_x_olds[_NoLevels-1][0]) (kdof_top)); // element sol
         } // end quadratic ------------------------------------------------
     }
     return;
@@ -435,7 +439,9 @@ void  MGSolBase::get_el_oldsol (
         for (int
                 ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
             const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
-            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_oold[_NoLevels-1]) (kdof_top)); // element sol
+//             uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_oold[_NoLevels-1]) (kdof_top)); // element sol
+            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*_x_olds[_NoLevels-1][1]) (kdof_top)); // element sol
+            
         } // end quadratic ------------------------------------------------
     }
     return;
@@ -528,7 +534,7 @@ void  MGSolBase::get_el_oooldsol (
         for (int
                 ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
             const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
-            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_ooold[_NoLevels-1]) (kdof_top)); // element sol
+            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*_x_olds[_NoLevels-1][2]) (kdof_top)); // element sol
         } // end quadratic ------------------------------------------------
     }
     return;
@@ -547,7 +553,7 @@ void  MGSolBase::get_el_ooooldsol (
         for (int
                 ivar=0; ivar<nvars; ivar++) {  //ivarq is like idim
             const int  kdof_top = _node_dof[_NoLevels-1][ el_conn[id]+ (ivar+ivar0) *offset]; // dof from top level
-            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*x_oooold[_NoLevels-1]) (kdof_top)); // element sol
+            uold[ id + (kvar0+ivar) *NDOF_FEM]= ( (*_x_olds[_NoLevels-1][3]) (kdof_top)); // element sol
         } // end quadratic ------------------------------------------------
     }
     return;
@@ -670,7 +676,9 @@ void MGSolBase::MGTimeStep (const double time, const int) {
               << "s "<< std::endl;
 #endif
     /// [d] Update of the old solution at the top Level
-    x[_NoLevels-1]->localize (*x_old[_NoLevels-1]);
+//     x[_NoLevels-1]->localize (*x_old[_NoLevels-1]);
+    x[_NoLevels-1]->localize (*_x_olds[_NoLevels-1][0]);
+    
     return;
 }
 
@@ -707,7 +715,10 @@ void MGSolBase::MGTimeStep_no_up (const double time, const int) {
 void MGSolBase::MGUpdateStep () {
 
     std::cout  << std::endl << "  " << _eqname.c_str() << " update solution "  << std::endl;
-    x[_NoLevels-1]->localize (*x_old[_NoLevels-1]);
+//     x[_NoLevels-1]->localize (*x_old[_NoLevels-1]);
+    x[_NoLevels-1]->localize (*_x_olds[_NoLevels-1][0]);
+    
+    
     return;
 }
 /// ======================================================

@@ -276,8 +276,8 @@ void MGSolT::MGTimeStep (
               <<" Ass. and sol. time: =" << double ( end_time2 - start_time ) / CLOCKS_PER_SEC << "s " << std::endl;
 #endif
         
-        x_old[_NoLevels-1]->localize ( *x_oold[_NoLevels-1] );
-        x[_NoLevels-1]->localize ( *x_old[_NoLevels-1] );
+        _x_olds[_NoLevels-1][0]->localize ( *_x_olds[_NoLevels-1][1] );
+        x[_NoLevels-1]->localize ( *_x_olds[_NoLevels-1][0] );
     }
     return;
 }// =======================================================================================

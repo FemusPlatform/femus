@@ -92,7 +92,7 @@ void RANS_param::read_param ( MGUtils & mgutils )
     _MaxNonLinearIterations = stoi ( _FileMap["MaxNonLinearIterations"] );
     _InterpolatedMuTurb     = stoi ( _FileMap["InterpolatedMuTurb"] );
     _WallFunctionApproach   = stoi ( _FileMap["WallFunctionApproach"] );
-
+    
     if ( _FileMap["FractionalStep"] != "" ) {
         _FractionalStep = stoi ( _FileMap["FractionalStep"] );
     }

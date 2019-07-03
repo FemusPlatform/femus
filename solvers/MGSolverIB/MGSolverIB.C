@@ -301,7 +301,7 @@ void MGSolIB::MGTimeStep (
     << "s "<< std::endl;
 #endif
     /// D) Update of the old solution at the top Level  (MGSolIB::OldSol_update),
-    x[_NoLevels-1]->localize ( *x_old[_NoLevels-1] );
+    x[_NoLevels-1]->localize ( *_x_olds[_NoLevels-1][0] );
 
     return;
 }// =======================================================================================

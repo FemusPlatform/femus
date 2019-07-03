@@ -56,7 +56,7 @@ MGSolDA::MGSolDA (
 //   const int nvarsl_in,                // # of linear variables
   std::string eqname_in,               // equation name
   std::string /*varname_in*/ )             // basic variable name
-  : MGSolBase ( mg_equations_map_in, nvars_in, eqname_in ) { // ===============================================
+  : _NumRestartSol(1), MGSolBase ( mg_equations_map_in, nvars_in, eqname_in ) { // ===============================================
   //piecewise constant linear, quadratic and (...cubic)
   _fe[0] =   _mgfemap.get_FE ( 0 ); ///> Lagrange piecewise constant
   _fe[1] =   _mgfemap.get_FE ( 1 ); ///> Lagrange piecewise linear
@@ -94,7 +94,7 @@ MGSolDA::MGSolDA (
       _refvalue[iname] = 1;
       }
 
-  _NumRestartSol = 1;
+  
   return;
   }
 
@@ -180,10 +180,7 @@ void MGSolDA::init ( const int Level ) {
   res[Level]->init ( n_glob, n_local, false, AUTOMATICM );
   x[Level] = NumericVectorM::build ( comm1 ).release();
   x[Level]->init ( n_glob, n_local, false, AUTOMATICM );
-  x_old[Level] = NumericVectorM::build ( comm1 ).release();
-  x_old[Level]->init ( n_glob, false, SERIALM );
-  x_oold[Level] = NumericVectorM::build ( comm1 ).release();
-  x_oold[Level]->init ( n_glob, false, SERIALM );
+
   x_nonl[Level] = NumericVectorM::build ( comm1 ).release();
   x_nonl[Level]->init ( n_glob, false, SERIALM );
   disp[Level] = NumericVectorM::build ( comm1 ).release();
@@ -194,11 +191,14 @@ void MGSolDA::init ( const int Level ) {
   disp_oold[Level]->init ( n_glob, false, SERIALM );
   disp_ooold[Level] = NumericVectorM::build ( comm1 ).release();
   disp_ooold[Level]->init ( n_glob, false, SERIALM );
-  x_ooold[Level] = NumericVectorM::build ( comm1 ).release();
-  x_ooold[Level]->init ( n_glob, false, SERIALM );
-  x_oooold[Level] = NumericVectorM::build ( comm1 ).release();
-  x_oooold[Level]->init ( n_glob, false, SERIALM );
 
+  _x_olds[Level].resize(_NumRestartSol);
+  for(int i=0; i<_NumRestartSol; i++){
+     _x_olds[Level][i] = NumericVectorM::build ( comm1 ).release();
+     _x_olds[Level][i]->init ( n_glob, false, SERIALM );
+  }
+  
+  
 
   if ( Level < _NoLevels - 1 ) { // Restrictor
       Rst[Level] = SparseMMatrixM::build ( comm1 ).release();
@@ -250,10 +250,8 @@ void MGSolDA::GenIc() {
       const int  * off_el    = _mgmesh._off_el[0];          // offset element
       int face_id_node = 0;
       int mat_id_elem = 0;
-      NumericVectorM & sol_top = *x[_NoLevels - 1]; // solution (top level)
-      NumericVectorM & old_sol_top = *x_old[_NoLevels - 1];
+      NumericVectorM & sol_top = *x[_NoLevels - 1]; // solution (top level)      
       NumericVectorM & nl_sol_top = *x_nonl[_NoLevels - 1];
-      NumericVectorM & oold_sol_top = *x_oold[_NoLevels - 1];
 
       const int * node_dof_top = &_node_dof[_NoLevels - 1][0];
       int ntot_elements = 0;
@@ -389,10 +387,10 @@ void MGSolDA::GenIc() {
               }
           } // end of element loop
 
-//     // delocalize
-      sol_top.localize ( old_sol_top );
+      // localize only on needed vectors
+      for(int ts=0; ts<_NumRestartSol; ts++)
+          sol_top.localize(*_x_olds[_NoLevels - 1][ts]);
       sol_top.localize ( nl_sol_top );
-      sol_top.localize ( oold_sol_top );
 
       //clean
       delete []u_value;
@@ -998,7 +996,8 @@ void  MGSolDA::get_el (
           el_dof_indices[indx_loc] = _node_dof[Level][indx_glob];    //from mesh to dof
           bc_dofs[0][indx_loc]       = _bc[0][kdof_top];                    // element bc
           bc_dofs[1][indx_loc]       = _bc[1][kdof_top];                    // element bc
-          uold[indx_loc]          = ( *x_old[_NoLevels - 1] ) ( kdof_top ); // element sol
+//           uold[indx_loc]          = ( *x_old[_NoLevels - 1] ) ( kdof_top ); // element sol
+          uold[indx_loc]          = ( *_x_olds[_NoLevels - 1][0] ) ( kdof_top ); // element sol
           } // end quadratic ------------------------------------------------
       }
 
@@ -1389,21 +1388,24 @@ void MGSolDA::print_u (
   SolSuffix[0] = "";
   SolSuffix[1] = "_old";
   SolSuffix[2] = "_oold";
-  
+  std::cout<<"=========================== MGSolDA::print_u ==============================\n";
   // print quad -------------------------------------
   for ( int ivar = 0; ivar < _nvars[2]; ivar++ )        {
       for( int timeStep = 0; timeStep < SolToPrint; timeStep ++ ){
       std::string var_name = _var_names[ivar] + SolSuffix[timeStep];
-
-      if(timeStep == 0)
-        for ( int i = 0; i < n_nodes; i++ ) 
-          sol[i]  = ( *x_old[Level] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];
-      else if(timeStep == 1)
-        for ( int i = 0; i < n_nodes; i++ ) 
-          sol[i]  = ( *x_oold[Level] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];    
-      else if(timeStep == 2)
-        for ( int i = 0; i < n_nodes; i++ ) 
-          sol[i]  = ( *x_ooold[Level] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];      
+      for ( int i = 0; i < n_nodes; i++ ) 
+        sol[i]  = ( *_x_olds[Level][timeStep] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];
+      
+      
+//       if(timeStep == 0)
+//         for ( int i = 0; i < n_nodes; i++ ) 
+//           sol[i]  = ( *_x_olds[Level - 1][0] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];
+//       else if(timeStep == 1)
+//         for ( int i = 0; i < n_nodes; i++ ) 
+//           sol[i]  = ( *_x_olds[Level - 1][1] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];    
+//       else if(timeStep == 2)
+//         for ( int i = 0; i < n_nodes; i++ ) 
+//           sol[i]  = ( *_x_olds[Level - 1][2] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];      
 
       _mgutils.print_Dhdf5 ( file_id, var_name, dimsf, sol );
       }
@@ -1430,10 +1432,12 @@ void MGSolDA::print_u (
                   for ( int in = 0; in < NDOF_P; in++ ) {
                       int gl_i = _mgmesh._el_map[0][indx + in];
                       double val = 0.;
-                      if(timeStep == 0) val = ( *x_old[Level] ) ( _node_dof[Level][gl_i + ivar * offset] );
-                      if(timeStep == 1) val = ( *x_oold[Level] ) ( _node_dof[Level][gl_i + ivar * offset] );
-                      if(timeStep == 2) val = ( *x_ooold[Level] ) ( _node_dof[Level][gl_i + ivar * offset] );
+                      val = ( *_x_olds[Level][timeStep] ) ( _node_dof[Level][gl_i + ivar * offset] );
                       
+//                       if(timeStep == 0) val = ( *_x_olds[Level - 1][0] ) ( _node_dof[Level][gl_i + ivar * offset] );
+//                       if(timeStep == 1) val = ( *_x_olds[Level - 1][1] ) ( _node_dof[Level][gl_i + ivar * offset] );
+//                       if(timeStep == 2) val = ( *_x_olds[Level - 1][2] ) ( _node_dof[Level][gl_i + ivar * offset] );
+//                       
                       sol_c[in] = val * _refvalue[ivar];
                       }
 
@@ -1478,7 +1482,8 @@ void MGSolDA::print_u (
           for ( int iel = 0; iel < delta; iel++ ) {
               int indx = iel + eldof_lev; // print only the first dof
 
-              double val = ( *x_old[Level] ) ( _node_dof[Level][indx * _el_dof[0] + ( ivar + _nvars[2] + _nvars[1] ) * offset] ) * _refvalue[_nvars[0]];
+//               double val = ( *_x_olds[Level - 1][0] ) ( _node_dof[Level][indx * _el_dof[0] + ( ivar + _nvars[2] + _nvars[1] ) * offset] ) * _refvalue[_nvars[0]];
+              double val = ( *_x_olds[Level][0] ) ( _node_dof[Level][indx * _el_dof[0] + ( ivar + _nvars[2] + _nvars[1] ) * offset] ) * _refvalue[_nvars[0]];
 
               for ( int isubcell = 0; isubcell < NSUBDOM; isubcell++ ) {
                   sol_p[indx * NSUBDOM + isubcell] = val * _refvalue[DIMENSION];
@@ -1538,7 +1543,7 @@ void  MGSolDA::set_xooold2x() {
 
               for ( int  i = 0; i < el_nds; i++ ) { // linear and quad
                   int k = _mgmesh._el_map[0][elem_gidx + i]; // the global node
-                  const double value = ( *x_ooold[Level - 1] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
+                  const double value = ( *_x_olds[Level - 1][3] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
                   x[Level - 1]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
                   }
               }
@@ -1552,8 +1557,12 @@ void  MGSolDA::set_xooold2x() {
           }
 
       /// D. delocalization and clean
-      x[Level - 1]->localize ( *x_old[Level - 1] );
-      x[Level - 1]->localize ( *x_oold[Level - 1] );
+//       x[Level - 1]->localize ( *x_old[Level - 1] );
+//       x[Level - 1]->localize ( *x_oold[Level - 1] );
+      
+      for(int ts=0; ts<2; ts++)
+          x[Level - 1]->localize ( *_x_olds[Level - 1][ts] );
+      
       }
 
   return;
@@ -1586,15 +1595,15 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
 
                     switch ( vec_from ) {
                       case 1:
-                        value = ( *x_old[Level] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
+                        value = ( *_x_olds[Level - 1][0] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
                         break;
 
                       case 2:
-                        value = ( *x_oold[Level] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
+                        value = ( *_x_olds[Level - 1][1] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
                         break;
 
                       case 3:
-                        value = ( *x_ooold[Level] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
+                        value = ( *_x_olds[Level - 1][2] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
                         break;
 
                       case 4:
@@ -1618,7 +1627,7 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
                         break;
 
                       case 9:
-                        value = ( *x_oooold[Level] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
+                        value = ( *_x_olds[Level - 1][3] ) ( _node_dof[_NoLevels - 1][k + ivar * offset] );
                         break;
 
                       default:
@@ -1628,15 +1637,15 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
 
                     switch ( vec_to ) {
                       case 1:
-                        x_old[Level]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
+                        _x_olds[Level - 1][0]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
                         break;
 
                       case 2:
-                        x_oold[Level]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
+                        _x_olds[Level - 1][1]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
                         break;
 
                       case 3:
-                        x_ooold[Level]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
+                        _x_olds[Level - 1][2]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
                         break;
 
                       case 4:
@@ -1660,7 +1669,7 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
                         break;
 
                       case 9:
-                        x_oooold[Level]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
+                        _x_olds[Level - 1][3]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], value ); // set the field
                         break;
 
                       default:
@@ -1672,7 +1681,7 @@ void  MGSolDA::set_vector ( const int & vec_from, const int & vec_to ) {
           }
 
       if ( vec_from == 1 && vec_to == 3 ) {
-          x[Level]->localize ( *x_oold[Level] );    //for backward compatibility
+          x[Level]->localize ( *_x_olds[Level - 1][1] );    //for backward compatibility
           }
       }
 
@@ -1877,7 +1886,8 @@ void MGSolDA::print_u_med (
       std::string var_name = _var_names[ivar];
 
       for ( int i = 0; i < n_nodes; i++ ) {
-          sol[i]  = ( *x_old[Level] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];
+//           sol[i]  = ( *_x_olds[Level - 1][0] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];
+          sol[i]  = ( *_x_olds[Level][0] ) ( _node_dof[Level][i + ivar * offset] ) * _refvalue[ivar];
           array ->setIJ ( i, 0, sol[i] );
 
           }
@@ -2145,8 +2155,9 @@ void MGSolDA::read_u (
               }
           }
 
-      x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );
-
+//       x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );
+      x[_NoLevels - 1]->localize ( *_x_olds[_NoLevels - 1][0] );
+      
       // clean
       H5Fclose ( file_mesh );
       delete []map_coarse;
@@ -2214,9 +2225,11 @@ void MGSolDA::read_u (
                   }
               }
 
-          if ( oldTstep == 0 ) x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );
-          if ( oldTstep == 1 ) x[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );
-          if ( oldTstep == 2 ) x[_NoLevels - 1]->localize ( *x_ooold[_NoLevels - 1] );
+          x[_NoLevels - 1]->localize ( *_x_olds[_NoLevels - 1][oldTstep] );    
+              
+//           if ( oldTstep == 0 ) x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );
+//           if ( oldTstep == 1 ) x[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );
+//           if ( oldTstep == 2 ) x[_NoLevels - 1]->localize ( *x_ooold[_NoLevels - 1] );
           }
       } //end if
 

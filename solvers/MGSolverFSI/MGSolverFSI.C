@@ -77,6 +77,7 @@ MGSolFSI::MGSolFSI (
 
     // READ PARAMETERS FROM CLASS FSI_parameter
     _FSI_parameter.read_param (_mgutils);
+    _NumRestartSol=2;
     _nNSdim=DIMENSION;
     // class equation ---------------------------------------------------------------------
     for (int k_index=0; k_index<30; k_index++)     _FF_idx[k_index]=-1;
@@ -387,8 +388,8 @@ void MGSolFSI::MGTimeStep (
             MGSolve (1.e-6,15);                                                           // solve
 //
         }
-        x_old[_NoLevels-1]->localize (*x_oold[_NoLevels-1]);
-        x[_NoLevels-1]->localize (*x_old[_NoLevels-1]);
+        _x_olds[_NoLevels-1][0]->localize (*_x_olds[_NoLevels-1][1]);
+        x[_NoLevels-1]->localize (*_x_olds[_NoLevels-1][0]);
 #if (FSI_EQUATIONS%2==0)
         x[_NoLevels-1]->localize (*x_nonl[_NoLevels-1]);
 #endif

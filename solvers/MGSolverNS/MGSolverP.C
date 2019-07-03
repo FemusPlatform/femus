@@ -13,6 +13,8 @@
 #include "MGFE.h"          // Mesh class
 #include "EquationSystemsExtendedM.h"  // Equation map class
 #include "Solvertype_enum.h"
+#include "Precondtype_enum.h"
+
 #include "Pparameters.h"
 
 // local alg lib -----------------------------------------------
@@ -54,9 +56,11 @@ MGSolP::MGSolP (
   _refvalue[0] = _rhof * _uref * _uref; // class variable names
   _IRe = _muf / _rhof;
 
-  for ( int  l = 0; l < _NoLevels; l++ ) {// BICGSTABM  BICGM
-      _solver[l]->set_solver_type ( GMRESM );
+  for ( int  l = 0; l < _NoLevels; l++ ) {// BICGSTABM  BICGM GMRESM LSQRM
+      _solver[l]->set_solver_type ( BICGSTABM );
+      _solver[l]->set_preconditioner_type ( AMG_PRECONDM );
       }
+
 
   _P_parameter.read_param ( _mgutils, _mgmesh._iproc );
   _AssembleOnce = _P_parameter._AssembleOnce;
@@ -477,9 +481,9 @@ void MGSolP::MGTimeStep_no_up (
 void MGSolP::MGUpdateStep()
   {
   if ( _SolveP == 1 ) {
-      x_oold[_NoLevels - 1]->localize ( *x_ooold[_NoLevels - 1] ); // p(n-2)
-      x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );   // p(n-1)
-      x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );        // p(n)
+      for(int ts=_NumRestartSol-1; ts>0; ts--)
+          _x_olds[_NoLevels - 1][ts-1] -> localize ( *_x_olds[_NoLevels - 1][ts] );
+      x[_NoLevels - 1]->localize ( *_x_olds[_NoLevels - 1][0] );        // p(n)
       }
 
   return;
@@ -519,7 +523,7 @@ void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
   for ( int idim = 0; idim < _nPdim; idim++ ) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts );
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts );
-      _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oooldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_3ts );
+//       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oooldsol ( 0, 1, el_ndof[2], el_conn, offset, idim, u_3ts );
       }
 
   _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_sol ( 0, 1, el_ndof[1], el_conn, offset, 0, _p_1ts ); // dp pressure
@@ -528,8 +532,8 @@ void MGSolP::get_el_data ( int el_ndof[], int el_conn[], int offset )
   for ( int dim = 0; dim < _nPdim; dim++ )
     for ( int node = 0; node < el_ndof[2]; node++ )
       _u_div[node + dim * el_ndof[2]] =     div_1ts * u_1ts[dim * NDOF_FEM + node]
-                                            + div_2ts * u_2ts[dim * NDOF_FEM + node]
-                                            + div_3ts * u_3ts[dim * NDOF_FEM + node];
+                                            + div_2ts * u_2ts[dim * NDOF_FEM + node];
+//                                             + div_3ts * u_3ts[dim * NDOF_FEM + node];
 
   for ( int node = 0; node < el_ndof[1]; node++ )
     _p_rhs[node] = pres_1ts * _p_1ts[node]

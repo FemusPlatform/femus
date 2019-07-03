@@ -21,6 +21,7 @@
 #include "linear_solverM.h"
 #include "parallelM.h"
 
+#include "Precondtype_enum.h"
 
 
 // ======================================================
@@ -53,7 +54,7 @@ MGSolRANS::MGSolRANS (
     /// A) reading parameters  for field coupling (in _FF_idx[])
     _RANS_parameter.read_param ( _mgutils );
     _TimeDer = _RANS_parameter._TimeDer;
-
+    _NumRestartSol=_TimeDer;
     
     FillBoundaryMap();
     _nTdim = DIMENSION;
@@ -67,7 +68,12 @@ MGSolRANS::MGSolRANS (
     for ( int l = 0; l < _NoLevels; l++ ) {
         _solver[l]->set_solver_type ( _RANS_parameter._SolverType );
     }
+//   for ( int  l = 0; l < _NoLevels; l++ ) {// BICGSTABM  BICGM GMRESM LSQRM
+// //       _solver[l]->set_solver_type ( BICGSTABM );
+//       _solver[l]->set_preconditioner_type ( AMG_PRECONDM );
+//       }
 
+      
     // SETTING TURBULENCE MODEL PARAMETERS -> READING FROM TurbUtils CLASS
     _WallDist = _mgutils._geometry["Wall_dist"];
     _InvSigma = 1. / 1.4;
@@ -460,8 +466,8 @@ void MGSolRANS::MGTimeStep (
         // SET UP XOOLD AND XNONL VECTORS AFTER RESTART
         if ( _Restart == 0 ) {
             _TimeDer = 1;
-            x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );
-            x_old[_NoLevels - 1]->localize ( *x_nonl[_NoLevels - 1] );
+            _x_olds[_NoLevels - 1][0]->localize ( *_x_olds[_NoLevels - 1][1] );
+            _x_olds[_NoLevels - 1][0]->localize ( *x_nonl[_NoLevels - 1] );
         }
 
         _Restart = 1;
@@ -583,8 +589,8 @@ void MGSolRANS::MGTimeStep_no_up (
 
         // SET UP XOOLD AND XNONL VECTORS AFTER RESTART
         if ( _Restart == 0 ) {
-            x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );
-            x_old[_NoLevels - 1]->localize ( *x_nonl[_NoLevels - 1] );
+            _x_olds[_NoLevels - 1][0]->localize ( *_x_olds[_NoLevels - 1][1] );
+            _x_olds[_NoLevels - 1][0]->localize ( *x_nonl[_NoLevels - 1] );
         }
 
         _Restart = 1;
@@ -604,7 +610,9 @@ void MGSolRANS::MGTimeStep_no_up (
 
 void MGSolRANS::MGUpdateStep()
 {
-    x_old[_NoLevels - 1]->localize ( *x_oold[_NoLevels - 1] );
+    
+    if(!(_TimeDer-2))
+       _x_olds[_NoLevels - 1][0]->localize ( *_x_olds[_NoLevels - 1][1] );
 
     int size = x[_NoLevels-1]->size();
     for ( int i=0; i<size; i++ ) {
@@ -615,7 +623,7 @@ void MGSolRANS::MGUpdateStep()
        }
     }
 
-    x[_NoLevels - 1]->localize ( *x_old[_NoLevels - 1] );
+    x[_NoLevels - 1]->localize ( *_x_olds[_NoLevels - 1][0] );
 
     return;
 }

@@ -230,7 +230,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValues_from_node(
         double sum=0.;
         for(int i_node = 0; i_node<npt_elem; i_node ++) {
           const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (jcmp+first_cmp) * offset];
-          double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+          double var      = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
           sum +=var/npt_elem;
         }
         array->setIJ(i_mg,jcmp,sum);
@@ -256,7 +256,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValues_from_node(
       for(int i_node = 0; i_node<np_cell; i_node ++) {
         for(int j_cmp=0; j_cmp<n_cmp; j_cmp++) {
           const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (j_cmp+first_cmp) * offset];
-          double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+          double var      = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
           array->setIJ(conn[i_node],j_cmp,var);
         }
       }
@@ -327,7 +327,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
         int node_mg   = map_mg[i_mg];  // mg  node
         int node_med  = map_med[i_mg];  // med node
         const int kdof_top = mgsyst->_node_dof[Level][node_mg+ (ji+first_cmp) *offset];
-        double v = (* (mgsyst->x_old[Level]))(kdof_top);
+        double v = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
         array->setIJ(node_med,ji,v);
       }
     } // ---------------------------------------------------------------------------------
@@ -357,7 +357,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_nodes(
         fct -> getSupport() -> getNodeIdsOfCell(i_mg,conn);
         for(int i_node = 0; i_node<Fcc; i_node ++) {
           const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (ji+first_cmp) * offset];
-          double intvar      = (* (mgsyst->x_old[Level]))(kdof_top);
+          double intvar      = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
           array->setIJ(conn[i_node],ji,intvar);
         }
         conn.clear();
@@ -485,7 +485,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValues_from_cell(
 //     for(int i_mg=0; i_mg < nCells; i_mg++) {
 //       for(int jcmp=0; jcmp<n_cmp; jcmp++) {
 //           const int kdof_top  = mg-> _element_dof[Level][i_mg] + (jcmp+first_cmp) * off_nelements];
-//           double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+//           double var      = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
 //         array->setIJ(i_mg,jcmp,var);
 //       }
 //     }
@@ -509,7 +509,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValues_from_cell(
 //         double sum=0.;
 //         for(int i_node = 0; i_node<npt_elem; i_node ++) {
 //           const int kdof_top  = mgsyst-> _node_dof[Level][MedMg[conn[i_node]] + (jcmp+first_cmp) * offset];
-//           double var      = (* (mgsyst->x_old[Level]))(kdof_top);
+//           double var      = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
 //           sum +=var/npt_elem;
 //         }
 //         array->setIJ(i_mg,jcmp,sum);
@@ -570,7 +570,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getValuesOnBoundary_elem(
 
     for(int j=  first_cmp; j< first_cmp+n_cmp; j++) {
       const int kdof_top = mgsyst->_node_dof[Level][node_mg+j*offset];
-      double v = (* (mgsyst->x_old[Level]))(kdof_top);
+      double v = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
       array->setIJ(node_med,j,v);
     }
   }
@@ -638,7 +638,7 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
 
     for(int j=  first_cmp; j< first_cmp+n_cmp; j++) {
       const int kdof_top = mgsyst->_node_dof[Level][node_mg+j*offset];
-      double v = (* (mgsyst->x_old[Level]))(kdof_top);
+      double v = (* (mgsyst->_x_olds[Level][0]))(kdof_top);
 //       if(i_mg== 589 || i_mg == 594 || i_mg == 593 || i_mg == 751 || i_mg == 756 || i_mg == 755 || i_mg == 749 || i_mg == 754 || i_mg == 753)
 //         std::cout<<"mg node "<<node_mg<<" for med node "<<i_mg<<" out of "<<nNodes<<" nodes, value "<<v<<std::endl;
 
@@ -681,7 +681,7 @@ void EquationSystemsExtendedM::write_Boundary_value(
   MGSolBase * mgsyst=get_eqs(mgsystem_name.c_str());
   int Level=_mg_mesh->_NoLevels-1;
   int offset= _mg_mesh->_NoNodes[Level];
-  NumericVectorM *old_sol_top= mgsyst->x_old[Level];
+  NumericVectorM *old_sol_top= mgsyst->_x_olds[Level][0];
   if(mgsystem_name=="NS2P") {
     old_sol_top= mgsyst->x_nonl[Level];    // MOD
   }

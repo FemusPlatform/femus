@@ -366,10 +366,11 @@ void MGSolNS::MGTimeStep_no_up (
 void MGSolNS::MGUpdateStep (
 ) {
   if ( _SolveNS ) {
-      x_oold[_NoLevels - 1] -> localize ( *x_ooold[_NoLevels - 1] ); // time step -2
-      x_old[_NoLevels - 1]  -> localize ( *x_oold[_NoLevels - 1]  ); // time step -1
-      x[_NoLevels - 1]      -> localize ( *x_old[_NoLevels - 1]   );  // time step
-      x[_NoLevels - 1]      -> localize ( *x_nonl[_NoLevels - 1]  );
+      
+      for(int ts=_NumRestartSol-1; ts>0; ts--)
+          _x_olds[_NoLevels - 1][ts-1] -> localize ( *_x_olds[_NoLevels - 1][ts] );
+      x[_NoLevels - 1] -> localize ( *_x_olds[_NoLevels - 1][0] );  // time step
+      x[_NoLevels - 1] -> localize ( *x_nonl[_NoLevels - 1]  );
       }
 
   return;

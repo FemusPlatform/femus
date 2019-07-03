@@ -96,7 +96,7 @@ void MGEquationsSystem::eqnmap_steady_loop(
     if (_num_equations[eqn->first] >= eq_min &&
         _num_equations[eqn->first] <= eq_max) {
       NoLevels = mgsol->_NoLevels;
-      norm_old += mgsol->x_old[NoLevels - 1]->l2_norm();
+      norm_old += mgsol->_x_olds[NoLevels - 1][0]->l2_norm();
       //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
   }
@@ -119,7 +119,7 @@ void MGEquationsSystem::eqnmap_steady_loop(
         NoLevels = mgsol->_NoLevels;
         mgsol->set_dt(time_step);
         mgsol->MGTimeStep(time, delta_t_step_in);
-        norm_new += mgsol->x_old[NoLevels - 1]->l2_norm();
+        norm_new += mgsol->_x_olds[NoLevels - 1][0]->l2_norm();
       }
     }
     diff_norm = fabs(norm_old - norm_new);
@@ -225,8 +225,8 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
         _num_equations[eqn->first] <= eq_max) {
       NoLevels = mgsol->_NoLevels;
       if (_num_equations[eqn->first] == 0) {
-        mgsol->x_old[NoLevels - 1]->close();
-        norm_old += mgsol->x_old[NoLevels - 1]->l2_norm();
+        mgsol->_x_olds[NoLevels - 1][0]->close();
+        norm_old += mgsol->_x_olds[NoLevels - 1][0]->l2_norm();
       }
       //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
@@ -249,7 +249,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
         NoLevels = mgsol->_NoLevels;
         mgsol->MGTimeStep(time, delta_t_step_in);
         if (_num_equations[eqn->first] == 0)
-          norm_new += mgsol->x_old[NoLevels - 1]->l2_norm();
+          norm_new += mgsol->_x_olds[NoLevels - 1][0]->l2_norm();
       }
     }
     diff_norm = fabs(norm_old - norm_new);
@@ -326,8 +326,8 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
       // ->x_old[NoLevels-1]->l2_norm();
       for (int i = 0; i < conv_dim; i++)
         if (_num_equations[eqn->first] == controlled_eq[i]) {
-          mgsol->x_old[NoLevels - 1]->close();
-          norm_old[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+          mgsol->_x_olds[NoLevels - 1][0]->close();
+          norm_old[i] += mgsol->_x_olds[NoLevels - 1][0]->l2_norm();
         }
       // mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
     }
@@ -354,7 +354,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
         // ->x_old[NoLevels-1]->l2_norm();
         for (int i = 0; i < conv_dim; i++)
           if (_num_equations[eqn->first] == controlled_eq[i]) {
-            norm_new[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+            norm_new[i] += mgsol->_x_olds[NoLevels - 1][0]->l2_norm();
             diff_norm[i] = fabs(norm_old[i] - norm_new[i]);
             err_rel[i] = diff_norm[i] / norm_old[i];
           }
@@ -1300,28 +1300,28 @@ void MGEquationsSystem::movemesh() {
 
     for (int inode = 0; inode < n_nodes; inode++) {
       offsetp = 0 * n_nodes;
-      double disp = (*mgsoldsx->x_old[NoLevels - 1])(inode) -
-                    (*mgsoldsx->x_oold[NoLevels - 1])(inode);
+      double disp = (*mgsoldsx->_x_olds[NoLevels - 1][0])(inode) -
+                    (*mgsoldsx->_x_olds[NoLevels - 1][1])(inode);
       //             _mgmesh._xyz[inode+offsetp] += disp; // cerroni
       _mgmesh._xyz[inode + offsetp] = _mgmesh._xyzo[inode + offsetp] +
-                                      (*mgsoldsx->x_old[NoLevels - 1])(inode);
+                                      (*mgsoldsx->_x_olds[NoLevels - 1][0])(inode);
       _mgmesh._dxdydz[inode + offsetp] = disp;
       offsetp = 1 * n_nodes;
-      disp = (*mgsoldsy->x_old[NoLevels - 1])(inode) -
-             (*mgsoldsy->x_oold[NoLevels - 1])(inode);
+      disp = (*mgsoldsy->_x_olds[NoLevels - 1][0])(inode) -
+             (*mgsoldsy->_x_olds[NoLevels - 1][1])(inode);
       //             _mgmesh._xyz[inode+offsetp] += disp; cerroni
       _mgmesh._dxdydz[inode + offsetp] = disp;
       _mgmesh._xyz[inode + offsetp] = _mgmesh._xyzo[inode + offsetp] +
-                                      (*mgsoldsy->x_old[NoLevels - 1])(inode);
+                                      (*mgsoldsy->_x_olds[NoLevels - 1][0])(inode);
 
 #if DIMENSION == 3
       offsetp = 2 * n_nodes;
-      disp = (*mgsoldsz->x_old[NoLevels - 1])(inode) -
-             (*mgsoldsz->x_oold[NoLevels - 1])(inode);
+      disp = (*mgsoldsz->_x_olds[NoLevels - 1][0])(inode) -
+             (*mgsoldsz->_x_olds[NoLevels - 1][1])(inode);
       //             _mgmesh._xyz[inode+offsetp] += disp; cerroni
       _mgmesh._dxdydz[inode + offsetp] = disp;
       _mgmesh._xyz[inode + offsetp] = _mgmesh._xyzo[inode + offsetp] +
-                                      (*mgsoldsz->x_old[NoLevels - 1])(inode);
+                                      (*mgsoldsz->_x_olds[NoLevels - 1][0])(inode);
 #endif
     }
 

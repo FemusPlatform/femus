@@ -73,16 +73,14 @@ class MGSolBase
         //  --------------------------
         ///@{  \name OLD VECTOR
 
-        std::vector<NumericVectorM *> x_old;    ///< old solution x
-        std::vector<NumericVectorM *> x_oold;   ///< oold solution x
-        std::vector<NumericVectorM *> x_nonl;   ///< non linear solution x
-        std::vector<NumericVectorM *> disp;     ///< displacement solution x
-        std::vector<NumericVectorM *> disp_old; ///< displacement old solution x
-        std::vector<NumericVectorM *> disp_oold; ///< displacement old solution x
+        std::vector<std::vector<NumericVectorM *>> _x_olds; //Levels * Num of old sols
+        
+        std::vector<NumericVectorM *> x_nonl;     ///< non linear solution x
+        std::vector<NumericVectorM *> disp;       ///< displacement solution x
+        std::vector<NumericVectorM *> disp_old;   ///< displacement old solution x
+        std::vector<NumericVectorM *> disp_oold;  ///< displacement old solution x
         std::vector<NumericVectorM *> disp_ooold; ///< displacement old solution x
-        std::vector<NumericVectorM *> x_ooold;  ///< vector for multiple uses
-        std::vector<NumericVectorM *> x_oooold;  ///< vector for multiple uses
-        std::vector<double> _weight_ctrl;       ///<controlled region for optimal control problems
+        std::vector<double> _weight_ctrl;         ///<controlled region for optimal control problems
 #ifdef HAVE_MED
         MEDCoupling::MEDCouplingFieldDouble * _ExtField;
 #endif
