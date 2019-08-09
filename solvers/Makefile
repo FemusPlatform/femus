@@ -213,15 +213,16 @@ clean:
 
 
 gencase:
-	@if [ \( -e "$(FEMUS_DIR)/bin/gencase" \) ]; then \
+	@if [ \( -L "$(FEMUS_DIR)/bin/gencase" \) ]; then \
 	  rm -f $(FEMUS_DIR)/bin/gencase ;\
+	  echo $(FEMUS_DIR)/bin/gencase "removed";\
 	fi
 	@cd $(FEMUS_DIR)/applications/gencase; \
 	$(MAKE); \
 	ln -s $(FEMUS_DIR)/bin/gencase-opt $(FEMUS_DIR)/bin/gencase; \
 
 gencase_clean:
-	@if [ \( -e "$(FEMUS_DIR)/bin/gencase" \) ]; then \
+	@if [ \( -L "$(FEMUS_DIR)/bin/gencase" \) ]; then \
 	  rm -f $(FEMUS_DIR)/bin/gencase ;\
 	fi
 	@cd $(FEMUS_DIR)/applications/gencase; \
