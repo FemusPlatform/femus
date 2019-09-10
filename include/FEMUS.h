@@ -369,7 +369,8 @@ public:
     void write_Boundary_value (int id_boundary_name,	  ///< identity interface name (in)
                                std::string mgsystem_name,	  ///< system name          (in)
                                int n_cmp,	                  ///< from variable system (in)
-                               int first_cmp = 0	          ///< to variable system   (in)
+                               int first_cmp = 0,	          ///< to variable system   (in)
+                               int store_value = 0            ///< store values in x_ooold (=1) or in x_old (=0)
                               );
     // ================================================================================================
     //! This function sets the field of interface function (interface_id) with an analitic expression

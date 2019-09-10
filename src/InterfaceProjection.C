@@ -99,7 +99,7 @@ void InterfaceProjection::FillParameters (
     
     int TrgCellNodes = __OutMesh->getNumberOfNodesInCell ( 0 );
     _SpaceDim            = __OutMesh->getSpaceDimension();
-    _MeshDim             = __OutMesh->getMeshDimension();
+    _MeshDim             = __InMesh->getMeshDimension();
     _TrgNodes = __OutMesh-> getNumberOfNodes();               // number of nodes in target mesh
     _TrgCells = __OutMesh-> getNumberOfCells();               // number of cells in target mesh
 
@@ -467,7 +467,8 @@ void InterfaceProjection::FillParameters (
                     // cell ids are elts[ eltsIndex[ i ]],..., elts[ eltsIndex[ i ] + NumPossibleCells ].
                     int NewCell = elts->getIJ ( eltsIndex->getIJ ( TNode,0 ) + iCount,0 );
                     __InMesh->getNodeIdsOfCell ( NewCell,SourceConn );
-
+                    
+                    _CoordMatrix.clear();
                     for ( int SNode = 0; SNode<_SrcCellNodes; SNode++ ) {
 //             BoundingNodes1->setIJ(TNode, SNode, SourceConn[MedLibmesh[SNode]]); //SourceConn[MedLibmesh[SNode]]=med index
 //             if(SNode <_SrcCoordInterpNodes)  __InMesh -> getCoordinatesOfNode(SourceConn[MedLibmesh[SNode]],_CoordMatrix); // only linear nodes

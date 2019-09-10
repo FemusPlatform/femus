@@ -76,9 +76,13 @@ public:
   IbUtils (MEDCoupling::MEDCouplingUMesh * SolidBodyMesh,
 	   const MEDCoupling::MEDCouplingUMesh * FluidMesh,
        int proc=0
-);
+  );
+  IbUtils (MEDCoupling::MEDCouplingUMesh * SolidBodyMesh,
+	   const MEDCoupling::MEDCouplingUMesh * FluidMesh,
+       int p_femus, int proc
+  );
   ~IbUtils ();
-  void read_file ();
+  void read_file (int p_femus = 0);
   void print_par ();
   void SetMeshes (MEDCoupling::MEDCouplingUMesh * SolidBodyMesh,
 		  const MEDCoupling::MEDCouplingUMesh * FluidMesh);
@@ -87,6 +91,8 @@ public:
 			   double dt);
   void ComputeStress (MEDCoupling::MEDCouplingFieldDouble *
 		      ReducedVelocityField, double Stress[]);
+  MEDCoupling::MEDCouplingFieldDouble * ComputeStressField (MEDCoupling::MEDCouplingFieldDouble *
+			ReducedVelocityField, const MEDCoupling::MEDCouplingUMesh *BoundaryMesh );
 
   void InitColor ();
   void CalcInterface (MEDCoupling::MEDCouplingFieldDouble * ProjectedColor);
@@ -99,6 +105,8 @@ public:
      double velocity[], MEDCoupling::MEDCouplingFieldDouble * VelocityField);
 
   void UpdateFluidMesh(const MEDCoupling::MEDCouplingUMesh * NewMesh);  
+  void UpdateSolidMesh (const MEDCoupling::MEDCouplingUMesh * NewMesh);
+  void UpdateSolidVelocity (const MEDCoupling::MEDCouplingFieldDouble * SourceField);
   void UpdateInterpolatedFields(MEDCoupling::MEDCouplingFieldDouble * VelocityField);
   void InsertTriangulatedCell(
     int SourceCellId, 
@@ -109,6 +117,11 @@ public:
     double FullCoordinates[], 
     int offset);
   
+  MEDCoupling::MEDCouplingFieldDouble * InterpolateFluidOnSolid (MEDCoupling::MEDCouplingFieldDouble *
+				   VelocityField, MEDCoupling::MEDCouplingFieldDouble * SolidBoundaryField, 
+                   const MEDCoupling::MEDCouplingUMesh *BoundaryMesh);
+  MEDCoupling::MEDCouplingFieldDouble * InterpolateSolidOnFluid (MEDCoupling::MEDCouplingFieldDouble *
+				   SolidVelocity, MEDCoupling::MEDCouplingFieldDouble * FluidVelocity);
   MEDCoupling::MEDCouplingFieldDouble * GetFluidCellColor ();
   MEDCoupling::MEDCouplingFieldDouble * GetFluidNodeColor ();
   MEDCoupling::MEDCouplingFieldDouble * GetInterpolatedSolidVelocity ();

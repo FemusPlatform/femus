@@ -355,9 +355,10 @@ void FEMUS::write_Boundary_value (
   int id_boundary_name,       ///< identity interface name (in)
   std::string mgsystem_name, ///< system name          (in)
   int n_cmp,             ///< from variable system (in)
-  int first_cmp               ///< to variable system   (in)
+  int first_cmp,               ///< to variable system   (in)
+  int store_value             ///< store values in x_ooold (=1) or in x_old (=0)
 ) {
-  _mg_equations_map->write_Boundary_value ( id_boundary_name, mgsystem_name, n_cmp, first_cmp );
+  _mg_equations_map->write_Boundary_value ( id_boundary_name, mgsystem_name, n_cmp, first_cmp, store_value );
   return;
   }
 
@@ -627,18 +628,18 @@ void FEMUS::update_interface (
 
 
   MEDCoupling::MEDCouplingUMesh * support;
-  MEDCoupling::MEDCouplingUMesh * support_up;
+//   MEDCoupling::MEDCouplingUMesh * support_up;
 //   int id_level=-1;  if(interface_id_1<10) {id_level=0;}
 //   support = MEDLoader::ReadUMeshFromGroups(localFile.c_str(), meshNames[0].c_str(), id_level,vG);
   support = ( getUMesh_orig ( interface_name ) )->clone ( 1 );
-  support_up = ( getUMesh ( interface_name ) )->clone ( 1 );
+//   support_up = ( getUMesh ( interface_name ) )->clone ( 1 );
 // support->zipCoords();
 
   MEDCoupling::DataArrayDouble * coord;
-  MEDCoupling::DataArrayDouble * coord_up;
+//   MEDCoupling::DataArrayDouble * coord_up;
 
   coord = support->getCoords();
-  coord_up = support_up->getCoords();
+//   coord_up = support_up->getCoords();
   int npt = coord->getNumberOfTuples();
   int ncomp = coord->getNumberOfComponents();
 
@@ -650,7 +651,11 @@ void FEMUS::update_interface (
   InterfaceFunctionM * fct = _mg_equations_map->get_interface_fun ( interface_name );
   fct->update_support ( support );
 
-
+  mg_disp->decrRef();
+  coord->decrRef();
+  new_cord->decrRef();
+//   support->decrRef();
+  
   return;
   }
 

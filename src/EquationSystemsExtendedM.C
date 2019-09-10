@@ -3,6 +3,7 @@
 #include <sstream>
 #include <set>
 #include <cstring>
+#include <memory>
 
 #include "EquationSystemsExtendedM.h"
 #include "MeshExtended.h"
@@ -657,10 +658,11 @@ MEDCouplingFieldDouble * EquationSystemsExtendedM::getProcValues(
 
 // =========================================================================
 void EquationSystemsExtendedM::write_Boundary_value(
-  int id_boundary_name,       /**< identity interface name (in)       */
-  std::string mgsystem_name,  /**< system name             (in)       */
-  int n_cmp,                  /**<  variable system    (in)           */
-  int first_cmp               /**< from variable system      (in)     */
+  int id_boundary_name,       /**< identity interface name (in)                 */
+  std::string mgsystem_name,  /**< system name             (in)                 */
+  int n_cmp,                  /**<  variable system    (in)                     */
+  int first_cmp,              /**< from variable system      (in)               */
+  int store_value             /**< store values in x_ooold (=1) or in x_old (=0) */
 ) { // ======================================================================
 
 
@@ -681,7 +683,9 @@ void EquationSystemsExtendedM::write_Boundary_value(
   MGSolBase * mgsyst=get_eqs(mgsystem_name.c_str());
   int Level=_mg_mesh->_NoLevels-1;
   int offset= _mg_mesh->_NoNodes[Level];
-  NumericVectorM *old_sol_top= mgsyst->x_old[Level];
+  NumericVectorM *old_sol_top;
+  if(store_value == 1) old_sol_top= mgsyst->x_ooold[Level];
+  else old_sol_top= mgsyst->x_old[Level];
   if(mgsystem_name=="NS2P") {
     old_sol_top= mgsyst->x_nonl[Level];    // MOD
   }

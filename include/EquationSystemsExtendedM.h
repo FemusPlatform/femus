@@ -123,7 +123,8 @@ public:
   void write_Boundary_value (int id_name,	///< [in] Identity interface name 
 			     std::string mgsystem_name,	///< [in] System name          
 			     int n_cmp,	///< [in] Number of components to write 
-			     int first_cmp = 0	///< [in] First component   
+			     int first_cmp = 0,	///< [in] First component
+                 int store_value = 0        ///< store values in x_ooold (=1) or in x_old (=0)
     );
 
   //! Set a MED field as external field
