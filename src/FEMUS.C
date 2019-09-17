@@ -461,4 +461,21 @@ void FEMUS::dummy_step (
     _mg_time_loop->dummy_step ( t_in,t_step,print_step,time,dt ); ///< step time
     return;
 }
-
+//=============================================================================
+// This function solves one step for under relaxations problems (no loop inside)
+void FEMUS::solve_underrelaxed_onestep  (
+    const int  & it,              ///< initial time iteration
+    const int  & t_step,          ///< actual time iteration
+    const int  & print_step,      ///< print every
+    double   &   time,            ///< actual time
+    double   &   dt,              ///< step time
+    const int  & eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int  & eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    std::vector<double>    controlled_eq,  ///< vector containing numbers of controlled equations
+    bool    &    converged,       ///< check if the solution converged (1->converged)     (out)
+    const double   &   toll             ///< tolerance
+)   // ========================================================================
+{
+    _mg_time_loop->transient_underrelaxed_onestep ( it,t_step,print_step,time,dt,eq_min,eq_max,controlled_eq,converged,toll ); ///< step time
+    return;
+}

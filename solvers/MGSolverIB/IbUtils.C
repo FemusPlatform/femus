@@ -2640,6 +2640,8 @@ MEDCoupling::MEDCouplingFieldDouble * IbUtils::ComputeStressField (MEDCoupling::
 	    }
 	}
 
+	for(int i = 0; i<DIMENSION; i++) Stress[i]=0;
+    
     for (int qp = 0; qp < QPoints; qp++)
     {
         double det = _fe[2]->JacSur (qp, Coord, InvJac);	// local coord _phi_g and jac
@@ -2702,14 +2704,14 @@ MEDCoupling::MEDCouplingFieldDouble * IbUtils::ComputeStressField (MEDCoupling::
 	  for (int i = 0; i < DIMENSION; i++){
 	    Stress[i] = ViscStress[i] - PressContrib[i];
         StressVector[FluidCellConn[qp] * (DIMENSION) + i] = Stress[i];
-        array->setIJ(FluidCellConn[qp],i,Stress[i]);
+//         array->setIJ(FluidCellConn[qp],i,Stress[i]);
       }
 	  GlobViscContrib += ViscStress[0];
 	  GlobPressContrib += PressContrib[0];
       
 
 	}			// END LOOP OVER GAUSS NODES
-
+    for (int qp = 0; qp < QPoints; qp++) for(int i = 0; i<DIMENSION; i++) array->setIJ(FluidCellConn[qp],i,Stress[i]);
 
     }				// END LOOP OVER CELLS
     

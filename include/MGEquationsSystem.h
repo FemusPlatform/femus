@@ -151,8 +151,17 @@ void  set_mgcc(MGSolCC  & cc);
       const int delta_t_step_in,
       const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
       const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-  );
-
+    );
+    
+    void eqnmap_timestep_loop_underrelaxed(
+      const int       &it,                ///< tolerance                                          (in)
+      const double    &delta_t_step_in,   ///< delta t timestep (in)
+      const int       &eq_min,            ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+      const int       &eq_max,            ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+      std::vector<double> controlled_eq,  ///< vector with the number of convergence-controlled equation  (in)
+      bool            &converged,         ///< check if the solution converged (1->converged) (out)
+      const double    &toll               ///< tolerance (in)
+    );
   
 //----------------------------------------------------------------------------------------------
   ///@{ \name READ-PRINT FUNCTIONS 

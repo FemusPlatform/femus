@@ -391,6 +391,84 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
   }
   return;
 }
+/// This function performes all the requested MGSystem time step routines for 
+/// under relaxed problems. It has no loop inside, only a feedback on the 
+/// reached convergence of the solution norm.
+void MGEquationsSystem::eqnmap_timestep_loop_underrelaxed(
+    const int &it, ///< tolerance                                          (in)
+    const double &delta_t_step_in, ///< delta t timestep (in)
+    const int
+        &eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+    const int
+        &eq_max, ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+    std::vector<double> controlled_eq, ///< vector whose compontents are the
+                                       ///< flags of the equations that have to
+                                       ///< converge
+    bool &converged,   ///< check if the solution converged (1->converged) (out)
+    const double &toll ///< tolerance (in)
+) {
+  int conv_dim = controlled_eq.size();
+  // Loop for time steps
+  int NoLevels = 0;
+  double norm_new[conv_dim];
+  double norm_old[conv_dim];
+  double diff_norm[conv_dim];
+  double err_rel[conv_dim];
+  for (int i = 0; i < conv_dim; i++) {
+    norm_new[i] = norm_old[i] = diff_norm[i] = err_rel[i] = 1.e-20;
+  }
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max) {
+      NoLevels = mgsol->_NoLevels;
+      for (int i = 0; i < conv_dim; i++)
+        if (_num_equations[eqn->first] == controlled_eq[i]) {
+          mgsol->x_old[NoLevels - 1]->close();
+          norm_old[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+        }
+    }
+  }
+  double time_step = delta_t_step_in;
+  double time = time_step * it;
+
+  // equation loop
+  // -----------------------------------------------------------------------
+  for (int i = 0; i < conv_dim; i++)
+    norm_new[i] = 1.e-20;
+  for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    MGSolBase *mgsol = eqn->second;
+    if (_num_equations[eqn->first] >= eq_min &&
+        _num_equations[eqn->first] <= eq_max) {
+      NoLevels = mgsol->_NoLevels;
+      mgsol->MGTimeStep(time, delta_t_step_in);
+      // norm_new[_num_equations[eqn->first]]+= mgsol
+      // ->x_old[NoLevels-1]->l2_norm();
+      for (int i = 0; i < conv_dim; i++)
+        if (_num_equations[eqn->first] == controlled_eq[i]) {
+          norm_new[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+          diff_norm[i] = fabs(norm_old[i] - norm_new[i]);
+          err_rel[i] = diff_norm[i] / norm_old[i];
+        }
+    }
+  }
+  // ---------------------------------------------------------------------------------------
+  converged = true;
+  for (int i = 0; i < conv_dim; i++) {
+    std::cout << "\n equation " << controlled_eq[i]
+              << ": old norm=" << norm_old[i] << "; new norm=" << norm_new[i]
+              << "; err  =" << err_rel[i] << std::endl;
+              
+    if (diff_norm[i] > toll) {
+      converged = false;
+      norm_old[i] = norm_new[i];
+      }
+  }
+  if (converged == true) {
+    std::cout << "*** Solution with under relaxation found" << std::endl;
+  }
+  return;
+}
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::eqnmap_timestep_loop(

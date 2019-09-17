@@ -239,6 +239,17 @@ public:
                                 bool                    &converged,         ///< check if the solution converged (1->converged) (out)
                                 const double            &toll = 1e-5        /// tolerance set by default 1e-5
                                );
+    void solve_underrelaxed_onestep  (const int             &it,              ///< initial time iteration
+                                      const int             &t_step,          ///< actual time iteration
+                                      const int             &print_step,      ///< print every
+                                      double                &time,            ///< actual time
+                                      double                &dt,              ///< step time
+                                      const int             &eq_min,          ///< eq min to solve -> enum  FIELDS (equations_conf.h) (in)
+                                      const int             &eq_max,          ///< eq max to solve -> enum  FIELDS (equations_conf.h) (in)
+                                      std::vector<double>   controlled_eq,    ///< vector containing numbers of controlled equations
+                                      bool                  &converged,       ///< check if the solution converged (1->converged)     (out)
+                                      const double          &toll = 1e-5      ///< tolerance
+                                     ); 
 
     //! This function write solution to/from x_ooold vector
     void set_uooold (const int &vec_from,	        ///< source vector to be copied

@@ -82,7 +82,7 @@ public:
     double     &  dt,                  ///< step time                   (in)
     const int  & eq_min, ///< eq min to solve -> enum  FIELDS (equations_conf.h)
   const int  & eq_max ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-  );  
+  ); 
   // ========================================================================================
   /// This function runs  a time step
   void steady(
@@ -134,6 +134,20 @@ public:
     std::vector<double>    controlled_eq,   /// vector with the number of convergence-controlled equation 
     bool                   & converged,            ///< check if the solution converged (1->converged)     (out)
     const double           & toll
+  );
+       // ========================================================================================
+ /// This function runs a time step with a feedback on the norm convergence
+  void transient_underrelaxed_onestep (
+    const int       & it,            ///< initial time iteration      (in)
+    const int       & t_step,        ///< running time iteration      (in)
+    const int       & print_step,    ///< print every                 (in)
+    double          & time,          ///< running time                (in)
+    double          & dt,            ///< step time                   (in)
+    const int       & eq_min,        ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int       & eq_max,        ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    std::vector<double>    controlled_eq,   /// vector with the number of convergence-controlled equation
+    bool            & converged,     ///< check if the solution converged (1->converged) (out)
+    const double    & toll
   );
    // ========================================================================================
   /// This function  prints a file time.****.xmf in RESU
