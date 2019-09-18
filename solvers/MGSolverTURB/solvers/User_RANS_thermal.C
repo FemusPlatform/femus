@@ -2,10 +2,10 @@
 
 #ifdef RANS_THERMAL_EQUATIONS
 
-#include "MGMesh.h"
+#include "User_RANS_thermal.h"
 #include "MGSolverRANS_thermal.h"
 #include "MGUtils.h"
-#include "User_RANS_thermal.h"
+#include "MGMesh.h"
 
 // INITIAL CONDITION ---------------------------------------------------------------------
 void MGSolRANS_thermal::ic_read(int bc_gam, int bc_mat, double xp[], int iel, double u_value[]) {

@@ -6,10 +6,10 @@
 #ifdef RANS_THERMAL_EQUATIONS
 // ==================================
 
+#include "User_RANS_thermal.h"
+#include "RANS_thermal_parameters.h"
 #include "MGFE_conf.h"
 #include "MGSolverDA.h"
-#include "RANS_thermal_parameters.h"
-#include "User_RANS_thermal.h"
 
 class MGEquationsSystem;
 

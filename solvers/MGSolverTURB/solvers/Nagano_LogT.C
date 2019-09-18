@@ -12,18 +12,18 @@
 #include <sstream>
 
 // local include -------------------
-#include "EquationSystemsExtendedM.h"
-#include "MGFE.h"
 #include "MGGeomEl.h"
-#include "MGSystem.h"
-#include "MGUtils.h"
+#include "EquationSystemsExtendedM.h"
 #include "MeshExtended.h"
-#include "dense_matrixM.h"
-#include "dense_vectorM.h"
-#include "linear_solverM.h"
+#include "MGSystem.h"
+#include "MGFE.h"
+#include "MGUtils.h"
 #include "numeric_vectorM.h"
-#include "parallelM.h"
+#include "dense_vectorM.h"
 #include "sparse_matrixM.h"
+#include "dense_matrixM.h"
+#include "linear_solverM.h"
+#include "parallelM.h"
 
 MGSolNaganoLogT::MGSolNaganoLogT(
     MGEquationsSystem& mg_equations_map_in,  ///<  mg_equations_map_in pointer

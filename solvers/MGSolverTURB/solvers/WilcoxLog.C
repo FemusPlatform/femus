@@ -5,8 +5,8 @@
 // ============================================
 
 // class local configuration -------
-#include "MGUtils.h"
 #include "WilcoxLog.h"
+#include "MGUtils.h"
 
 MGSolWilcoxLog::MGSolWilcoxLog(
     MGEquationsSystem& mg_equations_map_in,  ///<  mg_equations_map_in pointer

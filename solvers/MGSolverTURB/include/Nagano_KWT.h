@@ -7,8 +7,8 @@
 // ==================================
 
 // config files ------------------
-#include "MGSolverDA.h"
 #include "MGSolverRANS_thermal.h"
+#include "MGSolverDA.h"
 class MGEquationsSystem;
 
 // =================================================

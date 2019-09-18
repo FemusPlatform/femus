@@ -5,8 +5,8 @@
 // ============================================
 
 #include <iomanip>  // std::setprecision
-#include "MGFE.h"   // Mesh class,double vel_g[]
 #include "MGSolverRANS_thermal.h"
+#include "MGFE.h"  // Mesh class,double vel_g[]
 
 // ===============================================================================================
 void /**/ MGSolRANS_thermal::vol_integral(

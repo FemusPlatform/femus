@@ -4,10 +4,10 @@
 #ifdef RANS_EQUATIONS  // 3D-2D Energy equation
 // ============================================
 
-#include <fstream>
-#include "MGUtils.h"
-#include "RANS_parameters.h"
 #include "User_RANS.h"
+#include "RANS_parameters.h"
+#include "MGUtils.h"
+#include <fstream>
 
 RANS_param::RANS_param() {
   _SolverType = GMRESM;

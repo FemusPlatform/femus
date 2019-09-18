@@ -1,5 +1,5 @@
-#include <iostream>
 #include "Utils_DynTurbModels_4p.h"
+#include <iostream>
 
 // FATHER Dyn4P CALC COEFFICIENTS
 void Dyn4P::CalcDynCoefficients(double ydist) {

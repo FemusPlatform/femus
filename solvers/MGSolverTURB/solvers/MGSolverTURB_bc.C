@@ -4,9 +4,9 @@
 #ifdef _TURBULENCE_  // 3D-2D Energy equation
 // ============================================
 
-#include "MGFE.h"          // Mesh class
 #include "MGSolverTURB.h"  // Navier-Stokes class header file
 #include "MGUtils.h"
+#include "MGFE.h"  // Mesh class
 
 // =========================================================================================
 /// This function sets the _bc_el with boundary condition flags.

@@ -4,10 +4,10 @@
 #ifdef RANS_EQUATIONS  // 3D-2D Energy equation
 // ============================================
 
-#include "MGMesh.h"
 #include "MGSolverRANS.h"  // Navier-Stokes class header file
-#include "MGUtils.h"
 #include "User_RANS.h"
+#include "MGUtils.h"
+#include "MGMesh.h"
 
 // INITIAL CONDITIONS --------------------------------------------------------------------
 void MGSolRANS::ic_read(int bc_gam, int bc_mat, double xp[], int iel, double u_value[]) {

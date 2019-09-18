@@ -1,5 +1,5 @@
-#include <iostream>
 #include "Utils_DynTurbModels_Wilcox.h"
+#include <iostream>
 
 double DynWilcox::CalcMuT(double* TurbVariables, double ydist) {
   CalcKappaAndOmega(TurbVariables);

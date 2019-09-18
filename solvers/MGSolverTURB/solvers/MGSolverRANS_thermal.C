@@ -9,17 +9,17 @@
 // configuration files -----------
 #include "Printinfo_conf.h"
 
-#include "EquationSystemsExtendedM.h"
-#include "MGFE.h"
 #include "MGGeomEl.h"
-#include "MGUtils.h"
+#include "EquationSystemsExtendedM.h"
 #include "MeshExtended.h"
-#include "dense_matrixM.h"
-#include "dense_vectorM.h"
-#include "linear_solverM.h"
+#include "MGFE.h"
+#include "MGUtils.h"
 #include "numeric_vectorM.h"
-#include "parallelM.h"
+#include "dense_vectorM.h"
 #include "sparse_matrixM.h"
+#include "dense_matrixM.h"
+#include "linear_solverM.h"
+#include "parallelM.h"
 
 // ======================================================
 /// This function constructs the 3d-2D MGSolTBK class

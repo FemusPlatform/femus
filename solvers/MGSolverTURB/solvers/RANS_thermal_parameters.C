@@ -2,10 +2,10 @@
 
 #ifdef RANS_THERMAL_EQUATIONS
 
+#include "RANS_thermal_parameters.h"
 #include <stdio.h>
 #include <fstream>
 #include "MGUtils.h"
-#include "RANS_thermal_parameters.h"
 
 RANS_thermal_param::RANS_thermal_param() {
   _SolverType = BICGSTABM;  // BICGSTABM  GMRESM

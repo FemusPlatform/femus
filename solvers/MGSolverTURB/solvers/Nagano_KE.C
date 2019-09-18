@@ -5,8 +5,8 @@
 // ============================================
 
 // class local configuration -------
-#include "MGUtils.h"
 #include "Nagano_KE.h"
+#include "MGUtils.h"
 
 MGSolNaganoKE::MGSolNaganoKE(
     MGEquationsSystem& mg_equations_map_in,  ///<  mg_equations_map_in pointer

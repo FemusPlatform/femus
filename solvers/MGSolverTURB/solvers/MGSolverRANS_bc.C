@@ -4,8 +4,8 @@
 #ifdef RANS_EQUATIONS  // 3D-2D Energy equation
 // ============================================
 
-#include "MGFE.h"          // Mesh class
 #include "MGSolverRANS.h"  // Navier-Stokes class header file
+#include "MGFE.h"          // Mesh class
 
 /// This function sets the _bc_el with boundary condition flags.
 /// This function also assembles the surface integral to obtain the algebraic sytem.

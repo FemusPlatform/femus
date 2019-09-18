@@ -1,5 +1,5 @@
-#include <iostream>
 #include "Utils_ThermTurbModels_4p.h"
+#include <iostream>
 
 double Therm4P::CalcAlphaTurb(double* DynKappaAndOmega, double* ThermTurbVar, double dist) {
   double alpha_t;
