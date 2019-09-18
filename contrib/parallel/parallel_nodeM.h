@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 #ifndef LIBMESH_PARALLEL_NODE_H
 #define LIBMESH_PARALLEL_NODE_H
 
@@ -24,24 +23,24 @@
 #include "Solverlib_conf.h"
 // #include "libmesh/libmesh_config.h"
 
-#include "nodeM.h"
 #include "id_typesM.h"
+#include "nodeM.h"
 
 // namespace libMesh {
 namespace ParallelM {
-  // BufferType<> specialization to return a buffer datatype
-  // to handle communication of Nodes
-  template <>
-  struct BufferType<const Node*> {
-    typedef largest_id_type type;
-  };
+// BufferType<> specialization to return a buffer datatype
+// to handle communication of Nodes
+template <>
+struct BufferType<const Node*> {
+  typedef largest_id_type type;
+};
 
-  template <>
-  struct BufferType<Node> {
-    typedef largest_id_type type;
-  };
+template <>
+struct BufferType<Node> {
+  typedef largest_id_type type;
+};
 
-} // namespace Parallel
+}  // namespace ParallelM
 // } // namespace libMesh
 
-#endif // LIBMESH_PARALLEL_NODE_H
+#endif  // LIBMESH_PARALLEL_NODE_H

@@ -15,7 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 #ifndef LIBMESH_PARALLEL_HILBERT_H
 #define LIBMESH_PARALLEL_HILBERT_H
 
@@ -37,31 +36,28 @@
 
 // namespace libMesh {
 namespace ParallelM {
-  // A StandardType<> specialization to return a derived MPI datatype
-  // to handle communication of HilbertIndices.  We use a singleton
-  // pattern here because a global variable would have tried to call
-  // MPI functions before MPI got initialized.
-  template <>
-  class StandardType<Hilbert::HilbertIndices> : public DataType
-  {
-  public:
-    explicit
-    StandardType(const Hilbert::HilbertIndices* =NULL) {
-      // _static_type never gets freed, but it only gets committed once
-      // so it's not a *huge* memory leak...
-      static DataType _static_type;
-      static bool _is_initialized = false;
-      if (!_is_initialized)
-        {
-          _static_type = DataType(ParallelM::StandardType<Hilbert::inttype>(), 3);
-          _is_initialized = true;
-        }
-      _datatype = _static_type;
+// A StandardType<> specialization to return a derived MPI datatype
+// to handle communication of HilbertIndices.  We use a singleton
+// pattern here because a global variable would have tried to call
+// MPI functions before MPI got initialized.
+template <>
+class StandardType<Hilbert::HilbertIndices> : public DataType {
+ public:
+  explicit StandardType(const Hilbert::HilbertIndices* = NULL) {
+    // _static_type never gets freed, but it only gets committed once
+    // so it's not a *huge* memory leak...
+    static DataType _static_type;
+    static bool _is_initialized = false;
+    if (!_is_initialized) {
+      _static_type = DataType(ParallelM::StandardType<Hilbert::inttype>(), 3);
+      _is_initialized = true;
     }
-  };
-} // namespace Parallel
+    _datatype = _static_type;
+  }
+};
+}  // namespace ParallelM
 // } // namespace libMesh
 
-#endif // LIBMESH_HAVE_LIBHILBERT && LIBMESH_HAVE_MPI
+#endif  // LIBMESH_HAVE_LIBHILBERT && LIBMESH_HAVE_MPI
 
-#endif // LIBMESH_PARALLEL_HILBERT_H
+#endif  // LIBMESH_PARALLEL_HILBERT_H

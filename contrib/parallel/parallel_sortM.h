@@ -15,7 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 #ifndef LIBMESH_PARALLEL_SORT_H
 #define LIBMESH_PARALLEL_SORT_H
 
@@ -31,24 +30,21 @@
 // namespace libMesh
 // {
 
-
-namespace ParallelM
-{
-  /**
-   * The parallel sorting method is templated on the
-   * type of data which is to be sorted.  It may later
-   * be templated on other things if we are ambitious.
-   * This class knows about MPI, and knows how many
-   * processors there are.  It is responsible for
-   * transmitting data between the processors and
-   * ensuring that the data is properly sorted between
-   * all the processors.  We assume that a Sort
-   * is instantiated on all processors.
-   */
-template <typename KeyType, typename IdxType=unsigned int>
-class Sort : public ParallelObjectM
-{
-public:
+namespace ParallelM {
+/**
+ * The parallel sorting method is templated on the
+ * type of data which is to be sorted.  It may later
+ * be templated on other things if we are ambitious.
+ * This class knows about MPI, and knows how many
+ * processors there are.  It is responsible for
+ * transmitting data between the processors and
+ * ensuring that the data is properly sorted between
+ * all the processors.  We assume that a Sort
+ * is instantiated on all processors.
+ */
+template <typename KeyType, typename IdxType = unsigned int>
+class Sort : public ParallelObjectM {
+ public:
   /**
    * Constructor takes the number of processors,
    * the processor id, and a reference to a vector of data
@@ -57,9 +53,7 @@ public:
    * a Sort object takes O(nlogn) time,
    * where n is the length of the vector.
    */
-  Sort (const ParallelM::Communicator &comm,
-	std::vector<KeyType>& d);
-
+  Sort(const ParallelM::Communicator& comm, std::vector<KeyType>& d);
 
   /**
    * This is the only method which needs to be
@@ -76,8 +70,7 @@ public:
    */
   const std::vector<KeyType>& bin();
 
-private:
-
+ private:
   /**
    * The number of processors to work with.
    */
@@ -120,7 +113,7 @@ private:
    * Right now it constructs a BenSorter<KeyType> object.
    * In the future this could be a template parameter.
    */
-  void binsort ();
+  void binsort();
 
   /**
    * Communicates the bins from each processor to the
@@ -136,10 +129,9 @@ private:
    * call to std::sort
    */
   void sort_local_bin();
-
 };
-}
+}  // namespace ParallelM
 
 // } // namespace libMesh
 
-#endif // LIBMESH_PARALLEL_SORT_H
+#endif  // LIBMESH_PARALLEL_SORT_H

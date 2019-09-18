@@ -15,7 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 #ifndef LIBMESH_THREADS_ALLOCATORS_H
 #define LIBMESH_THREADS_ALLOCATORS_H
 
@@ -26,104 +25,87 @@
 
 // Threading building blocks includes
 #ifdef HAVE_TBB_API
-#  include "tbb/scalable_allocator.h"
+#include "tbb/scalable_allocator.h"
 #endif
 
 // C++ includes
-#include <memory> // for std::allocator
 #include <cstddef>
+#include <memory>  // for std::allocator
 
 // namespace libMesh
 // {
-
 
 /**
  * The Threads namespace is for wrapper functions
  * for common general multithreading algorithms and tasks.
  */
-namespace ThreadsM
-{
+namespace ThreadsM {
 #ifdef HAVE_TBB_API
 
- //-------------------------------------------------------------------
-  /**
-   * Scalable allocator to be used in multithreaded code chunks which
-   * allocate a lot of dynamic memory.  This allocator can be faster
-   * than the std::allocator when there are multiple threads.
-   */
-  template <typename T>
-  class scalable_allocator : public tbb::scalable_allocator<T>
-  {
-  public:
-    typedef T* pointer;
-    typedef const T* const_pointer;
-//     typedef T& reference;              // Intel 7.1 tries to instantiate an allocator<void>,
-//     typedef const T& const_reference;  // so we can't typedef a reference to void.
-    typedef T value_type;
-    typedef size_t size_type;
-    typedef ptrdiff_t difference_type;
+//-------------------------------------------------------------------
+/**
+ * Scalable allocator to be used in multithreaded code chunks which
+ * allocate a lot of dynamic memory.  This allocator can be faster
+ * than the std::allocator when there are multiple threads.
+ */
+template <typename T>
+class scalable_allocator : public tbb::scalable_allocator<T> {
+ public:
+  typedef T* pointer;
+  typedef const T* const_pointer;
+  //     typedef T& reference;              // Intel 7.1 tries to instantiate an allocator<void>,
+  //     typedef const T& const_reference;  // so we can't typedef a reference to void.
+  typedef T value_type;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
 
-    template<typename U>
-    struct rebind
-    {
-      typedef scalable_allocator<U> other;
-    };
-
-    scalable_allocator () :
-      tbb::scalable_allocator<T>() {}
-
-    scalable_allocator (const scalable_allocator &a) :
-      tbb::scalable_allocator<T>(a) {}
-
-    template<typename U>
-    scalable_allocator(const scalable_allocator<U> &a) :
-      tbb::scalable_allocator<T>(a) {}
+  template <typename U>
+  struct rebind {
+    typedef scalable_allocator<U> other;
   };
 
+  scalable_allocator() : tbb::scalable_allocator<T>() {}
 
+  scalable_allocator(const scalable_allocator& a) : tbb::scalable_allocator<T>(a) {}
 
-#else //LIBMESH_HAVE_TBB_API
+  template <typename U>
+  scalable_allocator(const scalable_allocator<U>& a) : tbb::scalable_allocator<T>(a) {}
+};
 
+#else  // LIBMESH_HAVE_TBB_API
 
+//-------------------------------------------------------------------
+/**
+ * Just use std::allocator when the Threading Building Blocks is absent.
+ */
+template <typename T>
+class scalable_allocator : public std::allocator<T> {
+ public:
+  typedef T* pointer;
+  typedef const T* const_pointer;
+  //     typedef T& reference;              // Intel 7.1 tries to instantiate an allocator<void>,
+  //     typedef const T& const_reference;  // so we can't typedef a reference to void.
+  typedef T value_type;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
 
- //-------------------------------------------------------------------
-  /**
-   * Just use std::allocator when the Threading Building Blocks is absent.
-   */
-  template <typename T>
-  class scalable_allocator : public std::allocator<T>
-  {
-  public:
-    typedef T* pointer;
-    typedef const T* const_pointer;
-//     typedef T& reference;              // Intel 7.1 tries to instantiate an allocator<void>,
-//     typedef const T& const_reference;  // so we can't typedef a reference to void.
-    typedef T value_type;
-    typedef size_t size_type;
-    typedef ptrdiff_t difference_type;
-
-    template<typename U>
-    struct rebind
-    {
-      typedef scalable_allocator<U> other;
-    };
-
-    scalable_allocator () :
-      std::allocator<T>() {}
-
-    scalable_allocator (const scalable_allocator &a) :
-      std::allocator<T>(a) {}
-
-    template<typename U>
-    scalable_allocator(const scalable_allocator<U> &a) :
-      std::allocator<T>(a) {}
+  template <typename U>
+  struct rebind {
+    typedef scalable_allocator<U> other;
   };
 
+  scalable_allocator() : std::allocator<T>() {}
 
-#endif // #ifdef LIBMESH_HAVE_TBB_API
+  scalable_allocator(const scalable_allocator& a) : std::allocator<T>(a) {}
 
-} // namespace Threads
+  template <typename U>
+  scalable_allocator(const scalable_allocator<U>& a) : std::allocator<T>(a) {}
+};
+
+#endif  // #ifdef LIBMESH_HAVE_TBB_API
+
+}  // namespace Threads
 
 // } // namespace libMesh
 
-#endif // LIBMESH_THREADS_ALLOCATORS_H
+#endif  // LIBMESH_THREADS_ALLOCATORS_H

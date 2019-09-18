@@ -15,7 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 #ifndef LIBMESH_PARALLEL_BIN_SORTER_H
 #define LIBMESH_PARALLEL_BIN_SORTER_H
 
@@ -29,65 +28,52 @@
 #include "parallel_objectM.h"
 
 // C++ includes
-#include <vector>
 #include <iterator>
+#include <vector>
 
 // namespace libMesh
 // {
 
 namespace ParallelM {
 
-template <typename KeyType, typename IdxType=unsigned int>
-  /**
-   * Perform a parallel sort using a bin-sort method.
-   */
-class BinSorter : public ParallelObjectM
-{
+template <typename KeyType, typename IdxType = unsigned int>
+/**
+ * Perform a parallel sort using a bin-sort method.
+ */
+class BinSorter : public ParallelObjectM {
   // the type of iterator we will be using is inferred from KeyType
   typedef typename std::vector<KeyType>::const_iterator IterType;
 
-public:
-
+ public:
   // Constructor
-  explicit
-  BinSorter (const ParallelM::Communicator &comm,
-	     const std::vector<KeyType>& d);
+  explicit BinSorter(const ParallelM::Communicator& comm, const std::vector<KeyType>& d);
 
   // The actual function which sorts the data into
   // nbins.  Currently based on the global min and
   // max which you must provide e.g. by using MPI.
-  void binsort (const IdxType nbins,
-		KeyType max,
-		KeyType min);
+  void binsort(const IdxType nbins, KeyType max, KeyType min);
 
   // Returns the size of bin b as an unsigned int.
-  IdxType sizeof_bin (const IdxType bin) const;
+  IdxType sizeof_bin(const IdxType bin) const;
 
-
-private:
-
+ private:
   const std::vector<KeyType>& data;
-  std::vector<IterType>       bin_iters;   // Iterators to the bin boundaries
-                                           //  in data
+  std::vector<IterType> bin_iters;  // Iterators to the bin boundaries
+                                    //  in data
 };
-
-
 
 //--------------------------------------------------------------------------
 template <typename KeyType, typename IdxType>
-inline
-IdxType BinSorter<KeyType,IdxType>::sizeof_bin (const IdxType bin) const
-{
-  assert ((bin+1)< bin_iters.size());
+inline IdxType BinSorter<KeyType, IdxType>::sizeof_bin(const IdxType bin) const {
+  assert((bin + 1) < bin_iters.size());
 
   // The size of the bin is defined by the distance between
   // its bounding iterators
-  return std::static_cast<IdxType>
-    (std::distance (bin_iters[bin], bin_iters[bin+1]));
+  return std::static_cast<IdxType>(std::distance(bin_iters[bin], bin_iters[bin + 1]));
 }
 
-}
+}  // namespace ParallelM
 
 // } // namespace libMesh
 
-#endif // LIBMESH_PARALLEL_BIN_SORTER_H
+#endif  // LIBMESH_PARALLEL_BIN_SORTER_H
