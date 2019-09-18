@@ -31,13 +31,14 @@
 // It instead relies on the PETSc version numbers detected during configure.  Note that if
 // LIBMESH_HAVE_PETSC is not defined, none of the LIBMESH_DETECTED_PETSC_VERSION_* variables will
 // be defined either.
-#define PETSC_VERSION_LESS_THAN(major,minor,subminor)			                                            \
-  ((LIBMESH_DETECTED_PETSC_VERSION_MAJOR < (major) ||						                    \
-    (LIBMESH_DETECTED_PETSC_VERSION_MAJOR == (major) && (LIBMESH_DETECTED_PETSC_VERSION_MINOR < (minor) ||	    \
-				  (LIBMESH_DETECTED_PETSC_VERSION_MINOR == (minor) &&		                    \
-				   LIBMESH_DETECTED_PETSC_VERSION_SUBMINOR < (subminor))))) ? 1 : 0)
-
-
+#define PETSC_VERSION_LESS_THAN(major, minor, subminor)         \
+  ((LIBMESH_DETECTED_PETSC_VERSION_MAJOR < (major) ||           \
+    (LIBMESH_DETECTED_PETSC_VERSION_MAJOR == (major) &&         \
+     (LIBMESH_DETECTED_PETSC_VERSION_MINOR < (minor) ||         \
+      (LIBMESH_DETECTED_PETSC_VERSION_MINOR == (minor) &&       \
+       LIBMESH_DETECTED_PETSC_VERSION_SUBMINOR < (subminor))))) \
+       ? 1                                                      \
+       : 0)
 
 // In case the configure test some day fails, we can fall back on including petscversion.h.
 // In order to support PETSc 2.3.1, however, we need to use a few hacks that allow us to
@@ -68,69 +69,67 @@
 // #endif
 
 // Make up for missing extern "C" in old PETSc versions
-#if !defined(LIBMESH_USE_COMPLEX_NUMBERS) && PETSC_VERSION_LESS_THAN(2,3,0)
-#  define EXTERN_C_FOR_PETSC_BEGIN extern "C" {
-#  define EXTERN_C_FOR_PETSC_END }
+#if !defined(LIBMESH_USE_COMPLEX_NUMBERS) && PETSC_VERSION_LESS_THAN(2, 3, 0)
+#define EXTERN_C_FOR_PETSC_BEGIN extern "C" {
+#define EXTERN_C_FOR_PETSC_END }
 #else
-#  define EXTERN_C_FOR_PETSC_BEGIN
-#  define EXTERN_C_FOR_PETSC_END
+#define EXTERN_C_FOR_PETSC_BEGIN
+#define EXTERN_C_FOR_PETSC_END
 #endif
-
 
 // Petsc include files
 EXTERN_C_FOR_PETSC_BEGIN
 #include <petsc.h>
 EXTERN_C_FOR_PETSC_END
 
-#if PETSC_VERSION_RELEASE && PETSC_VERSION_LESS_THAN(3,1,1)
+#if PETSC_VERSION_RELEASE && PETSC_VERSION_LESS_THAN(3, 1, 1)
 typedef PetscTruth PetscBool;
 #endif
 
-#if PETSC_VERSION_RELEASE && PETSC_VERSION_LESS_THAN(3,1,1)
-#  define LibMeshVecDestroy(x)         VecDestroy(*(x))
-#  define LibMeshVecScatterDestroy(x)  VecScatterDestroy(*(x))
-#  define LibMeshMatDestroy(x)         MatDestroy(*(x))
-#  define LibMeshISDestroy(x)          ISDestroy(*(x))
-#  define LibMeshKSPDestroy(x)         KSPDestroy(*(x))
-#  define LibMeshSNESDestroy(x)        SNESDestroy(*(x))
-#  define LibMeshPetscViewerDestroy(x) PetscViewerDestroy(*(x))
-#  define LibMeshPCDestroy(x)          PCDestroy(*(x))
+#if PETSC_VERSION_RELEASE && PETSC_VERSION_LESS_THAN(3, 1, 1)
+#define LibMeshVecDestroy(x) VecDestroy(*(x))
+#define LibMeshVecScatterDestroy(x) VecScatterDestroy(*(x))
+#define LibMeshMatDestroy(x) MatDestroy(*(x))
+#define LibMeshISDestroy(x) ISDestroy(*(x))
+#define LibMeshKSPDestroy(x) KSPDestroy(*(x))
+#define LibMeshSNESDestroy(x) SNESDestroy(*(x))
+#define LibMeshPetscViewerDestroy(x) PetscViewerDestroy(*(x))
+#define LibMeshPCDestroy(x) PCDestroy(*(x))
 #else
-#  define LibMeshVecDestroy(x)         VecDestroy(x)
-#  define LibMeshVecScatterDestroy(x)  VecScatterDestroy(x)
-#  define LibMeshMatDestroy(x)         MatDestroy(x)
-#  define LibMeshISDestroy(x)          ISDestroy(x)
-#  define LibMeshKSPDestroy(x)         KSPDestroy(x)
-#  define LibMeshSNESDestroy(x)        SNESDestroy(x)
-#  define LibMeshPetscViewerDestroy(x) PetscViewerDestroy(x)
-#  define LibMeshPCDestroy(x)          PCDestroy(x)
+#define LibMeshVecDestroy(x) VecDestroy(x)
+#define LibMeshVecScatterDestroy(x) VecScatterDestroy(x)
+#define LibMeshMatDestroy(x) MatDestroy(x)
+#define LibMeshISDestroy(x) ISDestroy(x)
+#define LibMeshKSPDestroy(x) KSPDestroy(x)
+#define LibMeshSNESDestroy(x) SNESDestroy(x)
+#define LibMeshPetscViewerDestroy(x) PetscViewerDestroy(x)
+#define LibMeshPCDestroy(x) PCDestroy(x)
 #endif
 
-#if PETSC_VERSION_LESS_THAN(2,2,1)
-// This version of PETSc always makes a copy. Current occurrences of PETSC_USE_POINTER are safe with the definition below.
-typedef enum { PETSC_COPY_VALUES, PETSC_OWN_POINTER, PETSC_USE_POINTER} PetscCopyMode;
-#  define ISCreateLibMesh(comm,n,idx,mode,is)                           \
-  ((mode) == PETSC_OWN_POINTER                                          \
-   ? (ISCreateGeneral((comm),(n),(idx),(is)) || PetscFree(idx) || (*(idx) = PETSC_NULL)) \
-   : (ISCreateGeneral((comm),(n),(idx),(is))))
-#elif PETSC_VERSION_RELEASE && PETSC_VERSION_LESS_THAN(3,1,1)
-typedef enum { PETSC_COPY_VALUES, PETSC_OWN_POINTER, PETSC_USE_POINTER} PetscCopyMode;
-#  define ISCreateLibMesh(comm,n,idx,mode,is)           \
-  ((mode) == PETSC_USE_POINTER                          \
-   ? ISCreateGeneralWithArray((comm),(n),(idx),(is))    \
-   : ((mode) == PETSC_OWN_POINTER                       \
-      ? ISCreateGeneralNC((comm),(n),(idx),(is))        \
-      : ISCreateGeneral((comm),(n),(idx),(is))))
+#if PETSC_VERSION_LESS_THAN(2, 2, 1)
+// This version of PETSc always makes a copy. Current occurrences of PETSC_USE_POINTER are safe with the
+// definition below.
+typedef enum { PETSC_COPY_VALUES, PETSC_OWN_POINTER, PETSC_USE_POINTER } PetscCopyMode;
+#define ISCreateLibMesh(comm, n, idx, mode, is)                                                 \
+  ((mode) == PETSC_OWN_POINTER                                                                  \
+       ? (ISCreateGeneral((comm), (n), (idx), (is)) || PetscFree(idx) || (*(idx) = PETSC_NULL)) \
+       : (ISCreateGeneral((comm), (n), (idx), (is))))
+#elif PETSC_VERSION_RELEASE && PETSC_VERSION_LESS_THAN(3, 1, 1)
+typedef enum { PETSC_COPY_VALUES, PETSC_OWN_POINTER, PETSC_USE_POINTER } PetscCopyMode;
+#define ISCreateLibMesh(comm, n, idx, mode, is)                                                             \
+  ((mode) == PETSC_USE_POINTER ? ISCreateGeneralWithArray((comm), (n), (idx), (is))                         \
+                               : ((mode) == PETSC_OWN_POINTER ? ISCreateGeneralNC((comm), (n), (idx), (is)) \
+                                                              : ISCreateGeneral((comm), (n), (idx), (is))))
 #else
-#  define ISCreateLibMesh(comm,n,idx,mode,is) ISCreateGeneral((comm),(n),(idx),(mode),(is))
+#define ISCreateLibMesh(comm, n, idx, mode, is) ISCreateGeneral((comm), (n), (idx), (mode), (is))
 #endif
 
 #define LIBMESH_CHKERRABORT(ierr) CHKERRABORT(this->comm().get(), ierr);
 
-#else // LIBMESH_HAVE_PETSC
+#else  // LIBMESH_HAVE_PETSC
 
-#define PETSC_VERSION_LESS_THAN(major,minor,subminor) 1
+#define PETSC_VERSION_LESS_THAN(major, minor, subminor) 1
 
-#endif // LIBMESH_HAVE_PETSC
+#endif  // LIBMESH_HAVE_PETSC
 
-#endif // LIBMESH_PETSC_MACRO_H
+#endif  // LIBMESH_PETSC_MACRO_H

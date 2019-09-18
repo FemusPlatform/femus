@@ -1,11 +1,7 @@
 // $Id: dense_vector.C 3391 2009-05-26 03:50:35Z benkirk $
 
-
-
 // Local Includes
 #include "dense_vectorM.h"
-
-
 
 //--------------------------------------------------------------
 // Explicit instantiations

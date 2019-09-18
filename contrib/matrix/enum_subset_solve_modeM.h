@@ -15,8 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-
 #ifndef LIBMESH_ENUM_SUBSET_SOLVE_MODE_H
 #define LIBMESH_ENUM_SUBSET_SOLVE_MODE_H
 
@@ -24,19 +22,22 @@
 // enum SubsetSolveMode definition
 // namespace libMeshEnums {
 
-  /**
-   * \enum libMeshEnums::SubsetSolveMode defines an \p enum for the
-   * question what happens to the dofs outside the given subset when a
-   * system is solved on a subset.
-   */
-  enum SubsetSolveModeM {
-    SUBSET_ZERO = 0, //!< Set dofs outside the subset to zero.
-    SUBSET_COPY_RHS, //!< Set dofs outside the subset to the value of the corresponding dofs of the right hand side.
-    SUBSET_DONT_TOUCH //!< Leaves dofs outside the subset unchanged.  This is fastest, but also most confusing because it abandons the property that the solution vector is (theoretically) independent of the initial guess.
-  };
+/**
+ * \enum libMeshEnums::SubsetSolveMode defines an \p enum for the
+ * question what happens to the dofs outside the given subset when a
+ * system is solved on a subset.
+ */
+enum SubsetSolveModeM {
+  SUBSET_ZERO = 0,   //!< Set dofs outside the subset to zero.
+  SUBSET_COPY_RHS,   //!< Set dofs outside the subset to the value of the corresponding dofs of the right hand
+                     //!< side.
+  SUBSET_DONT_TOUCH  //!< Leaves dofs outside the subset unchanged.  This is fastest, but also most confusing
+                     //!< because it abandons the property that the solution vector is (theoretically)
+                     //!< independent of the initial guess.
+};
 
 // }
 
 // using namespace libMeshEnums;
 
-#endif // LIBMESH_ENUM_SUBSET_SOLVE_MODE_H
+#endif  // LIBMESH_ENUM_SUBSET_SOLVE_MODE_H
