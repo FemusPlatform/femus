@@ -31,7 +31,7 @@ public:
   TURB_param _C_parameter;
 private:
   int _nTdim;			//<dimension
-  int _FF_idx[30];		//< field equation flag
+  int _FF_idx[40];		//< field equation flag
   // parameters--------------------------------------------------------------------------------------------
   // constant reference parameters (From paramater.in file _mgphys.get_par("Uref")) -----------------------
   const double _uref;	/**< "Uref" */
@@ -59,7 +59,7 @@ private:
   int _bc_el[NDOF_FEM];	     /**<  b.cond in matrix assemblying */
   // ------------------ integration -----------------------
   //  fields at gaussian points
-  double _ub_g[3][30];	/**< external field  (0-1-2 degree)*/
+  double _ub_g[3][40];	/**< external field  (0-1-2 degree)*/
   double _xxg[DIMENSION];							     /**< gauss pts*/
   double _InvJac2[DIMENSION * DIMENSION];
   double _ub_dxg[2 * DIMENSION];	///< external field derivative  (0-1-2 degree)

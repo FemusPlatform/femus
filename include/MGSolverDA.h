@@ -51,12 +51,12 @@ class  external_field
 public:
     ///@{ \name EXTERNAL FIELDS INFORMATION
     int n_eqs;                         ///< number of equations in the system
-    const int max_neqs=30;             ///< max number of equations (can be changed)
-    MGSolBase* mg_eqs[30];             ///< equation system pointer (mg_eqs)
-    int tab_eqs[30];                   ///< map external system and index
+    const int max_neqs=40;             ///< max number of equations (can be changed)
+    MGSolBase* mg_eqs[40];             ///< equation system pointer (mg_eqs)
+    int tab_eqs[40];                   ///< map external system and index
 
-    int indx_ub[30];                   ///< index of external equations(const/linear/quad):
-    double  ub[30*NDOF_FEM];           ///< element external field old solution= max_neqs*NDOF_FEM
+    int indx_ub[40];                   ///< index of external equations(const/linear/quad):
+    double  ub[40*NDOF_FEM];           ///< element external field old solution= max_neqs*NDOF_FEM
     ///@}
     ///@{ \name CONSTRUCTOR-DESTRUCTOR
     external_field() {} //< Empty Constructor

@@ -73,7 +73,7 @@ MGSolTURB::MGSolTURB (
     /// A) reading parameters  for field coupling (in _FF_idx[])
     _nTdim = DIMENSION;
 
-    for ( int k_index = 0; k_index < 30; k_index++ ) {
+    for ( int k_index = 0; k_index < 40; k_index++ ) {
         _FF_idx[k_index] = -1;
     }
 
@@ -174,7 +174,7 @@ void  MGSolTURB::GenMatRhs (
     std::vector<int> el_dof_indices ( el_mat_ncols );   // element dof vector
 
     // coupling  fields -------------------------------------------------------------------------------
-    for ( int k = 0; k < 30; k++ ) { // coupling  basic system fields
+    for ( int k = 0; k < 40; k++ ) { // coupling  basic system fields
         const int idx = _data_eq[2].tab_eqs[k];
         _FF_idx[k] = ( idx >= 0 ) ? _data_eq[2].indx_ub[idx] : -1;
     }

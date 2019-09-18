@@ -53,9 +53,9 @@
 #endif // -----------------------------------------
 #ifdef TTBK_EQUATIONS  // Turbulence -------------
 #include "MGSolverTTBK.h"
-#ifdef _TURBULENCE_
-#include "MGSolverTURB.h"
-#endif
+// #ifdef _TURBULENCE_
+// #include "MGSolverTURB.h"
+// #endif
 #endif
 #ifdef RANS_THERMAL_EQUATIONS  // Turbulence -------------
 #include "Nagano_LogT.h"
@@ -94,6 +94,12 @@
 #endif
 #ifdef Q_EQUATIONS
 #include "MGSolverQ.h"
+#endif
+#ifdef TAU_EQUATIONS
+#include "MGSolverTAU.h"
+#endif
+#ifdef THF_EQUATIONS
+#include "MGSolverTHF.h"
 #endif
 
 
@@ -215,21 +221,28 @@ void EquationsMap::FillEquationMap (
         if ( _myproblemP[iname] == IB_F ) {
             initImmersedBoundary ( EqMap );
             }
-          
-      if ( _myproblemP[iname]== TCOUP_F ) {
-          initCoupledTemperature ( EqMap );
-          } 
-          
-      if ( _myproblemP[iname] == A_F ) {
-          initAreaMono ( EqMap );
-          }
-          
-      if ( _myproblemP[iname] == Q_F ) {
-          initFlowrateMono ( EqMap );
-          }
+
+        if ( _myproblemP[iname]== TCOUP_F ) {
+            initCoupledTemperature ( EqMap );
+            }
+
+        if ( _myproblemP[iname] == A_F ) {
+            initAreaMono ( EqMap );
+            }
+
+        if ( _myproblemP[iname] == Q_F ) {
+            initFlowrateMono ( EqMap );
+            }
+        if ( _myproblemP[iname] == TAU_F  || _myproblemP[iname] == TAUXX_F || _myproblemP[iname] == TAUXY_F || _myproblemP[iname] == TAUYY_F ) {
+            initReynoldsStressTensor ( EqMap );
+            }
+        if ( _myproblemP[iname] == THF_F  || _myproblemP[iname] == THFX_F || _myproblemP[iname] == THFY_F || _myproblemP[iname] == THFZ_F ) {
+            initReynoldsHeatFlux ( EqMap );
+            }
+
 
         }
-        
+
 
     // This Function calls the MGSolDA::init_ext_fields()
     for ( auto eqn = EqMap._equations.begin(); eqn != EqMap._equations.end(); eqn++ ) {
@@ -328,9 +341,10 @@ void EquationsMap::initDisplacements ( EquationSystemsExtendedM & EqMap ) {
     _nvars[2] = 1;
     EqMap.AddSolver<MGSolDS> ( "SDSX", SDSX_F, _nvars[0], _nvars[1], _nvars[2], "dx" );
     EqMap.AddSolver<MGSolDS> ( "SDSY", SDSY_F, _nvars[0], _nvars[1], _nvars[2], "dy" );
-#if (DIMENSION==3)
+// #if (DIMENSION==3)
     EqMap.AddSolver<MGSolDS> ( "SDSZ", SDSZ_F, _nvars[0], _nvars[1], _nvars[2], "dz" );
-#endif
+
+// #endif
 #endif
 
     return;
@@ -454,8 +468,8 @@ void EquationsMap::initThermalTurbulence ( EquationSystemsExtendedM & EqMap ) {
     EqMap.AddSolver<MGSolTTBK> ( "TK2", KTT_F + 1, _nvars[0], _nvars[1], _nvars[2], "wh" );
 #endif
 
-#endif    
-    
+#endif
+
 #ifdef RANS_THERMAL_EQUATIONS
     _nvars[0] = 0;                   // Costant(0)
     _nvars[1] = 0;                   // Linear(1)
@@ -505,7 +519,7 @@ void EquationsMap::initThermalTurbulence ( EquationSystemsExtendedM & EqMap ) {
         }
 
 #endif    // end TBK model =============================================================      
-    
+
 #ifdef _TURBULENCE_
     _nvars[2] = 1;
     EqMap.AddSolver<MGSolTURB> ( "ALPHA_T", ALPHA_T, _nvars[0], _nvars[1], _nvars[2], "alphaT" );
@@ -662,7 +676,7 @@ void EquationsMap::initCoupledTemperature ( EquationSystemsExtendedM & EqMap ) {
 
 #endif
     return;
-}
+    }
 
 void EquationsMap::initImmersedBoundary ( EquationSystemsExtendedM & EqMap ) {
 #ifdef IMMERSED_BOUNDARY
@@ -672,28 +686,52 @@ void EquationsMap::initImmersedBoundary ( EquationSystemsExtendedM & EqMap ) {
     EqMap.AddSolver<MGSolIB> ( "IB1", IB_F, _nvars[0], _nvars[1], _nvars[2], "Col" );
     EqMap.AddSolver<MGSolIB> ( "IB2", IB_F + 1, _nvars[0], _nvars[1], _nvars[2], "VolFrac" );
 #endif
-  return;
-  }
-      
+    return;
+    }
+
 void EquationsMap::initAreaMono ( EquationSystemsExtendedM & EqMap ) {
 #ifdef A_EQUATIONS
-  _nvars[0] = 0;
-  _nvars[1] = 1;
-  _nvars[2] = 0; // only Quadratic[2] approx
-  EqMap.AddSolver<MGSolA> ( "A", A_F, _nvars[0], _nvars[1], _nvars[2], "A" );
+    _nvars[0] = 0;
+    _nvars[1] = 1;
+    _nvars[2] = 0; // only Quadratic[2] approx
+    EqMap.AddSolver<MGSolA> ( "A", A_F, _nvars[0], _nvars[1], _nvars[2], "A" );
 #endif
-  return;
-  }
+    return;
+    }
 
 void EquationsMap::initFlowrateMono ( EquationSystemsExtendedM & EqMap ) {
 #ifdef Q_EQUATIONS
-  _nvars[0] = 0;
-  _nvars[1] = 1;
-  _nvars[2] = 0; // only Quadratic[2] approx
-  EqMap.AddSolver<MGSolQ> ( "Q", Q_F, _nvars[0], _nvars[1], _nvars[2], "Q" );
+    _nvars[0] = 0;
+    _nvars[1] = 1;
+    _nvars[2] = 0; // only Quadratic[2] approx
+    EqMap.AddSolver<MGSolQ> ( "Q", Q_F, _nvars[0], _nvars[1], _nvars[2], "Q" );
 #endif
-  return;
-  }
+    return;
+    }
+void EquationsMap::initReynoldsStressTensor ( EquationSystemsExtendedM & EqMap ) {
+#ifdef TAU_EQUATIONS
+    _nvars[0] = 0;
+    _nvars[1] = 0;
+    _nvars[2] = 1;
+    EqMap.AddSolver<MGSolTAU> ( "TAUXX", TAUXX_F, _nvars[0], _nvars[1], _nvars[2], "tau_xx" );
+    EqMap.AddSolver<MGSolTAU> ( "TAUXY", TAUXY_F, _nvars[0], _nvars[1], _nvars[2], "tau_xy" );
+    EqMap.AddSolver<MGSolTAU> ( "TAUYY", TAUYY_F, _nvars[0], _nvars[1], _nvars[2], "tau_yy" );
+#endif
+    return;
+    }
+void EquationsMap::initReynoldsHeatFlux ( EquationSystemsExtendedM & EqMap ) {
+#ifdef THF_EQUATIONS
+    _nvars[0] = 0;
+    _nvars[1] = 0;
+    _nvars[2] = 1;
+    EqMap.AddSolver<MGSolTHF> ( "THFX", THFX_F, _nvars[0], _nvars[1], _nvars[2], "thf_x" );
+    EqMap.AddSolver<MGSolTHF> ( "THFY", THFY_F, _nvars[0], _nvars[1], _nvars[2], "thf_y" );
+#if (DIMENSION==3)
+    EqMap.AddSolver<MGSolTHF> ( "THFZ", THFZ_F, _nvars[0], _nvars[1], _nvars[2], "thf_z" );
+#endif
+#endif
+    return;
+    }
 
 
 
@@ -763,10 +801,20 @@ void EquationsMap::Fill_FIELD_map (
     _map_str2field["MG_ImmersedBoundary"]  = IB_F;    // [16]-> Color function for FSI
     _map_str2field["MG_CoupledTemperature"] = TCOUP_F;  // [29]-> Coupled Temperature optimality system
     _map_str2field["TCOUP_F"]   = TCOUP_F;    // [4] -> Temperature   (quadratic (2);T_EQUATIONS)
-  _map_str2field["MG_MonoArea"]  = A_F;    // [30]-> Area for monodimensional code
-  _map_str2field["MG_MonoFlowrate"]  = Q_F;    // [31]-> Flowrate for monodimensional code
-  return;
-  }
+    _map_str2field["MG_MonoArea"]  = A_F;    // [30]-> Area for monodimensional code
+    _map_str2field["MG_MonoFlowrate"]  = Q_F;    // [31]-> Flowrate for monodimensional code
+    _map_str2field["MG_ReynoldsStressTensor"] = TAU_F;// [32] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["TAU_F"] = TAU_F;        // [32] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["TAUXX_F"] = TAUXX_F;    // [32] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["TAUXY_F"] = TAUXY_F;    // [33] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["TAUYY_F"] = TAUYY_F;    // [34] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["THF_F"] = THF_F;        // [32] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["MG_ReynoldsHeatFlux"] = THF_F;// [32] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["THFX_F"] = THFX_F;    // [32] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["THFY_F"] = THFY_F;    // [33] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    _map_str2field["THFZ_F"] = THFZ_F;    // [34] -> Anisotropy (quadratic (2); TAU_EQUATIONS)
+    return;
+    }
 
 /// Solution sharing between activated equations
 void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
@@ -908,29 +956,41 @@ void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
             if ( EqnName == "MG_DA" ) {
                 ProbObj->ActivateScalar ( 2, DA_F, "DA", _QuadEq );
                 }
-                
+
             // COUPLED OPTIMAL CONTROL TEMPERATURE
             if ( EqnName == "MG_CoupledTemperature" ) {
 //                 if ( EqnLabel <=2 ) {
-                    int coupled = 1;
-                    ProbObj->ActivateVectField ( 2, TCOUP_F, "TCOUP0", _QuadEq, coupled );
+                int coupled = 1;
+                ProbObj->ActivateVectField ( 2, TCOUP_F, "TCOUP0", _QuadEq, coupled );
 //                     if ( coupled == 0 ) {
 //                         ProbObj->ActivateScalar ( 1, P_F, "NSAP", _LinearEq );
 //                         }
 //                     }
                 }
-          // DA
-          if ( EqnName == "MG_DA" ) {
-              ProbObj->ActivateScalar ( 2, DA_F, "DA", _QuadEq );
-              }
-              
-          // ONE-DIMENSIONAL CODE
-          if ( EqnName == "MG_MonoArea" ) {
-              ProbObj->ActivateScalar ( 1, A_F, "A", _LinearEq );
-              ProbObj->ActivateScalar ( 1, Q_F, "Q", _LinearEq );
-              }
-        
-          }
+            // DA
+            if ( EqnName == "MG_DA" ) {
+                ProbObj->ActivateScalar ( 2, DA_F, "DA", _QuadEq );
+                }
+
+            // ONE-DIMENSIONAL CODE
+            if ( EqnName == "MG_MonoArea" ) {
+                ProbObj->ActivateScalar ( 1, A_F, "A", _LinearEq );
+                ProbObj->ActivateScalar ( 1, Q_F, "Q", _LinearEq );
+                }
+            // REYNOLDS STRESS TENSOR
+            if ( EqnName == "MG_ReynoldsStressTensor" ) {
+                if ( EqnLabel <= 2 ) {
+                    int coupled = ( EqnLabel == 1 ) ? 1 : 0;
+                    ProbObj->ActivateVectField ( 2, TAU_F, "TAU", _QuadEq, coupled );
+                    }
+                }
+            if ( EqnName == "MG_ReynoldsHeatFlux" ) {
+                if ( EqnLabel <= 2 ) {
+                    int coupled = ( EqnLabel == 1 ) ? 1 : 0;
+                    ProbObj->ActivateVectField ( 2, THF_F, "THF", _QuadEq, coupled );
+                    }
+                }
+            }
 
         }
 
