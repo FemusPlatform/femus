@@ -1,7 +1,7 @@
 #include "Equations_conf.h"
 
 // ============================================
-#ifdef RANS_THERMAL_EQUATIONS // 3D-2D Energy equation
+#ifdef RANS_THERMAL_EQUATIONS  // 3D-2D Energy equation
 // ============================================
 
 // class local configuration -------
@@ -12,112 +12,103 @@
 #include <sstream>
 
 // local include -------------------
-#include "MGGeomEl.h"
 #include "EquationSystemsExtendedM.h"
-#include "MeshExtended.h"
-#include "MGSystem.h"
 #include "MGFE.h"
+#include "MGGeomEl.h"
+#include "MGSystem.h"
 #include "MGUtils.h"
-#include "numeric_vectorM.h"
-#include "dense_vectorM.h"
-#include "sparse_matrixM.h"
+#include "MeshExtended.h"
 #include "dense_matrixM.h"
+#include "dense_vectorM.h"
 #include "linear_solverM.h"
+#include "numeric_vectorM.h"
 #include "parallelM.h"
+#include "sparse_matrixM.h"
 
-MGSolNaganoLogT::MGSolNaganoLogT (
-    MGEquationsSystem & mg_equations_map_in, ///<  mg_equations_map_in pointer
-    const int nvars_in[],                   ///< KLQ number of variables
-    std::string eqname_in,                  ///< equation name
-    std::string varname_in                  ///< basic variable name
-) : MGSolRANS_thermal (
-        mg_equations_map_in, ///<  mg_equations_map_in pointer
-        nvars_in,                   ///< KLQ number of variables
-        eqname_in,                  ///< equation name
-        varname_in                  ///< basic variable name
-    )   // parameter  conductivity reference
+MGSolNaganoLogT::MGSolNaganoLogT(
+    MGEquationsSystem& mg_equations_map_in,  ///<  mg_equations_map_in pointer
+    const int nvars_in[],                    ///< KLQ number of variables
+    std::string eqname_in,                   ///< equation name
+    std::string varname_in                   ///< basic variable name
+    )
+    : MGSolRANS_thermal(
+          mg_equations_map_in,  ///<  mg_equations_map_in pointer
+          nvars_in,             ///< KLQ number of variables
+          eqname_in,            ///< equation name
+          varname_in            ///< basic variable name
+          )                     // parameter  conductivity reference
 {
-    //  =========================================================================
+  //  =========================================================================
 
-    _var_names[0] = varname_in;
+  _var_names[0] = varname_in;
 
-    if ( !varname_in.compare ( "lkh" ) ) {
-        _dir = 0;  // kappa
-        _refvalue[0] = _uref * _uref;
-    }
+  if (!varname_in.compare("lkh")) {
+    _dir = 0;  // kappa
+    _refvalue[0] = _uref * _uref;
+  }
 
-    if ( !varname_in.compare ( "lwh" ) ) {
-        _dir = 1;  // omega
-        _refvalue[0] = _uref * _uref * _uref / _lref;
-    }
+  if (!varname_in.compare("lwh")) {
+    _dir = 1;  // omega
+    _refvalue[0] = _uref * _uref * _uref / _lref;
+  }
 
-    _ExplicitNearWallDer[0] = _ExplicitNearWallDer[1] = 1;
+  _ExplicitNearWallDer[0] = _ExplicitNearWallDer[1] = 1;
 
-    double khlim = log ( _mgutils._TurbParameters->GetKHlim() );
-    double whlim = log ( _mgutils._TurbParameters->GetWHlim() );
+  double khlim = log(_mgutils._TurbParameters->GetKHlim());
+  double whlim = log(_mgutils._TurbParameters->GetWHlim());
 
-    _LowerLimit = ( _dir==0 ) ? khlim : whlim;
+  _LowerLimit = (_dir == 0) ? khlim : whlim;
 
-    return;
+  return;
 }
 
-void MGSolNaganoLogT::CalcAdvectiveAndDiffusiveTerms ( int i, int j, int el_ndof2, double f_upwind )
-{
+void MGSolNaganoLogT::CalcAdvectiveAndDiffusiveTerms(int i, int j, int el_ndof2, double f_upwind) {
+  _Adv = _Lap = _LapSupg = _LapMuTurb = _Cross[0] = _Cross[1] = _Log_Cross[0] = _Log_Cross[1] = 0.;
 
-    _Adv = _Lap = _LapSupg = _LapMuTurb = _Cross[0] = _Cross[1] = _Log_Cross[0] = _Log_Cross[1] = 0.;
+  for (int idim = 0; idim < _nTKdim; idim++) {  // LOOP OVER SPACE COMPONENTS
+    const double dphiidxg = _dphi_g[2][i + idim * el_ndof2];
+    const double dphijdxg = _dphi_g[2][j + idim * el_ndof2];
 
-    for ( int idim = 0; idim <  _nTKdim; idim++ ) { // LOOP OVER SPACE COMPONENTS
-        const double  dphiidxg = _dphi_g[2][i + idim * el_ndof2];
-        const double  dphijdxg = _dphi_g[2][j + idim * el_ndof2];
+    _Cross[1] += 2. * _alpha_eff * _KH_der[idim] * dphijdxg;
 
-        _Cross[1]   += 2.*_alpha_eff * _KH_der[idim] * dphijdxg;
+    _Log_Cross[0] += _alpha_eff * (_KH_der[idim]) * dphijdxg;
+    _Log_Cross[1] += _alpha_eff * (_WH_der[idim]) * dphijdxg;
 
-        _Log_Cross[0] += _alpha_eff * ( _KH_der[idim] ) * dphijdxg;
-        _Log_Cross[1] += _alpha_eff * ( _WH_der[idim] ) * dphijdxg;
+    _Adv += _Vel_g[idim] * dphijdxg;           // advection
+    _Lap += _alpha_eff * dphijdxg * dphiidxg;  // diffusion
 
-        _Adv          += _Vel_g[idim] * dphijdxg;         // advection
-        _Lap          += _alpha_eff * dphijdxg * dphiidxg;    // diffusion
-
-        if ( _UPWIND > 0.001 ) {
-            _Lap += _UPWIND * f_upwind * _Vel_g[idim] * _Vel_g[idim] * dphijdxg * dphiidxg;  // normal upwind
-        }
-
-        if ( _SUPG && _RANS_t_parameter._InterpolatedAlphaTurb == 1 && _WallElement != 1 ) {
-            _LapMuTurb   += dphijdxg * _AlphaTurbDxg[idim];
-        }
-
-        if ( _SUPG ) {
-            _LapSupg  += _alpha_eff * _ddphi_g[2][j * _nTKdim * _nTKdim + idim * _nTKdim + idim];
-        }
-
+    if (_UPWIND > 0.001) {
+      _Lap += _UPWIND * f_upwind * _Vel_g[idim] * _Vel_g[idim] * dphijdxg * dphiidxg;  // normal upwind
     }
 
-    return;
+    if (_SUPG && _RANS_t_parameter._InterpolatedAlphaTurb == 1 && _WallElement != 1) {
+      _LapMuTurb += dphijdxg * _AlphaTurbDxg[idim];
+    }
+
+    if (_SUPG) { _LapSupg += _alpha_eff * _ddphi_g[2][j * _nTKdim * _nTKdim + idim * _nTKdim + idim]; }
+  }
+
+  return;
 }
 
-
-
-void MGSolNaganoLogT::VelocityForSUPG (
-    double & mod2_vel,
-    double vel_g[],
-    double VEL[]
-)   // NUMERICAL STABILIZATION - UPWIND AND SUPG ===============================
+void MGSolNaganoLogT::VelocityForSUPG(
+    double& mod2_vel, double vel_g[],
+    double VEL[])  // NUMERICAL STABILIZATION - UPWIND AND SUPG ===============================
 {
+  for (int i = 0; i < DIMENSION; i++) {
+    VEL[i] = vel_g[i];
 
-    for ( int i = 0; i < DIMENSION; i++ ) {
-        VEL[i]  = vel_g[i];
-
-        if ( _ModifiedSupg ) {
-            VEL[i] -= _alpha_eff * ( ( 1 - _dir ) * _KH_der[i] + _dir * ( _WH_der[i] + 2.*_KH_der[i] ) );
-        }
-
-        mod2_vel += VEL[i] * VEL[i];
+    if (_ModifiedSupg) {
+      VEL[i] -= _alpha_eff * ((1 - _dir) * _KH_der[i] + _dir * (_WH_der[i] + 2. * _KH_der[i]));
     }
 
-    mod2_vel = sqrt ( mod2_vel );
+    mod2_vel += VEL[i] * VEL[i];
+  }
 
-    return;
-}//==========================================================================
+  mod2_vel = sqrt(mod2_vel);
+
+  return;
+}  //==========================================================================
 
 #endif
-// kate: indent-mode cstyle; indent-width 4; replace-tabs on; 
+// kate: indent-mode cstyle; indent-width 4; replace-tabs on;

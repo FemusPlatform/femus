@@ -17,36 +17,30 @@
 // #define PRINT_MED (1)
 // print the field and interfaces passed between problems with MED interface
 
-
 // ========= No user   ==================
 
-
-
 // ============== no user ==================
-#if PRINT_TIME==1
+#if PRINT_TIME == 1
 #include <ctime>
 #endif
-
-
 
 //*****************
 #ifdef LM_REFCOUNT
 
-//refcount needs init (and also debug mode, by the way)
-    #ifndef LM_INIT   
-      #define LM_INIT
-    #endif
+// refcount needs init (and also debug mode, by the way)
+#ifndef LM_INIT
+#define LM_INIT
+#endif
 
-//also,if refcount starts then LM_REAL must also start, otherwise
-                      //you get ambiguous references to Real
-    #ifndef LM_REAL 
-    #define LM_REAL
-    #endif
-    
-  #include "reference_counted_object.h"
+// also,if refcount starts then LM_REAL must also start, otherwise
+// you get ambiguous references to Real
+#ifndef LM_REAL
+#define LM_REAL
+#endif
+
+#include "reference_counted_object.h"
 
 #endif
- //******************
+//******************
 
-
-#endif // ------end file ---------------------
+#endif  // ------end file ---------------------

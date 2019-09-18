@@ -9,8 +9,6 @@
 #ifndef __mgsnsc_h__
 #define __mgsnsc_h__
 
-
-
 //  -----------------------------
 // NAVIER-STOKES ADVECTION term
 // --------------------------------
@@ -22,10 +20,10 @@
 #define STAB 1.
 //
 
-
 #endif
 
-#endif /* End DA Equation ---------------------------------------------------------------------------------*/
+#endif /* End DA Equation \
+          ---------------------------------------------------------------------------------*/
 //
 //
 /*===================================== FSI Equation ======================================================*/
@@ -36,7 +34,6 @@
 #ifndef __mgsnscfsi_h__
 #define __mgsnscfsi_h__
 
-
 //
 // MULTIGRID PARAMETERS
 // -------------------------------
@@ -46,25 +43,20 @@
 // Pressure solver type (projection method only)
 #define SOLVER_FSIP CGM  // options -> GMRESM CGM BICGSTABM
 
-
 // ------------------------
 //   SOLID MODEL
 // ----------------------------
 // geometric non-linearity
- #define NL_GEOM  (1)
+#define NL_GEOM (1)
 
 // define penalty  (only with FSIP_EQUATIONS==1)
-#define  PENALTY_FSI (100.)
+#define PENALTY_FSI (100.)
 
-
-
- // ---------------------------
+// ---------------------------
 //   SOLID-FLUID REGIONS
 // -----------------------------
 //  #define SOLID 0
 //  #define STIFF 10
-
-
 
 //  --------------------------
 // 3D NAVIER-STOKES ADVECTION term
@@ -77,7 +69,6 @@
 // A) Picard iteration  ADVPIC_SM=1, ADVNEW_SM=0
 // B) Newton iteration  ADVPIC_SM=1, ADVNEW_SM=1
 #define ADVNEW_FSI 0.
-
 
 // -----------  stabilization ------------------
 // --------------------------------------------
@@ -94,9 +85,7 @@
 // Navier-Stokes  c -> antisymmetric (0.5)
 // #define ADV_ASYM 0.
 
-
 // #define LQ (2)
-
 
 // Crank-Nicolson first order 0. 2nd order 0.5
 // #define CN_TIME 0.
@@ -108,18 +97,14 @@
 // #define MU_LOW (1.e-12)
 // #define MU_TOP (1.e+12)
 
-
 // #define SQCMU (0.3)
 // #define YPLUS (1.)
 // #define ALPHA0 (1.)
-
-
 
 // P solver ------------------------------------
 
 // #define SOLVERT VANKATM ---------------------
 // #define SOLVERFSIP GMRESM
-
 
 // temperature lows -----------------------------
 //  #define  CONST 1
@@ -133,9 +118,9 @@
 // // boundary pressure --------------------------
 // #define P_BD (1.)
 
-
 #endif
-#endif /* End FSI Equation --------------------------------------------------------------------------------*/
+#endif /* End FSI Equation \
+          --------------------------------------------------------------------------------*/
 //
 //
 /*===================================== DS Equation =======================================================*/
@@ -143,8 +128,8 @@
 #ifdef DS_EQUATIONS
 // =============================================
 
-
-#endif /* End DS Equation ---------------------------------------------------------------------------------*/
+#endif /* End DS Equation \
+          ---------------------------------------------------------------------------------*/
 //
 //
 //
@@ -153,8 +138,8 @@
 //
 #ifdef TTBK_EQUATIONS
 
-#ifndef  __mgsttbkconf_h__
-#define  __mgsttbkconf_h__
+#ifndef __mgsttbkconf_h__
+#define __mgsttbkconf_h__
 
 // turbulence  ==========================
 #define ADVE 1.
@@ -163,7 +148,7 @@
 #define SOLVERTBK GMRESM
 
 // temperature lows ================================
- #define  CONST 1
+#define CONST 1
 // #define densityT(x) (1.)
 // #define cipiT(x) (1.)
 // #define kappa(x)  (1.)
@@ -175,16 +160,16 @@
 
 #define UP_WIND_TTK (1.)
 
-//boundary
+// boundary
 // #define SQCMU (0.3)
 // #define KAPPA_VK (0.4)
 //
 /*-------------------------------------- For Nagano K-E ----------------------------------------------------*/
 //
-#if ((TTBK_EQUATIONS/2)==1)
+#if ((TTBK_EQUATIONS / 2) == 1)
 
-#define MAX_TAUT (1.e+8)                 /* Limit for maximum thermal characteristic time */
-#define MIN_TAUT (1.e-8)                 /* Limit for minimum thermal characteristic time */
+#define MAX_TAUT (1.e+8) /* Limit for maximum thermal characteristic time */
+#define MIN_TAUT (1.e-8) /* Limit for minimum thermal characteristic time */
 
 #define SIGMA_EH (0.714285714286)
 #define SIGMA_KH (0.714285714286)
@@ -196,17 +181,17 @@
 
 #define CMU (0.09)
 
-#endif /* End Nagano K-E -----------------------------------------------------------------------------------*/
+#endif /* End Nagano K-E \
+          -----------------------------------------------------------------------------------*/
 //
 /*-------------------------------------- The Thermal K-W turbulence models ---------------------------------*/
 //
-#if ((TTBK_EQUATIONS/2)==2)
+#if ((TTBK_EQUATIONS / 2) == 2)
 //
-#define MAX_TAUT (1.e+14)                /* Limit for maximum thermal characteristic time */
-#define MIN_TAUT (1.e-14)                /* Limit for minimum thermal characteristic time */
+#define MAX_TAUT (1.e+14) /* Limit for maximum thermal characteristic time */
+#define MIN_TAUT (1.e-14) /* Limit for minimum thermal characteristic time */
 #define CMU (0.09)
 #define BETA (0.09)
-
 
 /*-------------------------------------- For SST -----------------------------------------------------------*/
 // #define SST (1)
@@ -217,7 +202,8 @@
 #define CP1 (1.1)
 #define CD2 (0.8)
 #define CP2 (0.6)
-#endif /* End SST ------------------------------------------------------------------------------------------*/
+#endif /* End SST \
+          ------------------------------------------------------------------------------------------*/
 //
 /*-------------------------------------- For Nagano K-w ----------------------------------------------------*/
 //
@@ -229,9 +215,12 @@
 #define CP1 (0.025)
 #define CD2 (1.9)
 #define CP2 (0.9)
-#endif /* End Nagano K-W -----------------------------------------------------------------------------------*/
+#endif /* End Nagano K-W \
+          -----------------------------------------------------------------------------------*/
 
-#endif /* End K-W models -----------------------------------------------------------------------------------*/
+#endif /* End K-W models \
+          -----------------------------------------------------------------------------------*/
 
 #endif
-#endif /* End TTBK_EQUATIONS ------------------------------------------------------------------------------*/
+#endif /* End TTBK_EQUATIONS \
+          ------------------------------------------------------------------------------*/
