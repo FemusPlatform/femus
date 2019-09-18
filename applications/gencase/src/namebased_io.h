@@ -15,17 +15,14 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
-
 #ifndef LIBMESH_NAMEBASED_IO_H
 #define LIBMESH_NAMEBASED_IO_H
 
 // Local includes
-#include "libmesh/mesh_output.h"
 #include "libmesh/mesh_input.h"
+#include "libmesh/mesh_output.h"
 
-namespace libMesh
-{
+namespace libMesh {
 
 // Forward declarations
 class MeshBase;
@@ -41,34 +38,29 @@ class MeshBase;
  * \author Roy H. Stogner
  * \date 2015
  */
-class NameBasedIO : public MeshInput<MeshBase>,
-                    public MeshOutput<MeshBase>
-{
-public:
-
+class NameBasedIO : public MeshInput<MeshBase>, public MeshOutput<MeshBase> {
+ public:
   /**
    * Constructor.  Takes a reference to a constant mesh object.
    * This constructor will only allow us to write the mesh.
    */
-  explicit
-  NameBasedIO (const MeshBase&);
+  explicit NameBasedIO(const MeshBase&);
 
   /**
    * Constructor.  Takes a writeable reference to a mesh object.
    * This constructor is required to let us read in a mesh.
    */
-  explicit
-  NameBasedIO (MeshBase&);
+  explicit NameBasedIO(MeshBase&);
 
   /**
    * This method implements reading a mesh from a specified file.
    */
-  virtual void read (const std::string& mesh_file) libmesh_override;
+  virtual void read(const std::string& mesh_file) libmesh_override;
 
   /**
    * This method implements writing a mesh to a specified file.
    */
-  virtual void write (const std::string& mesh_file) libmesh_override;
+  virtual void write(const std::string& mesh_file) libmesh_override;
 
   /**
    * This method implements writing a mesh with data to a specified file
@@ -79,54 +71,35 @@ public:
    * output a proper restart file if the requested filename is an XDA
    * or XDR type.
    */
-  virtual void write_equation_systems (const std::string& filename,
-                                       const EquationSystems& es,
-                                       const std::set<std::string>* system_names=NULL) libmesh_override;
+  virtual void write_equation_systems(
+      const std::string& filename, const EquationSystems& es,
+      const std::set<std::string>* system_names = NULL) libmesh_override;
 
   /**
    * This method implements writing a mesh with nodal data to a
    * specified file where the nodal data and variable names are provided.
    */
-  virtual void write_nodal_data (const std::string&,
-                                 const std::vector<Number>&,
-                                 const std::vector<std::string>&) libmesh_override;
+  virtual void write_nodal_data(
+      const std::string&, const std::vector<Number>&, const std::vector<std::string>&) libmesh_override;
 
   // Certain mesh formats can support parallel I/O, including the
   // "new" Xdr format and the Nemesis format.
-  bool is_parallel_file_format (const std::string &filename);
+  bool is_parallel_file_format(const std::string& filename);
 };
-
-
 
 // ------------------------------------------------------------
 // NameBasedIO inline members
-inline
-NameBasedIO::NameBasedIO (const MeshBase& mesh) :
-  MeshOutput<MeshBase>    (mesh)
-{
+inline NameBasedIO::NameBasedIO(const MeshBase& mesh) : MeshOutput<MeshBase>(mesh) {}
+
+inline NameBasedIO::NameBasedIO(MeshBase& mesh) : MeshInput<MeshBase>(mesh), MeshOutput<MeshBase>(mesh) {}
+
+inline bool NameBasedIO::is_parallel_file_format(const std::string& name) {
+  return (
+      (name.rfind(".xda") < name.size()) || (name.rfind(".xdr") < name.size()) ||
+      (name.rfind(".nem") < name.size()) || (name.rfind(".n") < name.size()) ||
+      (name.rfind(".cp") < name.size()));
 }
 
-inline
-NameBasedIO::NameBasedIO (MeshBase& mesh) :
-  MeshInput<MeshBase> (mesh),
-  MeshOutput<MeshBase>(mesh)
-{
-}
+}  // namespace libMesh
 
-inline
-bool
-NameBasedIO::is_parallel_file_format (const std::string &name)
-{
-  return ((name.rfind(".xda") < name.size()) ||
-          (name.rfind(".xdr") < name.size()) ||
-          (name.rfind(".nem") < name.size()) ||
-          (name.rfind(".n") < name.size())   ||
-          (name.rfind(".cp") < name.size())
-          );
-}
-
-
-} // namespace libMesh
-
-
-#endif // LIBMESH_NAMEBASED_IO_H
+#endif  // LIBMESH_NAMEBASED_IO_H
