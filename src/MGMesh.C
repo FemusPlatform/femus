@@ -1,9 +1,7 @@
 // std lib
+#include <cmath>
 #include <iomanip>
 #include <sstream>
-/*#include <iomanip>
-#include <cmath>
-#include <sstream>*/
 
 // conf includes ------------------
 #include "MGFE_conf.h"       // FEM conf
