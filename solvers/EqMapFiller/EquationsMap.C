@@ -92,6 +92,11 @@
 #ifdef A_EQUATIONS
 #include "MGSolverA.h"
 #endif
+#ifdef B_EQUATIONS
+#include "MGSolverB.h"
+#include "MGSolverB_proj.h"  // NS ================
+#include "MGSolverB_coup.h"  // NS ================
+#endif
 #ifdef Q_EQUATIONS
 #include "MGSolverQ.h"
 #endif
@@ -182,6 +187,10 @@ void EquationsMap::FillEquationMap (
             initDisplacements ( EqMap );
             }
 
+        if ( _myproblemP[iname] == B_F  || _myproblemP[iname] == BX_F || _myproblemP[iname] == BY_F || _myproblemP[iname] == BZ_F ) {
+            initBoundary ( EqMap );
+            }   
+          
         if ( _myproblemP[iname] == T_F ) {
             initTemperature ( EqMap );
             }
@@ -341,15 +350,48 @@ void EquationsMap::initDisplacements ( EquationSystemsExtendedM & EqMap ) {
     _nvars[2] = 1;
     EqMap.AddSolver<MGSolDS> ( "SDSX", SDSX_F, _nvars[0], _nvars[1], _nvars[2], "dx" );
     EqMap.AddSolver<MGSolDS> ( "SDSY", SDSY_F, _nvars[0], _nvars[1], _nvars[2], "dy" );
-// #if (DIMENSION==3)
+ #if (DIMENSION==3)
     EqMap.AddSolver<MGSolDS> ( "SDSZ", SDSZ_F, _nvars[0], _nvars[1], _nvars[2], "dz" );
 
-// #endif
+ #endif
 #endif
 
     return;
     }
+   // ================================== B_EQUATIONS ================================
+void EquationsMap::initBoundary ( EquationSystemsExtendedM & EqMap ) {
 
+#ifdef B_EQUATIONS
+    const int NS_sol_type = _EquationsToAdd["MG_Boundary"] ;
+
+//     if ( NDOF_K > 0 ) {
+//         _nvars[0] = 1;    // konstant(0) approx
+//         _nvars[1] = 0;
+//         }
+
+    if ( NS_sol_type == 2 ) { // SEGREGATED SOLVER
+        _nvars[2] = 1; // quadratic(2) approx
+        _nvars[0] = 0;
+        _nvars[1] = 0; // linear(1) approx
+        EqMap.AddSolver<MGSolB_proj> ( "B0X", B_F,     _nvars[0], _nvars[1], _nvars[2], "bx" );
+        EqMap.AddSolver<MGSolB_proj> ( "B0Y", B_F + 1, _nvars[0], _nvars[1], _nvars[2], "by" );
+#if DIMENSION==3
+        EqMap.AddSolver<MGSolB_proj> ( "B0Z", B_F + 2, _nvars[0], _nvars[1], _nvars[2], "bz" );
+#endif
+        }
+
+    if ( NS_sol_type == 1 ) { // MONOLITHIC SOLVER
+        _nvars[2] = DIMENSION; // quadratic(2) approx
+        _nvars[0] = 0;
+        _nvars[1] = 1; // linear(1) approx
+        EqMap.AddSolver<MGSolB_coup> ( "B0", B_F, _nvars[0], _nvars[1], _nvars[2], "b" );
+        }
+
+#endif
+    return;
+    } 
+
+    
 // ================================== T_EQUATIONS ================================
 void EquationsMap::initTemperature ( EquationSystemsExtendedM & EqMap ) {
 #ifdef T_EQUATIONS
@@ -769,6 +811,11 @@ void EquationsMap::Fill_FIELD_map (
     _map_str2field["SDSX_F"] = SDSX_F;   // [9] -> Displacement (quadratic (2); DS_EQUATIONS)
     _map_str2field["SDSY_F"] = SDSY_F;  // [10]-> Displacement (quadratic (2); DS_EQUATIONS)
     _map_str2field["SDSZ_F"] = SDSZ_F;  // [11]-> Displacement (quadratic (2); DS_EQUATIONS)
+    _map_str2field["MG_Boundary"] = B_F;
+    _map_str2field["B_F"] = B_F;   // [9] -> Displacement (quadratic (2); DS_EQUATIONS)
+    _map_str2field["BX_F"] = BX_F;   // [9] -> Displacement (quadratic (2); DS_EQUATIONS)
+    _map_str2field["BY_F"] = BY_F;  // [10]-> Displacement (quadratic (2); DS_EQUATIONS)
+    _map_str2field["BZ_F"] = BZ_F;  // [11]-> Displacement (quadratic (2); DS_EQUATIONS)
     _map_str2field["MG_DA"] = DA_F;
     _map_str2field["DA_F"]   = DA_F;  // [12]-> DA solver (quadratic (2); DA_EQUATIONS)
     // adjoint
@@ -902,6 +949,27 @@ void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
                     ProbObj->ActivateVectField ( 2, SDS_F, "SDS", _QuadEq, coupled );
                     }
                 }
+            // BOUNDARY
+            if ( EqnName == "MG_Boundary" ) {
+                if ( EqnLabel <= 2 ) {
+                    int coupled = ( EqnLabel == 1 ) ? 1 : 0;
+                    ProbObj->ActivateVectField ( 2, B_F, "B0", _QuadEq, coupled );
+
+                     if ( coupled == 0 ) {
+                         if ( NDOF_K == 1 ) {
+                             ProbObj->ActivateScalar ( 0, P_F, "B2P", _PieceEq );
+                             }
+                         else {
+                             ProbObj->ActivateScalar ( 1, P_F, "B2P", _LinearEq );
+                             }
+                         }
+                    }
+
+//                  if ( EqnLabel == 3 ) {
+//                     ProbObj->ActivateScalar ( 2, B_F, "B0", _QuadEq );
+//                     }
+                }      
+                
 
             // TEMPERATURE
             if ( EqnName == "MG_Temperature" ) {

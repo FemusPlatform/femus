@@ -391,6 +391,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
   }
   return;
 }
+
 /// This function performes all the requested MGSystem time step routines for 
 /// under relaxed problems. It has no loop inside, only a feedback on the 
 /// reached convergence of the solution norm.
@@ -469,6 +470,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_underrelaxed(
   }
   return;
 }
+
 // ==========================================================================================
 /// This function performes all the MGSystem time step routines
 void MGEquationsSystem::eqnmap_timestep_loop(
@@ -481,8 +483,9 @@ void MGEquationsSystem::eqnmap_timestep_loop(
   for (iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
     MGSolBase *mgsol = eqn->second;
     if (_num_equations[eqn->first] >= eq_min &&
-        _num_equations[eqn->first] <= eq_max)
+        _num_equations[eqn->first] <= eq_max){
       mgsol->MGTimeStep(time, delta_t_step_in);
+    }
   }
   return;
 }

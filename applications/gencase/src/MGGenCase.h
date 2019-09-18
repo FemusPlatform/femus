@@ -252,8 +252,8 @@ void  print_Mat(int *Mat,int nrow,int ncln);
   /// Print mesh (hdf5 format)
   void print_mesh_h5(int* n_nodes_lev,const int * map_mesh_in,
 		     int n_nodes,double* nod_val,
-		     int* off_nd[],int n_elements,
-	        	int* n_elements_lev,int bd_n_elements,
+		     int* off_nd[],int n_elements, 
+	        	int* n_elements_lev,int bd_n_elements,int n_nodes_b,
 		int* off_el,int* v_inv_nd,int* v_inv_el,int** elem_sto,int** elem_conn,
 		std::vector<std::pair<int,int> > v_el,
 		int** bd_elem_sto,std::vector<std::pair<int,int> > v_elb,

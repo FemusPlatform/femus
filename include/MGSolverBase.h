@@ -32,46 +32,38 @@ class MGSolBase
 #endif
     {
 
-
     protected:
         //  ----------------------------------
-        ///@{ \name DATA POINTER
-//   MGUtils          & _mgutils;  ///<  utility class pointer
-// //   MGSystem         & _mgphys;   ///<  parameter class pointer
-//   MGFEMap          & _mgfemap;  ///<  FEM class pointer
-        MGMesh      &      _mgmesh;   ///<  mesh pointer
+        // DATA POINTER
+        MGMesh      &         _mgmesh;   ///<  mesh pointer
         MGEquationsSystem  &  _mgeqnmap; ///<  equation map  pointerz
-        ///<
-        ///@}
         //  ----------------------------------
-        ///@{ \name DATA PARALLEL
+        // DATA PARALLEL
         int _iproc;                  ///< processor
         LinearSolverM ** _solver;    ///< linear system solver type (each level)
         ///<
         ///@}
         //  ---------------------
-        ///@{ \name  MULTIGRID MATRICES AND RHS'S
+        //  MULTIGRID MATRICES AND RHS'S
         std::vector<SparseMatrixM *> A;     ///< Matrix A
         std::vector<NumericVectorM *> b;    ///< rhs b
         std::vector<NumericVectorM *> x;    ///< solution x
         std::vector<NumericVectorM *> res;  ///< residual
-        ///@}
+        
         // Multigrid operators ------------------------------
-        ///@{  \name MULTIGRID OPERATORS
+        //   MULTIGRID OPERATORS
         std::vector<SparseMMatrixM *> Rst;  ///< Restrictor
         std::vector<SparseMMatrixM *> Prl;  ///< Prolongation
-        ///<
-        ///@}
+        
     public:
 #ifdef    TWO_PHASE_LIB
         MGSolCC * _msolcc;
 #endif
         double  _control;
         MGUtils      &     _mgutils;  ///<  utility class pointer
-//   MGSystem         & _mgphys;   ///<  parameter class pointer
-        MGFEMap       &      _mgfemap;  ///<  FEM class pointer
+        MGFEMap      &     _mgfemap;  ///<  FEM class pointer
         //  --------------------------
-        ///@{  \name OLD VECTOR
+        // OLD VECTOR
 
         std::vector<NumericVectorM *> x_old;    ///< old solution x
         std::vector<NumericVectorM *> x_oold;   ///< oold solution x
@@ -86,43 +78,32 @@ class MGSolBase
 #ifdef HAVE_MED
         MEDCoupling::MEDCouplingFieldDouble * _ExtField;
 #endif
-        ///<
-        ///@}
         // ---------------------------------------
-        ///@{  \name  MATRIX and VECTOR
-        DenseMatrixM _KeM;
-        DenseVectorM _FeM;                  // local  matrix+rhs
-        ///<
-        ///@}
-        ///<
-        ///@}
+        // Local MATRIX and VECTOR
+        DenseMatrixM _KeM;                  // local  matrix
+        DenseVectorM _FeM;                  // local  rhs
         // ---------------------------------------
-        ///@{  \name  ATTRIBUTES
+        //   DOF MAP
+     
+        int ** _node_dof;         ///< dof map
         const int _NoLevels;        ///< level number
         int * _Dim;                 ///< dimension number of dofs per level
-        ///<
-        ///@}
         // ---------------------------------------
-        ///@{  \name LABELING
+        // LABELING
         const std::string _eqname;  ///< equation name
-        ///<
-        ///@}
+    
         // ---------------------------------------
-        ///@{  \name  VARIABLES
+        //    VARIABLES
         const int _n_vars;         ///< number of variables
         int _nvars[3];        ///< number of variables quadratic[2], linear[1] and piecewise [0]
         std::string * _var_names;  ///< variable names
         double * _refvalue;        ///reference values
-        ///<
-        ///@}
-        // ---------------------------------------
-///@{  \name BC AND DOF MAP
-        int * _bc[2];              ///< boundary conditions map (top level)
-        int ** _node_dof;         ///< dof map
-        
-///<
-        ///@}
 
+        // ---------------------------------------
+        // BC 
+        int *   _bc[2];              ///< boundary conditions map (top level)
+   
+        
         // ======================================
         ///@{ \name CONSTRUCTOR-DESTRUCTOR
 
@@ -148,7 +129,9 @@ class MGSolBase
 //-------------------------------------------------------------------------
         /// Distributing dof function
         virtual void init_dof (
-            const int Level                ///< \param[in]
+            const int Level,                ///< \param[in]
+            const int vb_0=0,               ///< type of mesh
+            const int n_vb=1                ///< number type of meshes
         ) = 0;
 //-------------------------------------------------------------------------
         ///  Initializing memory allocation

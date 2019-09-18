@@ -249,7 +249,8 @@ MGGenCase::GenCase()
     std::cout << " \n ==================================================  \n ";
     std::clock_t start_timeC = std::clock();
 #endif // -------------------------------------------------------
-
+    std::cout << "\n =============== Fine Mesh info ==================== \n";
+    bd_msht->print_info();
     std::cout << "\n =============== Fine Mesh info ==================== \n";
     msht->print_info();
 
@@ -305,7 +306,8 @@ MGGenCase::printMesh ( BoundaryMesh & bd_msht,	// boundary mesh
     int n_nodes = msht.n_nodes();	//from mesh
     int n_elements = msht.n_elem();	//from mesh
     int n_elements_b = bd_msht.n_elem() * _n_levels;	//from mesh
-
+    int n_nodes_b = bd_msht.n_nodes();	//from mesh
+    std::cout << " \n bnodes   " << n_nodes_b<<"\n";
     Mesh::const_element_iterator it_t00 = msh0.elements_begin();
     const Mesh::const_element_iterator end_t00 = msh0.elements_end();
     Mesh::const_element_iterator it_tr = msht.elements_begin();
@@ -894,7 +896,7 @@ MGGenCase::printMesh ( BoundaryMesh & bd_msht,	// boundary mesh
 
 //   print mesh
     print_mesh_h5 ( n_nodes_lev, map_mesh_in, n_nodes, nod_val,
-                    off_nd, n_elements, n_elements_lev, bd_n_elements,
+                    off_nd, n_elements, n_elements_lev, bd_n_elements,n_nodes_b, 
                     off_el, v_inv_nd, v_inv_el, elem_sto, elem_conn, v_el,
                     bd_elem_sto, v_elb, bd_off_el, g_indexL, v, nod_flag,
                     mat_flag );
@@ -1247,7 +1249,7 @@ MGGenCase::print_mesh_h5 ( int *n_nodes_lev,
                            double *nod_val,
                            int *off_nd[],
                            int n_elements, int *n_elements_lev,
-                           int bd_n_elements, int *off_el, int *v_inv_nd,
+                           int bd_n_elements, int bd_n_nodes,int *off_el, int *v_inv_nd,
                            int *v_inv_el, int **elem_sto, int **elem_conn,
                            std::vector < std::pair < int, int > >v_el,
                            int **bd_elem_sto, std::vector < std::pair < int,
@@ -1311,13 +1313,36 @@ MGGenCase::print_mesh_h5 ( int *n_nodes_lev,
                                  , H5P_DEFAULT, H5P_DEFAULT
 #endif
                                );
+    
+    
+    
+    
+    
+    
 // // ++++++++++++++++++++++++++++++++++++++++++++++++++
-// //  COORDINATES
+//        hid_t subgroup99_id = H5Gcreate ( file, "/NODES/NPOINT", H5P_DEFAULT
+// #if HDF5_VERSIONM != 1808
+//                                     , H5P_DEFAULT, H5P_DEFAULT
+// #endif
+//                                   );
+      // packaging data
+    int *n_point_b;
+    n_point_b=new int [2];   n_point_b[0]=n_nodes;  n_point_b[1]=bd_n_nodes;
+    // hdf5 print
+        dimsf[0] = 2;    dimsf[1] = 1;
+        name.str ( "" );
+        name << "/NODES/NPOINTS";
+        status = _mgutils.print_Ihdf5 ( file, name.str(), dimsf, n_point_b);
+    delete []n_point_b;
+//      H5Gclose ( subgroup99_id );
+    
+    // // Number of point 
     hid_t subgroup_id = H5Gcreate ( file, "/NODES/COORD", H5P_DEFAULT
 #if HDF5_VERSIONM != 1808
                                     , H5P_DEFAULT, H5P_DEFAULT
 #endif
                                   );
+      // packaging data
     // _xyz ---------------------------------------------------------------------
     // packaging data
     double *xcoord;

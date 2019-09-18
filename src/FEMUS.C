@@ -142,15 +142,8 @@ void FEMUS::init_fem ()
     }
 
     /// B) setting MGFEMap (fem)
-    _mg_femap=new MGFEMap();
-    MGFE * dfe_q;
-    dfe_q=new MGFE ( 2,ELTYPE );
-    dfe_q->init_qua();
-    MGFE * dfe_l;
-    dfe_l=new MGFE ( 1,ELTYPE );
-    dfe_l->init_lin();
-    MGFE * dfe_k;
-    dfe_k=new MGFE ( 0,ELTYPE );
+    _mg_femap=new MGFEMap();    MGFE * dfe_q;    dfe_q=new MGFE ( 2,ELTYPE );    dfe_q->init_qua();    MGFE * dfe_l;
+    dfe_l=new MGFE ( 1,ELTYPE );    dfe_l->init_lin();    MGFE * dfe_k;    dfe_k=new MGFE ( 0,ELTYPE );
     dfe_k->init_pie();
 
     _mg_femap->set_FE ( dfe_q ); // quadratic fem
@@ -169,15 +162,13 @@ FEMUS::~FEMUS (
 )  // ==========================================================================
 {
 // DO NOT TOUCH ================
-    delete _mg_time_loop;
-    delete _start;
+    delete _mg_time_loop;    delete _start;
 //==============================
 
 //   delete _mg_equations_map;
 //   delete _mg_utils;
 //   delete _mg_mesh;
-    delete _mg_geomel;
-    delete _mg_femap;
+    delete _mg_geomel;    delete _mg_femap;
 #ifdef HAVE_MED
 //   if(_med_mesh) _med_mesh->decrRef();        // med-mesh
 #endif
@@ -310,14 +301,11 @@ void FEMUS::set_mesh (
     }
 #endif
     _MgMeshInitialized = true;
-    return;
-}
+    
+//     int *data=new int[2];
+//     _mg_mesh->readf_hdf5_NPOINTS("/dsk5/dsk5/platform/PLAT_USERS/sandro/nek_0/RESU/mesh.msh1.h5","/NODES/NPOINTS",2,data);
+// std::cout<< data[1]  <<" =nnods_bd  \n";
 
-
-void FEMUS::setMeshTurbCase ( )
-{
-    set_mesh();
-    setMedMesh ();
     return;
 }
 // *******************************************************************
@@ -461,6 +449,7 @@ void FEMUS::dummy_step (
     _mg_time_loop->dummy_step ( t_in,t_step,print_step,time,dt ); ///< step time
     return;
 }
+
 //=============================================================================
 // This function solves one step for under relaxations problems (no loop inside)
 void FEMUS::solve_underrelaxed_onestep  (

@@ -101,6 +101,8 @@ public:
      * also the _x_ooold stored solution is printed, with _oold suffix (visible inside .h5 file)
      */
     int _NumRestartSol;
+    
+    
 // ========================================================================
 ///@{ \name  Constructor destructor memory allocation
 // ========================================================================
@@ -117,7 +119,9 @@ public:
     void clean();
     // Setting --------------------------------------------------
     virtual void init_dof ( ///< Setting dof
-        const int Level          // MG Level
+        const int Level,          // MG Level
+         const int vb_0=0,
+         const int n_vb=1
     );
     virtual void init (    ///< Setting Memmory alloc
         const int Level         // MG Level

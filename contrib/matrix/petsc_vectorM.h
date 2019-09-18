@@ -304,7 +304,7 @@ public:
 
 
     // ===========================
-    // PARALLELM OPERATIONS
+    // PARALLEL OPERATIONS
     // ===========================
      
     /// Creates a copy of the global vector in the local vector \p v_local.
