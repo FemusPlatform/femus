@@ -57,9 +57,9 @@
 // #endif
 #endif
 #ifdef RANS_THERMAL_EQUATIONS  // Turbulence -------------
+#include "Nagano_LogT.h"
 #include "Nagano_KET.h"
 #include "Nagano_KWT.h"
-#include "Nagano_LogT.h"
 #endif
 #ifdef SM_EQUATIONS  // Structural Mechanics ======
 #include "MGSolverDS.h"
