@@ -195,8 +195,36 @@ function intern_femus_show_compiling_functions {
   echo "     2D and 3D meshes"
 }
 
+function femus_gencase_compile_lib {
 
+  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
+  OLD_METHOD=$METHOD
+  export ACTUAL_DIR=$PWD
+  
+  export MAIN_GENCASE_DIR=$FEMUS_DIR/applications/gencase/
+  cd $MAIN_GENCASE_DIR
+  
+  # 2D gencase
+  echo "${red}Now compiling standard gencase application for 2D geometries"
+  echo "Standard gencase for quadrilateral elements${NC}"
+  cd gencase_2d
+  femus_application_configure opt 
+  make clean
+  make -j$np
+  
+  # 3D gencase
+  echo "${red}Now compiling standard gencase application for 3D geometries"
+  echo "Standard gencase for hexahedral elements${NC}"
+  cd ../gencase_3d
+  femus_application_configure opt 
+  make clean
+  make -j$np
 
+  cd $ACTUAL_DIR
+  export METHOD=$OLD_METHOD
+  femus_application_configure $METHOD
+  
+}
 
 function femus_turbulence_compile_lib_opt {
 
