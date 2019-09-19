@@ -341,6 +341,17 @@ void MGSolFSI::MGTimeStep(
       const int idx = _data_eq[2].tab_eqs[k];
       _FF_idx[k] = (idx >= 0) ? _data_eq[2].indx_ub[idx] : -1;
     }
+
+    // SET UP SDSX DISP FOR RESTART OF FSI
+    if (_Restart == 0) {  // sdsx last solution is stored into sdsx disp vector
+      for (int kdim = 0; kdim < _nNSdim; kdim++) {
+        const int num = _data_eq[2].tab_eqs[SDSX_F + kdim];
+        _data_eq[2].mg_eqs[num]->x_old[_NoLevels - 1]->localize(
+            *_data_eq[2].mg_eqs[num]->disp[_NoLevels - 1]);  // Moves the mesh (interpolation of mid-points)
+      }
+    }
+    _Restart = 1;
+
     for (int kdim = 0; kdim < _nNSdim; kdim++) {
       const int num = _data_eq[2].tab_eqs[SDSX_F + kdim];
       _mgmesh.Translate(
