@@ -101,6 +101,89 @@ function femus_application_configure () {
    return;
 }
 
+function femus_develop {
+  #Create sessi data format '<Tab Name/Title>    <Profile Name>   <Working Directory>'
+  # main session0
+  femus_application_configure dbg
+  kdevelop &
+  dir=$PWD
+  # session 1  dbg
+  session1=$(qdbus $KONSOLE_DBUS_SERVICE $KONSOLE_DBUS_WINDOW newSession)
+  command10="cd "$dir
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command10}"
+  command11="NumericPlatform"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command11}"
+  command12="femus_application_configure opt"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command12}"
+  # session e gencase + paraview 
+  session2=$(qdbus $KONSOLE_DBUS_SERVICE $KONSOLE_DBUS_WINDOW newSession)
+  command20="cd "$dir
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command20}"
+  command21="NumericPlatform"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command21}"
+  command22="femus_application_configure opt"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command22}"
+  command23="cd ../../../PLAT_CODES/femus/applications/gencase/"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command23}"
+  command24="paraview &"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command24}"
+}
+
+function femus_gencase_develop {
+  #Create sessi data format '<Tab Name/Title>    <Profile Name>   <Working Directory>'
+  # main session0
+  femus_application_configure dbg
+  dir=$PWD
+  command23="cd ../../../PLAT_CODES/femus/applications/gencase/"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command23}"
+  kdevelop gencase.kdev4 &
+  # session e gencase + paraview 
+  session2=$(qdbus $KONSOLE_DBUS_SERVICE $KONSOLE_DBUS_WINDOW newSession)
+  command20="cd "$dir
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command20}"
+  command21="NumericPlatform"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command21}"
+  command22="femus_application_configure opt"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command22}"
+  command23="cd ../../../PLAT_CODES/femus/applications/gencase/"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command23}"
+  command24=" platParaview  &"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command24}"
+}
+
+
+ function femus_workbench {
+   #Create sessi data format '<Tab Name/Title>    <Profile Name>   <Working Directory>'
+   # main session0
+   femus_application_configure opt
+   kate  DATA/Equations_conf.h  DATA/MGFE_conf.h DATA/param_files_msh1.in DATA/SimulationConfiguration.in  DATA/Equations.in  
+   kate  DATA/GeometrySettings.in DATA/NSproperties.in DATA/RANS_dynamical_properties.in  &
+   kate DATA/Tproperties.in Domain_conf.h    DATA/MaterialProperties.in    DATA/RANS_thermal_properties.in  DATA/Turbulence.in &
+   dir=$PWD
+   # session 1  dbg
+   session1=$(qdbus $KONSOLE_DBUS_SERVICE $KONSOLE_DBUS_WINDOW newSession)
+   command10="cd "$dir
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command10}"
+  command11="NumericPlatform"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command11}"
+  command12="femus_application_configure opt"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command12}"
+  command13="../../../PLAT_VISU/salome"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session1} runCommand "${command13}"
+   # session e gencase + paraview 
+  session2=$(qdbus $KONSOLE_DBUS_SERVICE $KONSOLE_DBUS_WINDOW newSession)
+  command20="cd "$dir
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command20}"
+  command21="NumericPlatform"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command21}"
+  command22="femus_application_configure opt"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command22}"
+  command23="cd ../../../PLAT_CODES/femus/applications/gencase/"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command23}"
+  command24="paraview &"
+  qdbus $KONSOLE_DBUS_SERVICE /Sessions/${session2} runCommand "${command24}"
+}
+
 # ==================================================================================
 #                      COMPILE LIBRARY AND STANDARD APPLICATIONS
 # ==================================================================================
@@ -114,36 +197,6 @@ function intern_femus_show_compiling_functions {
 
 
 
-function femus_gencase_compile_lib {
-
-  if [  "$1" == ""  ]; then np="1" ;    else    np=$1;    fi
-  OLD_METHOD=$METHOD
-  export ACTUAL_DIR=$PWD
-  
-  export MAIN_GENCASE_DIR=$FEMUS_DIR/applications/gencase/
-  cd $MAIN_GENCASE_DIR
-  
-  # 2D gencase
-  echo "${red}Now compiling standard gencase application for 2D geometries"
-  echo "Standard gencase for quadrilateral elements${NC}"
-  cd gencase_2d
-  femus_application_configure opt 
-  make clean
-  make -j$np
-  
-  # 3D gencase
-  echo "${red}Now compiling standard gencase application for 3D geometries"
-  echo "Standard gencase for hexahedral elements${NC}"
-  cd ../gencase_3d
-  femus_application_configure opt 
-  make clean
-  make -j$np
-
-  cd $ACTUAL_DIR
-  export METHOD=$OLD_METHOD
-  femus_application_configure $METHOD
-  
-}
 
 function femus_turbulence_compile_lib_opt {
 
