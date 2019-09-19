@@ -20,9 +20,9 @@
 #include "MGSolverTBK.h"
 #endif                 // -----------------------------------------
 #ifdef RANS_EQUATIONS  // Turbulence -------------
+#include "Nagano_Log.h"
 #include "Nagano_KE.h"
 #include "Nagano_KW.h"
-#include "Nagano_Log.h"
 #include "Wilcox.h"
 #include "WilcoxLog.h"
 #endif  // -----------------------------------------
