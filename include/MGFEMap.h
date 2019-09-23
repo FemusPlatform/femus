@@ -21,7 +21,7 @@ class MGFEMap {
   /// Constructor
   MGFEMap(){};
   /// Destructor
-  ~MGFEMap() { FE_map.clear(); }
+  ~MGFEMap();
   ///@}
 
   // ====================  functions ==========================================
