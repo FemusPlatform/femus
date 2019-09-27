@@ -419,9 +419,11 @@ void MGSolDA::GenBc() {  // ====================================================
   for (int ilev = 0; ilev < _NoLevels; ilev++) { ntot_elements += _mgmesh._NoElements[0][ilev]; }
 
   // Dof ----------------------------------------------------------------------
-  const int n_kb_dofs = ((_nvars[0] > 0) ? DIMENSION + 1 : 0);                    // surface dofs
-  const int n_pb_dofs = ((_nvars[1] > 0) ? _fe[1]->_NoShape[DIMENSION - 2] : 0);  // get_n_shapes(DIMENSION-2);
-  const int n_ub_dofs = ((_nvars[2] > 0) ? _fe[2]->_NoShape[DIMENSION - 2] : 0);  // get_n_shapes(DIMENSION-2);
+  const int n_kb_dofs = ((_nvars[0] > 0) ? DIMENSION + 1 : 0);  // surface dofs
+  const int n_pb_dofs =
+      ((_nvars[1] > 0) ? _fe[1]->_NoShape[DIMENSION - 2] : 0);  // get_n_shapes(DIMENSION-2);
+  const int n_ub_dofs =
+      ((_nvars[2] > 0) ? _fe[2]->_NoShape[DIMENSION - 2] : 0);  // get_n_shapes(DIMENSION-2);
   //   const int  n_dofs =  n_pb_dofs*_nvars[1] + n_ub_dofs*_nvars[2];
   const int n_k_dofs = ((_nvars[0] > 0) ? DIMENSION + 1 : 0);                    // volume dofs
   const int n_l_dofs = ((_nvars[1] > 0) ? _fe[1]->_NoShape[DIMENSION - 1] : 0);  // get_n_shapes(DIMENSION-1);
@@ -603,11 +605,12 @@ void MGSolDA::GenBc_loop(
           // sharing boundary nodes on the same element
           for (int ivar = 0; ivar < n_dofs; ivar++) {
             int kdof = _node_dof[_NoLevels - 1][k + ivar * offset];  // kdof <-k
-            int number = _bc[1][kdof] / 10000;  // number of old count for double pt in an element
-
-            if (abs(number) == 1) {
-              _bc[1][kdof] = _bc[1][kdof] -
-                             _bc[1][kdof] * 10000 / abs(_bc[1][kdof]);  // if the count is 1 set 0 if >1 leave
+            if (kdof > -1) {
+              int number = _bc[1][kdof] / 10000;  // number of old count for double pt in an element
+              if (abs(number) == 1) {
+                _bc[1][kdof] = _bc[1][kdof] - _bc[1][kdof] * 10000 /
+                                                  abs(_bc[1][kdof]);  // if the count is 1 set 0 if >1 leave
+              }
             }
           }
         }
