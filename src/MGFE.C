@@ -268,6 +268,9 @@ MGFE::MGFE(const int order_in  // Fem order input
 // ==============================
 /// This function destroys the MGFE class
 MGFE::~MGFE() {  // ==============================
+#if PRINT_INFO == 2
+  std::cout << "~MGFE() called" << std::endl;
+#endif
   clear();
 }
 

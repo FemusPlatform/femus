@@ -13,5 +13,7 @@ MGFEMap::~MGFEMap() {  // ==============================
     (itr->second)->~MGFE();
   }
   FE_map.clear();
+#if PRINT_INFO == 2
   std::cout << "~MGFEMap() called" << std::endl;
+#endif
 }

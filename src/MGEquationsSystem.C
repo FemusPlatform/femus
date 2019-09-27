@@ -38,15 +38,17 @@ MGEquationsSystem::MGEquationsSystem(
 // ====================================================
 MGEquationsSystem::~MGEquationsSystem() {
   clean();  // deallocates the map of equations
+#if PRINT_INFO == 2
+  std::cout << "~MGEquationsSystem() called" << std::endl;
+#endif
 }
 
 // ====================================================
 /// This function destroys all the MGSystems
 void MGEquationsSystem::clean() {
-  /*
-   for(MGEquationsSystem::iterator eqn=_equations.begin(); eqn !=
-   _equations.end(); eqn++) { delete eqn->second;
-   } */
+  for (MGEquationsSystem::iterator eqn = _equations.begin(); eqn != _equations.end(); eqn++) {
+    delete eqn->second;
+  }
   _equations.clear();
 }
 

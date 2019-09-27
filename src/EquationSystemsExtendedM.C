@@ -30,11 +30,11 @@ EquationSystemsExtendedM::EquationSystemsExtendedM(
 // ========================================================================
 EquationSystemsExtendedM::~EquationSystemsExtendedM() {
 #ifdef HAVE_MED
-  std::map<int, InterfaceFunctionM*>::iterator it = _interfaceFunMap.begin();
-  for (; it != _interfaceFunMap.end(); it++) {
-    if (it->second) { delete it->second; }
-    it->second = NULL;
-  }
+//   std::map<int, InterfaceFunctionM*>::iterator it = _interfaceFunMap.begin();
+//   for (; it != _interfaceFunMap.end(); it++) {
+//     if (it->second) { delete it->second; }
+//     it->second = NULL;
+//   }
 #endif
   return;
 }
