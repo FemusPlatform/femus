@@ -305,8 +305,6 @@ void EquationsMap::initFluidStructure(EquationSystemsExtendedM& EqMap) {
   EqMap.AddSolver<MGSolFSIP>("FSIP", FS_F + 3, _nvars[0], _nvars[1], _nvars[2], "p");
 #endif
 
-  // DISPLACEMENTS
-  initDisplacements(EqMap);
 #endif
 
   return;
