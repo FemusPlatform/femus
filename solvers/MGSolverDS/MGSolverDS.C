@@ -388,7 +388,7 @@ void MGSolDS::MoveMesh(const int Level                 // Level <-
     }      // 2bB end interpolation over the fine mesh ------------------------
   }
   disp[Level]->close();
-  delete sol_c;
+  delete[] sol_c;
   return;
 }
 

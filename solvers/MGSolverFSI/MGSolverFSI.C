@@ -56,13 +56,13 @@ MGSolFSI::MGSolFSI(
       //                                    A) Reading parameters                                          //
       //===================================================================================================//
       //
-      _offset(_mgmesh._NoNodes[-1]),          // mesh nodes (top level)
-      _dt(stod(_mgutils._sim_config["dt"])),  // parameter  dt
-      _uref(_mgutils._mat_prop["Uref"]),      // parameter  u reference
-      _lref(_mgutils._mat_prop["Lref"]),      // parameter  l reference
-      _rhof(_mgutils._mat_prop["rho0"]),      // parameter density
-      _muf(_mgutils._mat_prop["mu0"]),        // parameter viscosity
-      _rhos(_mgutils._mat_prop["rhos"]),      // parameter density
+      _offset(_mgmesh._NoNodes[_NoLevels - 1]),  // mesh nodes (top level)
+      _dt(stod(_mgutils._sim_config["dt"])),     // parameter  dt
+      _uref(_mgutils._mat_prop["Uref"]),         // parameter  u reference
+      _lref(_mgutils._mat_prop["Lref"]),         // parameter  l reference
+      _rhof(_mgutils._mat_prop["rho0"]),         // parameter density
+      _muf(_mgutils._mat_prop["mu0"]),           // parameter viscosity
+      _rhos(_mgutils._mat_prop["rhos"]),         // parameter density
       _ni(_mgutils._mat_prop["nis"]),
       _Emod(_mgutils._mat_prop["Es"]),
       _hs(_mgutils._mat_prop["hs"]) {
