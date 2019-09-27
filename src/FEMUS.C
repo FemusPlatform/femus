@@ -172,7 +172,7 @@ FEMUS::~FEMUS()  // ============================================================
   delete _start;
   //==============================
   //   delete _mg_utils;
-  //   delete _mg_mesh;
+  delete _mg_mesh;
   delete _mg_geomel;
   delete _mg_femap;
 #ifdef HAVE_MED

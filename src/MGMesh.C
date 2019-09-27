@@ -56,7 +56,9 @@ MGMesh::MGMesh(
 // ====================================================
 /// This function is the mesh destructor
 MGMesh::~MGMesh() {  // ================================================
-
+#if PRINT_INFO == 2
+  std::cout << "~MGMesh() called" << std::endl;
+#endif
   clear();
   delete[] _NoElements;
   delete[] _xyz;
@@ -76,6 +78,7 @@ MGMesh::~MGMesh() {  // ================================================
   delete[] _el_neighbor;
   delete[] _node_map;
   delete[] _NodeBDgroup;
+  delete[] _normalb;
 }
 
 // ====================================================
