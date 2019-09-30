@@ -1929,7 +1929,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::InterpolateFluidOnSolid(
 
 MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
     MEDCoupling::MEDCouplingFieldDouble* ReducedVelocityField,
-    const MEDCoupling::MEDCouplingUMesh* BoundaryMesh) {
+    const MEDCoupling::MEDCouplingUMesh* BoundaryMesh, const int axisym) {
   //   if (_ExtractedVelocity != NULL)
   //     _ExtractedVelocity->decrRef ();
   //   _ExtractedVelocity =
@@ -1961,6 +1961,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
 
   const int WeightDim = DIMENSION - 2;
   const int QPoints = _fe[2]->_NoGauss1[WeightDim];
+  const int ext_points = _fe[1]->_NoGauss1[WeightDim];
 
   double InvJac[DIMENSION * DIMENSION], phi_g[3], xyz_g[DIMENSION], CanPos[DIMENSION],
       vel_dx_g[DIMENSION * DIMENSION], vel_on_nodes[DIMENSION * NDOF_FEMB], Tensor[DIMENSION][DIMENSION],
@@ -1987,10 +1988,14 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
     std::vector<int> conn;
     double Coord[3 * DIMENSION];
     BoundaryMesh->getNodeIdsOfCell(cell, conn);
-    for (int dim = 0; dim < conn.size(); dim++) {
+    _CoordMatrix.clear();
+    for (int pt = 0; pt < conn.size(); pt++) {
       std::vector<double> coord;
-      BoundaryMesh->getCoordinatesOfNode(conn[dim], coord);
-      for (int j = 0; j < DIMENSION; j++) { Coord[dim + j * 3] = coord[j]; }
+      BoundaryMesh->getCoordinatesOfNode(conn[pt], coord);
+      for (int j = 0; j < DIMENSION; j++) {
+        Coord[pt + j * 3] = coord[j];
+        if (pt < ext_points) _CoordMatrix.push_back(coord[j]);
+      }
     }
 
     std::vector<int> FluidCellConn;
@@ -2051,15 +2056,23 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
       double JxW_g = det * _fe[2]->_weight1[WeightDim][qp] /**dt*/;  // weight
       _fe[2]->get_phi_gl_g(DIMENSION - 1, qp, phi_g);                // global coord _phi_g
       xyz_g[0] = xyz_g[1] = xyz_g[DIMENSION - 1] = 0.;
+
       for (int i = 0; i < DIMENSION; i++)
         for (int j = 0; j < QPoints; j++) xyz_g[i] += Coord[j + i * QPoints] * phi_g[j];
 
-      _XiEtaChi.clear();
-      XiEtaChiCalc(xyz_g);
-      CanPos[0] = _XiEtaChi[0];
-      CanPos[1] = _XiEtaChi[1];
-      CanPos[DIMENSION - 1] = _XiEtaChi[DIMENSION - 1];
-      _XiEtaChi.clear();
+      if (axisym == 1) {
+        JxW_g *= xyz_g[0];  // axisymmetric
+      }
+
+      //       _XiEtaChi.clear();
+      //       XiEtaChiCalc(xyz_g);
+      std::vector<double> XiEtaBound;
+      XiEtaCalc_1D(xyz_g, XiEtaBound);
+      CanPos[0] = XiEtaBound[0];
+      //       CanPos[0] = _XiEtaChi[0];
+      //       CanPos[1] = _XiEtaChi[1];
+      //       CanPos[DIMENSION - 1] = _XiEtaChi[DIMENSION - 1];
+      //       _XiEtaChi.clear();
       _fe[2]->get_dphi_gl_g(DIMENSION - 1, qp, InvJac, dphi);  // global coord deriv
       double p_on_g = 0.;
       for (int n = 0; n < NDOF_PB; n++) {  // number of dof
@@ -2093,7 +2106,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
       NewStress[0] += JxW_g * (Vel_tg_grad_norm_g * Normal[1] * _muf - _rhof * p_on_g * Normal[0]);
       NewStress[1] += JxW_g * (Vel_tg_grad_norm_g * Normal[0] * _muf + _rhof * p_on_g * Normal[1]);
       for (int i = 0; i < DIMENSION; i++) {
-        Stress[i] = ViscStress[i] - PressContrib[i];
+        Stress[i] += ViscStress[i] - PressContrib[i];
         StressVector[FluidCellConn[qp] * (DIMENSION) + i] = Stress[i];
         //         array->setIJ(FluidCellConn[qp],i,Stress[i]);
       }
