@@ -33,12 +33,12 @@ MGSolNS::MGSolNS(
       //                                    A) Reading parameters                                          //
       //===================================================================================================//
       //
-      _offset(_mgmesh._NoNodes[-1]),          // mesh nodes (top level)
-      _dt(stod(_mgutils._sim_config["dt"])),  // parameter  dt
-      _uref(_mgutils._mat_prop["Uref"]),      // parameter  u reference
-      _lref(_mgutils._mat_prop["Lref"]),      // parameter  l reference
-      _rhof(_mgutils._mat_prop["rho0"]),      // parameter density
-      _muf(_mgutils._mat_prop["mu0"]) {       // parameter viscosity
+      _offset(_mgmesh._NoNodes[_NoLevels - 1]),  // mesh nodes (top level)
+      _dt(stod(_mgutils._sim_config["dt"])),     // parameter  dt
+      _uref(_mgutils._mat_prop["Uref"]),         // parameter  u reference
+      _lref(_mgutils._mat_prop["Lref"]),         // parameter  l reference
+      _rhof(_mgutils._mat_prop["rho0"]),         // parameter density
+      _muf(_mgutils._mat_prop["mu0"]) {          // parameter viscosity
   //===================================================================================================//
   //                                    B) Setting class variables                                     //
   //===================================================================================================//
