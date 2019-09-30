@@ -654,7 +654,7 @@ void MGSolDA::GenBc_loop(
           // computation of k_el and face_id_el
           int k_el = _mgmesh._el_map[0][(iel + iel0) * ndof_femv + sur_toply[NDOF_FEMB - 1]];  // global node
           int k_el_dof = _node_dof[_NoLevels - 1][k_el];
-          int bc_el = (int)_bc[0][k_el_dof] % 100;
+          int bc_el = (k_el_dof > -1) ? (int)_bc[0][k_el_dof] % 100 : 0;
           int score_old = 1000;
           //
           //
@@ -678,8 +678,8 @@ void MGSolDA::GenBc_loop(
           const int k_face =
               _mgmesh._el_map[0][(iel + iel0) * ndof_femv + sur_toply[NDOF_FEMB - 1]];  // global node
           int k0dof = _node_dof[_NoLevels - 1][k_face];
-          int face_id_mid_face = face_id_vect[k0dof];
-          int bc_face = (int)_bc[0][k0dof];
+          int face_id_mid_face = (k0dof > -1) ? face_id_vect[k0dof] : 0;
+          int bc_face = (k0dof > -1) ? (int)_bc[0][k0dof] : 0;
           bc_face = bc_face % 100;
 
           for (int i = 0; i < NDOF_FEMB; i++) {                                         // node lement loop
