@@ -30,7 +30,6 @@ MGUtils::MGUtils() : _ProbID(-1) {
 }
 MGUtils::MGUtils(int a) : _ProbID(a) {
   _app_dir = getenv("APP_PATH");
-  _inout_dir = _app_dir + "/RESU/";
   _data_dir = _app_dir + "/DATA/";
   _contrib_dir = _femus_dir + "/contrib/";
 
@@ -39,7 +38,9 @@ MGUtils::MGUtils(int a) : _ProbID(a) {
   const std::string& name = loc_par_file.str();
   read(name);
   StandardBuild();
-
+  std::string inout = get_file("INPUT_DIR");  // name mesh
+  _inout_dir = _app_dir + "/" + inout;
+  std::cout << "INOUT DIR is " << _inout_dir << std::endl;
   std::string mesh_nameP = get_file("F_MESH_READ");  // name mesh
   std::ostringstream filenameP;
   int posP = mesh_nameP.find(".");  // position of "live" in str
