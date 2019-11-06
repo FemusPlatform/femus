@@ -415,7 +415,7 @@ void IbUtils::CalcInterface(MEDCoupling::MEDCouplingFieldDouble* ProjectedColor)
     std::vector<int> OrderedNodes;
     int LastNo = -1;
     for (int l = 0; l < NDOF_FEM; l++) {  // CALCULATION OF FLUID NODES: scalar product between distance
-                                          // node-interaface node and interface normal
+      // node-interaface node and interface normal
       double scal_prod = 0.;
       for (int dir = 0; dir < DIMENSION; dir++) {
         scal_prod += (Coordinates[l + dir * NDOF_FEM] - point1[dir]) * norm[dir];
@@ -1553,10 +1553,10 @@ void IbUtils::ComputeStress(MEDCoupling::MEDCouplingFieldDouble* ReducedVelocity
   // //     std::cout<< "cd:  "<< cd <<"  cl: "<<cl<<std::endl;
   // //
   //
-  //     double cd2 =     Stress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
-  //     double cl2 = -1.*Stress[1] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
-  //     std::cerr<<" ==================================== \n";
-  //     std::cerr<< "cd:  "<< cd2 <<"  cl: "<<cl2<<std::endl;
+  //       double cd2 =     Stress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
+  //       double cl2 = -1.*Stress[1] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
+  //       std::cout<<" ==================================== \n";
+  //       std::cout<< "cd:  "<< cd2 <<"  cl: "<<cl2<<std::endl;
   //
   //     std::cerr<<" ==================================== \n";
   if (_Proc == 0) std::cerr << "   " << Pa - Pb << "   " << GlobViscContrib << "   " << GlobPressContrib;
@@ -1929,25 +1929,23 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::InterpolateFluidOnSolid(
 
 MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
     MEDCoupling::MEDCouplingFieldDouble* ReducedVelocityField,
-    const MEDCoupling::MEDCouplingUMesh* BoundaryMesh, const int axisym) {
-  //   if (_ExtractedVelocity != NULL)
-  //     _ExtractedVelocity->decrRef ();
-  //   _ExtractedVelocity =
-  //     ReducedVelocityField->buildSubPart (_CellToExtract,
-  // 					_CellToExtract + _NumCellToExtract);
+    MEDCoupling::MEDCouplingFieldDouble* BoundaryField, const MEDCoupling::MEDCouplingUMesh* BoundaryMesh,
+    const int axisym) {
+  if (_ExtractedVelocity != NULL) _ExtractedVelocity->decrRef();
+  _ExtractedVelocity = ReducedVelocityField->buildSubPart(_CellToExtract, _CellToExtract + _NumCellToExtract);
 
-  // //     if ( _Proc==0 ) MEDCoupling::WriteField ( "Extracted_vel.med", _ExtractedVelocity, true );
-  int Nodes = ReducedVelocityField->getMesh()->getNumberOfNodes();
-  int Cells = ReducedVelocityField->getMesh()->getNumberOfCells();
+  //     if ( _Proc==0 ) MEDCoupling::WriteField ( "Extracted_vel.med", _ExtractedVelocity, true );
+  int Nodes = _ExtractedVelocity->getMesh()->getNumberOfNodes();
+  int Cells = _ExtractedVelocity->getMesh()->getNumberOfCells();
+  int Cells2 = _ReconInterface->getNumberOfCells();
   // velocity components are written as: for i-th node Vel[i*dimension] and Vel[i*dimension+1]
-  double* Vel = const_cast<double*>(ReducedVelocityField->getArray()->getPointer());
-  double Stress[DIMENSION];
-  std::vector<double> StressVector(Nodes * DIMENSION);
-  //   StressVector.resize(Nodes * DIMENSION);
+  double* Vel = const_cast<double*>(_ExtractedVelocity->getArray()->getPointer());
 
-  Stress[0] = 0.;
-  Stress[1] = 0.;
+  double Stress[DIMENSION], StressOnCell[DIMENSION];
+  Stress[0] = Stress[1] = 0.;
+  StressOnCell[0] = StressOnCell[1] = 0.;
   Stress[DIMENSION - 1] = 0.;
+  StressOnCell[DIMENSION - 1] = 0.;
 
   double GlobPressContrib = 0.;
   double GlobViscContrib = 0.;
@@ -1961,62 +1959,81 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
 
   const int WeightDim = DIMENSION - 2;
   const int QPoints = _fe[2]->_NoGauss1[WeightDim];
-  const int ext_points = _fe[1]->_NoGauss1[WeightDim];
 
   double InvJac[DIMENSION * DIMENSION], phi_g[3], xyz_g[DIMENSION], CanPos[DIMENSION],
-      vel_dx_g[DIMENSION * DIMENSION], vel_on_nodes[DIMENSION * NDOF_FEMB], Tensor[DIMENSION][DIMENSION],
-      Normal[DIMENSION], Tangent[DIMENSION], VelTg[NDOF_FEMB], Vel_tg_grad_norm_g;
+      vel_dx_g[DIMENSION * DIMENSION], vel_on_nodes[DIMENSION * NDOF_FEM], Tensor[DIMENSION][DIMENSION],
+      Normal[DIMENSION], Tangent[DIMENSION], VelTg[NDOF_FEM], Vel_tg_grad_norm_g;
 
-  double dphi[DIMENSION * NDOF_FEMB], Pressure[NDOF_PB];
+  double dphi[DIMENSION * NDOF_FEM], Pressure[NDOF_P];
   _FamilyType = 1;
   _SrcCoordInterpNodes = 4;
 
-  double NewStress[2];
-  NewStress[0] = NewStress[1] = 0.;
-
   MEDCoupling::MEDCouplingFieldDouble* StressFieldBD;
-  StressFieldBD = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
-  StressFieldBD->setMesh(BoundaryMesh);
+  StressFieldBD = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_CELLS);
+  StressFieldBD->setMesh(_ExtractedVelocity->getMesh());
   StressFieldBD->setName("Stress");
   StressFieldBD->setNature(MEDCoupling::IntensiveMaximum);
 
   MEDCoupling::DataArrayDouble* array = MEDCoupling::DataArrayDouble::New();
-  array->alloc(Nodes, DIMENSION);
+  array->alloc(Cells, DIMENSION);
   array->fillWithZero();
 
+  double NewStress[2];
+  NewStress[0] = NewStress[1] = 0.;
   for (int cell = 0; cell < Cells; cell++) {  // loop over extracted mesh cells
     std::vector<int> conn;
     double Coord[3 * DIMENSION];
-    BoundaryMesh->getNodeIdsOfCell(cell, conn);
-    _CoordMatrix.clear();
-    for (int pt = 0; pt < conn.size(); pt++) {
+    double MidPoint[DIMENSION];
+    MidPoint[0] = 0.;
+    MidPoint[1] = 0.;
+    MidPoint[DIMENSION - 1] = 0.;
+    _ReconInterface->getNodeIdsOfCell(cell, conn);
+    for (int dim = 0; dim < conn.size(); dim++) {
       std::vector<double> coord;
-      BoundaryMesh->getCoordinatesOfNode(conn[pt], coord);
+      _ReconInterface->getCoordinatesOfNode(conn[dim], coord);
       for (int j = 0; j < DIMENSION; j++) {
-        Coord[pt + j * 3] = coord[j];
-        if (pt < ext_points) _CoordMatrix.push_back(coord[j]);
+        Coord[dim + j * 3] = coord[j];
+        MidPoint[j] += coord[j];
+      }
+    }
+    Coord[2] = MidPoint[0] / 2;
+    Coord[5] = MidPoint[1] / 2;
+
+    std::vector<int> FluidCellConn;
+    _ExtractedMesh->getNodeIdsOfCell(cell, FluidCellConn);
+
+    _CoordMatrix.clear();
+    double FEM_coord[DIMENSION * NDOF_FEM];
+    for (int s = 0; s < NDOF_FEM; s++) {
+      std::vector<double> coord;
+      _ExtractedMesh->getCoordinatesOfNode(FluidCellConn[s], coord);
+      for (int d = 0; d < DIMENSION; d++) {
+        FEM_coord[s + d * NDOF_FEM] = coord[d];
+        if (s < _SrcCoordInterpNodes) _CoordMatrix.push_back(coord[d]);
       }
     }
 
-    std::vector<int> FluidCellConn;
-    //       _ExtractedVelocity->getMesh ()->getNodeIdsOfCell (cell, FluidCellConn);
-    BoundaryMesh->getNodeIdsOfCell(cell, FluidCellConn);
+    double xmin = (FEM_coord[0] < FEM_coord[2]) ? FEM_coord[0] : FEM_coord[2];
+    double ymin = (FEM_coord[0 + NDOF_FEM] < FEM_coord[2 + NDOF_FEM]) ? FEM_coord[0 + NDOF_FEM]
+                                                                      : FEM_coord[2 + NDOF_FEM];
+    double xmax = (FEM_coord[0] > FEM_coord[2]) ? FEM_coord[0] : FEM_coord[2];
+    double ymax = (FEM_coord[0 + NDOF_FEM] > FEM_coord[2 + NDOF_FEM]) ? FEM_coord[0 + NDOF_FEM]
+                                                                      : FEM_coord[2 + NDOF_FEM];
 
-    //     for (int dir = 0; dir < DIMENSION; dir++)   Normal[dir] = _InterfaceNormal[cell * DIMENSION + dir];
-    _fe[2]->normal_g(Coord, Normal);
+    for (int dir = 0; dir < DIMENSION; dir++) Normal[dir] = _InterfaceNormal[cell * DIMENSION + dir];
     Tangent[0] = Normal[1];
     Tangent[1] = -Normal[0];
 
-    for (int k = 0; k < NDOF_FEMB; k++)          // node
+    for (int k = 0; k < NDOF_FEM; k++)           // node
       for (int dir = 0; dir < DIMENSION; dir++)  // direction
-        vel_on_nodes[k + dir * NDOF_FEMB] = Vel[FluidCellConn[k] * (DIMENSION + 1) + dir];
+        vel_on_nodes[k + dir * NDOF_FEM] = Vel[FluidCellConn[k] * (DIMENSION + 1) + dir];
 
-    for (int n = 0; n < NDOF_PB; n++) Pressure[n] = Vel[FluidCellConn[n] * (DIMENSION + 1) + DIMENSION];
+    for (int n = 0; n < NDOF_P; n++) Pressure[n] = Vel[FluidCellConn[n] * (DIMENSION + 1) + DIMENSION];
 
-    for (int nod = 0; nod < NDOF_FEMB; nod++) {
+    for (int nod = 0; nod < NDOF_FEM; nod++) {
       double scal_prod = 0;
       for (int dim = 0; dim < DIMENSION; dim++) {
-        scal_prod += Tangent[dim] * vel_on_nodes[nod + dim * NDOF_FEMB];
+        scal_prod += Tangent[dim] * vel_on_nodes[nod + dim * NDOF_FEM];
       }
       int sign = (scal_prod > 0) ? 1 : -1;
       VelTg[nod] = sign * fabs(scal_prod);
@@ -2030,7 +2047,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
       CanPos[0] = _XiEtaChi[0];
       CanPos[1] = _XiEtaChi[1];
       Pa = 0.;
-      for (int n = 0; n < NDOF_PB; n++) {  // number of dof
+      for (int n = 0; n < NDOF_P; n++) {  // number of dof
         double lin_phi = LinPhi(n, CanPos);
         Pa += Pressure[n] * lin_phi;
       }
@@ -2043,20 +2060,17 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
       CanPos[0] = _XiEtaChi[0];
       CanPos[1] = _XiEtaChi[1];
       Pb = 0.;
-      for (int n = 0; n < NDOF_PB; n++) {  // number of dof
+      for (int n = 0; n < NDOF_P; n++) {  // number of dof
         double lin_phi = LinPhi(n, CanPos);
         Pb += Pressure[n] * lin_phi;
       }
     }
-
-    for (int i = 0; i < DIMENSION; i++) Stress[i] = 0;
 
     for (int qp = 0; qp < QPoints; qp++) {
       double det = _fe[2]->JacSur(qp, Coord, InvJac);                // local coord _phi_g and jac
       double JxW_g = det * _fe[2]->_weight1[WeightDim][qp] /**dt*/;  // weight
       _fe[2]->get_phi_gl_g(DIMENSION - 1, qp, phi_g);                // global coord _phi_g
       xyz_g[0] = xyz_g[1] = xyz_g[DIMENSION - 1] = 0.;
-
       for (int i = 0; i < DIMENSION; i++)
         for (int j = 0; j < QPoints; j++) xyz_g[i] += Coord[j + i * QPoints] * phi_g[j];
 
@@ -2064,32 +2078,30 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
         JxW_g *= xyz_g[0];  // axisymmetric
       }
 
-      //       _XiEtaChi.clear();
-      //       XiEtaChiCalc(xyz_g);
-      std::vector<double> XiEtaBound;
-      XiEtaCalc_1D(xyz_g, XiEtaBound);
-      CanPos[0] = XiEtaBound[0];
-      //       CanPos[0] = _XiEtaChi[0];
-      //       CanPos[1] = _XiEtaChi[1];
-      //       CanPos[DIMENSION - 1] = _XiEtaChi[DIMENSION - 1];
-      //       _XiEtaChi.clear();
-      _fe[2]->get_dphi_gl_g(DIMENSION - 1, qp, InvJac, dphi);  // global coord deriv
+      _XiEtaChi.clear();
+      XiEtaChiCalc(xyz_g);
+      CanPos[0] = _XiEtaChi[0];
+      CanPos[1] = _XiEtaChi[1];
+      CanPos[DIMENSION - 1] = _XiEtaChi[DIMENSION - 1];
+      _XiEtaChi.clear();
+      _fe[2]->get_dphi_on_given_node(DIMENSION, FEM_coord, CanPos, dphi);
+
       double p_on_g = 0.;
-      for (int n = 0; n < NDOF_PB; n++) {  // number of dof
+      for (int n = 0; n < NDOF_P; n++) {  // number of dof
         double lin_phi = LinPhi(n, CanPos);
         p_on_g += Pressure[n] * lin_phi;
       }
       // interpolation of velocity derivatives
       for (int l = 0; l < DIMENSION * DIMENSION; l++) vel_dx_g[l] = 0.;
-      for (int i = 0; i < DIMENSION; i++)      // velocity component  ->  [ux uy vx vy]
-        for (int j = 0; j < DIMENSION; j++)    // direction of derivative
-          for (int n = 0; n < NDOF_FEMB; n++)  // number of dof
-            vel_dx_g[i * DIMENSION + j] += vel_on_nodes[n + i * NDOF_FEMB] * dphi[n + j * NDOF_FEMB];
+      for (int i = 0; i < DIMENSION; i++)     // velocity component  ->  [ux uy vx vy]
+        for (int j = 0; j < DIMENSION; j++)   // direction of derivative
+          for (int n = 0; n < NDOF_FEM; n++)  // number of dof
+            vel_dx_g[i * DIMENSION + j] += vel_on_nodes[n + i * NDOF_FEM] * dphi[n + j * NDOF_FEM];
 
       Vel_tg_grad_norm_g = 0;
-      for (int j = 0; j < DIMENSION; j++)    // direction of derivative
-        for (int n = 0; n < NDOF_FEMB; n++)  // number of dof
-          Vel_tg_grad_norm_g += VelTg[n] * dphi[n + j * NDOF_FEMB] * Normal[j];
+      for (int j = 0; j < DIMENSION; j++)   // direction of derivative
+        for (int n = 0; n < NDOF_FEM; n++)  // number of dof
+          Vel_tg_grad_norm_g += VelTg[n] * dphi[n + j * NDOF_FEM] * Normal[j];
 
       for (int i = 0; i < DIMENSION; i++)
         for (int j = 0; j < DIMENSION; j++)
@@ -2105,30 +2117,34 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
 
       NewStress[0] += JxW_g * (Vel_tg_grad_norm_g * Normal[1] * _muf - _rhof * p_on_g * Normal[0]);
       NewStress[1] += JxW_g * (Vel_tg_grad_norm_g * Normal[0] * _muf + _rhof * p_on_g * Normal[1]);
+
       for (int i = 0; i < DIMENSION; i++) {
         Stress[i] += ViscStress[i] - PressContrib[i];
-        StressVector[FluidCellConn[qp] * (DIMENSION) + i] = Stress[i];
-        //         array->setIJ(FluidCellConn[qp],i,Stress[i]);
+        StressOnCell[i] += Stress[i];
       }
+
       GlobViscContrib += ViscStress[0];
       GlobPressContrib += PressContrib[0];
 
     }  // END LOOP OVER GAUSS NODES
-    for (int qp = 0; qp < QPoints; qp++)
-      for (int i = 0; i < DIMENSION; i++) array->setIJ(FluidCellConn[qp], i, Stress[i]);
+
+    for (int i = 0; i < DIMENSION; i++) {
+      array->setIJ(cell, i, Stress[i] /*StressOnCell[i]*/);
+      StressOnCell[i] = 0;
+    }
 
   }  // END LOOP OVER CELLS
 
   //     double cd =     NewStress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
   //     double cl = -1.*NewStress[1] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
   // //     std::cout<<" ==================================== \n";
-  // //     std::cout<< "cd:  "<< cd <<"  cl: "<<cl<<std::endl;
+  std::cout << "Stress[0]:  " << Stress[0] << "  Stress[1]: " << Stress[1] << std::endl;
   // //
   //
-  //     double cd2 =     Stress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
-  //     double cl2 = -1.*Stress[1] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
-  //     std::cerr<<" ==================================== \n";
-  //     std::cerr<< "cd:  "<< cd2 <<"  cl: "<<cl2<<std::endl;
+  //       double cd2 =     Stress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
+  //       double cl2 = -1.*Stress[1] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
+  //       std::cout<<" ==================================== \n";
+  //       std::cout<< "cd:  "<< cd2 <<"  cl: "<<cl2<<std::endl;
   //
   //     std::cerr<<" ==================================== \n";
   if (_Proc == 0) std::cerr << "   " << Pa - Pb << "   " << GlobViscContrib << "   " << GlobPressContrib;
@@ -2139,9 +2155,31 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
   array->decrRef();                                     // delete array
   StressFieldBD->checkConsistencyLight();               // check f
 
-  StressVector.clear();
+  MEDCoupling::MEDCouplingFieldDouble* f = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
 
-  return StressFieldBD;
+  MEDCoupling::MCAuto<MEDCoupling::MEDCouplingMesh> ExtractedMesh = StressFieldBD->getMesh();
+  MEDCoupling::MCAuto<MEDCoupling::MEDCouplingUMesh> ExtractedUMesh(
+      MEDCoupling::DynamicCast<MEDCoupling::MEDCouplingMesh, MEDCoupling::MEDCouplingUMesh>(ExtractedMesh));
+
+  MEDCoupling::MEDCouplingRemapper Remap;
+  Remap.setPrecision(1e-11);
+  Remap.setIntersectionType(INTERP_KERNEL::Triangulation);  // <- more accurate than triangulate
+  Remap.prepare(ExtractedUMesh, ExtractedUMesh, "P0P1");
+
+  MEDCoupling::MEDCouplingFieldDouble* StressFieldBDNodes;
+  StressFieldBDNodes = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
+  StressFieldBDNodes = Remap.transferField(StressFieldBD, 0.);
+
+  std::cout << "\033[1;21m IBMOVER: FILL PARAMETERS\033[0m\n";
+  FillParameters(ExtractedUMesh, BoundaryMesh, Volume, 1.e-5);
+  f = InterpolatedField(StressFieldBDNodes, BoundaryField);
+
+  //     StressFieldBD->decrRef();
+  //     StressFieldBDNodes->decrRef();
+  //     ExtractedMesh->decrRef();
+  //     ExtractedUMesh->decrRef();
+
+  return f;
 }
 
 MEDCoupling::MEDCouplingFieldDouble* IbUtils::GetFluidCellColor() { return _FluidCellColor->deepCopy(); }
