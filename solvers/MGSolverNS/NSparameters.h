@@ -11,7 +11,7 @@
 #include "UserNS.h"
 
 class MGUtils;
-enum bound_cond;
+enum bound_cond_NS;
 
 /*! \defgroup NS_param   Class Table:  Navier-Stokes equation parameters (NS_param) */
 /// \ingroup NS_param
@@ -30,9 +30,9 @@ class NS_param {
   int _WallFunctionApproach;
   int _InterpolatedMuTurb;
   std::vector<int> _BoundaryGroupsIDs;  /// Vector containing boundary group ids
-  std::map<int, bound_cond>
+  std::map<int, bound_cond_NS>
       _map_NSgroup;  /// Map containing boundary group ids and their relative boundary condition
-  std::map<std::string, bound_cond>
+  std::map<std::string, bound_cond_NS>
       _BoundMap;  /// Map that associates a bound_condT condition to the relative string
   std::map<std::string, std::string> _FileMap;  /// String map containing Tproperties.in parameters
   int _Les;                                     /// Flag for turbulence with LES

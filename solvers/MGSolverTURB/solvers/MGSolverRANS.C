@@ -190,7 +190,7 @@ void MGSolRANS::GenMatRhs(
     for (int deg = 0; deg < 3; deg++) {  // OLD SOLUTION
       for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
         _data_eq[deg].mg_eqs[eq]->get_el_sol(
-            0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+            0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
             _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
       }
     }
@@ -198,9 +198,9 @@ void MGSolRANS::GenMatRhs(
     get_el_dof_bc(Level, iel + ndof_lev, el_ndof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd);
 
     _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_sol(
-        0, 1, el_ndof[2], el_conn, offset, 0, _x_1ts);
-    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_oldsol(
-        0, 1, el_ndof[2], el_conn, offset, 0, _x_2ts);
+        0, 0, 1, el_ndof[2], el_conn, offset, 0, _x_1ts);
+    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_sol(
+        1, 0, 1, el_ndof[2], el_conn, offset, 0, _x_2ts);
 
     // ----------------------------------------------------------------------------------
     /// 2. Boundary integration  (bc)
@@ -401,7 +401,6 @@ void MGSolRANS::SetUpFlags() {
     // VOLUME INTEGRATION
     if (_WallElement == 1) {
       for (int i = 0; i < el_ndof2; i++) { _bc_vol[i] = 8; }
-
       set_el_dof_bc(_NoLevels, iel + ndof_lev, el_ndof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd);
     }
 
@@ -429,8 +428,8 @@ void MGSolRANS::MGTimeStep(
     // SET UP XOOLD AND XNONL VECTORS AFTER RESTART
     if (_Restart == 0) {
       _TimeDer = 1;
-      x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-      x_old[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
     }
 
     _Restart = 1;
@@ -540,8 +539,8 @@ void MGSolRANS::MGTimeStep_no_up(
 
     // SET UP XOOLD AND XNONL VECTORS AFTER RESTART
     if (_Restart == 0) {
-      x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-      x_old[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
     }
 
     _Restart = 1;
@@ -556,7 +555,7 @@ void MGSolRANS::MGTimeStep_no_up(
 }  // =======================================================================================
 
 void MGSolRANS::MGUpdateStep() {
-  x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
+  x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
 
   int size = x[_NoLevels - 1]->size();
   for (int i = 0; i < size; i++) {
@@ -567,7 +566,7 @@ void MGSolRANS::MGUpdateStep() {
     }
   }
 
-  x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+  x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
 
   return;
 }

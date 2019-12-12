@@ -159,7 +159,7 @@ void MGSolNS::RowSetUp(int nPhi, int indx_eq, int qp, int el_ndof[]) {
   }
 
   if (_BoundEquation && !_NormalEquation) {
-    CalcTangDir(nPhi, el_ndof[2], _bc_el[indx_eq], qp, _ProjDir[0], _ProjDir[1], VEL_BASED);
+    //     CalcTangDir(nPhi, el_ndof[2], _bc_el[indx_eq], qp, _ProjDir[0], _ProjDir[1], VEL_BASED);
   }
 
   _NComp =

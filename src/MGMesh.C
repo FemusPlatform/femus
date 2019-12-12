@@ -56,9 +56,7 @@ MGMesh::MGMesh(
 // ====================================================
 /// This function is the mesh destructor
 MGMesh::~MGMesh() {  // ================================================
-#if PRINT_INFO == 2
-  std::cout << "~MGMesh() called" << std::endl;
-#endif
+
   clear();
   delete[] _NoElements;
   delete[] _xyz;
@@ -78,7 +76,6 @@ MGMesh::~MGMesh() {  // ================================================
   delete[] _el_neighbor;
   delete[] _node_map;
   delete[] _NodeBDgroup;
-  delete[] _normalb;
 }
 
 // ====================================================
@@ -1927,10 +1924,10 @@ void MGMesh::set_node_normal_adj_bc(int bc[], int node_dof[]) {
             int idofu_mid = node_dof[in_mid];
             int ibc_mid = bc[idofu_mid];
             int ibc_mid0 = _NodeBDgroup[in_mid];
-            int xibc = ibc;
+            int xibc = ibc;  // not used only print
 
             // Note; ibc == ibc_mid geometric -> normals based on the Group regions
-            if (ibc != ibc_mid && xibc != 11) {
+            if (ibc != ibc_mid) {
               int nor_f = ibc / 10;
               int tg_f = ibc % 10;
               int nor_midf = ibc_mid / 10;

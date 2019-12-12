@@ -930,7 +930,7 @@ void EquationsMap::setProblems(MGSolBase*& ProbObj) {
 
       // DYNAMICAL TURBULENCE
       if (EqnName == "MG_DynamicalTurbulence") {
-        ProbObj->ActivateCoupled(2, K_F, "K2K", "K1W", _QuadEq);
+        ProbObj->ActivateCoupled(2, K_F, "K2K", _QuadEq, "K1W");
 #ifdef _TURBULENCE_
         ProbObj->ActivateScalar(2, DIST, "DIST", _QuadEq);
         ProbObj->ActivateScalar(2, MU_T, "MU_T", _QuadEq);
@@ -939,20 +939,20 @@ void EquationsMap::setProblems(MGSolBase*& ProbObj) {
 
       // THERMAL TURBULENCE
       if (EqnName == "MG_ThermalTurbulence") {
-        ProbObj->ActivateCoupled(2, KTT_F, "TK", "TK2", _QuadEq);
+        ProbObj->ActivateCoupled(2, KTT_F, "TK", _QuadEq, "TK2");
 #ifdef _TURBULENCE_
         ProbObj->ActivateScalar(2, ALPHA_T, "ALPHA_T", _QuadEq);
 #endif
       }
 
       // COLOR FUNCTION
-      if (EqnName == "MG_ColorFunction") { ProbObj->ActivateCoupled(2, CO_F, "C", "CK", _QuadEq); }
+      if (EqnName == "MG_ColorFunction") { ProbObj->ActivateCoupled(2, CO_F, "C", _QuadEq, "CK"); }
 
       // IMMERSED BOUNDARY
-      if (EqnName == "MG_ImmersedBoundary") { ProbObj->ActivateCoupled(2, IB_F, "IB1", "IB2", _QuadEq); }
+      if (EqnName == "MG_ImmersedBoundary") { ProbObj->ActivateCoupled(2, IB_F, "IB1", _QuadEq, "IB2"); }
 
       // ADJOINT TURBULENCE
-      if (EqnName == "MG_AdjointTurbulence") { ProbObj->ActivateCoupled(2, KA_F, "K2KA", "K1WA", _QuadEq); }
+      if (EqnName == "MG_AdjointTurbulence") { ProbObj->ActivateCoupled(2, KA_F, "K2KA", _QuadEq, "K1WA"); }
 
       // DA
       if (EqnName == "MG_DA") { ProbObj->ActivateScalar(2, DA_F, "DA", _QuadEq); }

@@ -94,8 +94,7 @@ void MGEquationsSystem::eqnmap_steady_loop(
 
     if (_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max) {
       NoLevels = mgsol->_NoLevels;
-      norm_old += mgsol->x_old[NoLevels - 1]->l2_norm();
-      //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+      norm_old += mgsol->x_old[0][NoLevels - 1]->l2_norm();
     }
   }
   double time_step = delta_t_step_in;
@@ -116,7 +115,7 @@ void MGEquationsSystem::eqnmap_steady_loop(
         NoLevels = mgsol->_NoLevels;
         mgsol->set_dt(time_step);
         mgsol->MGTimeStep(time, delta_t_step_in);
-        norm_new += mgsol->x_old[NoLevels - 1]->l2_norm();
+        norm_new += mgsol->x_old[0][NoLevels - 1]->l2_norm();
       }
     }
     diff_norm = fabs(norm_old - norm_new);
@@ -146,8 +145,8 @@ void MGEquationsSystem::eqnmap_steady_loop(
       // //         if(_num_equations[eqn->first] <flag_state) {
       //            if(_num_equations[eqn->first] >= eq_min &&
       //            _num_equations[eqn->first] <= eq_max ) {
-      //           mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
-      //           norm_old += mgsol ->x_old[NoLevels-1]->l2_norm();
+      //           mgsol->x_ooold[NoLevels-1]=mgsol->x_old[0][NoLevels-1];
+      //           norm_old += mgsol ->x_old[0][NoLevels-1]->l2_norm();
       //
       //         }
       //       }
@@ -180,7 +179,7 @@ void MGEquationsSystem::set_uooold(
       if (vec_from == 3 && vec_to == 0)
         mgsol->set_xooold2x();
       else
-        mgsol->set_vector(vec_from, vec_to);
+        mgsol->set_cp_vector(vec_from, vec_to);
     }
   }
   return;
@@ -212,10 +211,10 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
     if (_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max) {
       NoLevels = mgsol->_NoLevels;
       if (_num_equations[eqn->first] == 0) {
-        mgsol->x_old[NoLevels - 1]->close();
-        norm_old += mgsol->x_old[NoLevels - 1]->l2_norm();
+        mgsol->x_old[0][NoLevels - 1]->close();
+        norm_old += mgsol->x_old[0][NoLevels - 1]->l2_norm();
       }
-      //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+      //       mgsol->x_ooold[NoLevels-1]=mgsol->x_old[0][NoLevels-1];
     }
   }
   double time_step = delta_t_step_in;
@@ -234,7 +233,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
       if (_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max) {
         NoLevels = mgsol->_NoLevels;
         mgsol->MGTimeStep(time, delta_t_step_in);
-        if (_num_equations[eqn->first] == 0) norm_new += mgsol->x_old[NoLevels - 1]->l2_norm();
+        if (_num_equations[eqn->first] == 0) norm_new += mgsol->x_old[0][NoLevels - 1]->l2_norm();
       }
     }
     diff_norm = fabs(norm_old - norm_new);
@@ -300,13 +299,13 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
     if (_num_equations[eqn->first] >= eq_min && _num_equations[eqn->first] <= eq_max) {
       NoLevels = mgsol->_NoLevels;
       // norm_old[_num_equations[eqn->first]]+= mgsol
-      // ->x_old[NoLevels-1]->l2_norm();
+      // ->x_old[0][NoLevels-1]->l2_norm();
       for (int i = 0; i < conv_dim; i++)
         if (_num_equations[eqn->first] == controlled_eq[i]) {
-          mgsol->x_old[NoLevels - 1]->close();
-          norm_old[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+          mgsol->x_old[0][NoLevels - 1]->close();
+          norm_old[i] += mgsol->x_old[0][NoLevels - 1]->l2_norm();
         }
-      // mgsol->x_ooold[NoLevels-1]=mgsol->x_old[NoLevels-1];
+      // mgsol->x_ooold[NoLevels-1]=mgsol->x_old[0][NoLevels-1];
     }
   }
   double time_step = delta_t_step_in;
@@ -326,10 +325,10 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
         NoLevels = mgsol->_NoLevels;
         mgsol->MGTimeStep(time, delta_t_step_in);
         // norm_new[_num_equations[eqn->first]]+= mgsol
-        // ->x_old[NoLevels-1]->l2_norm();
+        // ->x_old[0][NoLevels-1]->l2_norm();
         for (int i = 0; i < conv_dim; i++)
           if (_num_equations[eqn->first] == controlled_eq[i]) {
-            norm_new[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+            norm_new[i] += mgsol->x_old[0][NoLevels - 1]->l2_norm();
             diff_norm[i] = fabs(norm_old[i] - norm_new[i]);
             err_rel[i] = diff_norm[i] / norm_old[i];
           }
@@ -392,8 +391,8 @@ void MGEquationsSystem::eqnmap_timestep_loop_underrelaxed(
       NoLevels = mgsol->_NoLevels;
       for (int i = 0; i < conv_dim; i++)
         if (_num_equations[eqn->first] == controlled_eq[i]) {
-          mgsol->x_old[NoLevels - 1]->close();
-          norm_old[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+          mgsol->x_old[0][NoLevels - 1]->close();
+          norm_old[i] += mgsol->x_old[0][NoLevels - 1]->l2_norm();
         }
     }
   }
@@ -409,10 +408,10 @@ void MGEquationsSystem::eqnmap_timestep_loop_underrelaxed(
       NoLevels = mgsol->_NoLevels;
       mgsol->MGTimeStep(time, delta_t_step_in);
       // norm_new[_num_equations[eqn->first]]+= mgsol
-      // ->x_old[NoLevels-1]->l2_norm();
+      // ->x_old[0][NoLevels-1]->l2_norm();
       for (int i = 0; i < conv_dim; i++)
         if (_num_equations[eqn->first] == controlled_eq[i]) {
-          norm_new[i] += mgsol->x_old[NoLevels - 1]->l2_norm();
+          norm_new[i] += mgsol->x_old[0][NoLevels - 1]->l2_norm();
           diff_norm[i] = fabs(norm_old[i] - norm_new[i]);
           err_rel[i] = diff_norm[i] / norm_old[i];
         }
@@ -643,7 +642,7 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/, int /*
   MGEquationsSystem::const_iterator pos1_e = _equations.end();
   for (; pos1 != pos1_e; pos1++) {
     MGSolBase* mgsol = pos1->second;
-    mgsol->print_xml_attrib(out, n_nodes, n_elements * NSUBDOM, attr_file.str());
+    mgsol->print_u_xdmf(out, n_nodes, n_elements * NSUBDOM, attr_file.str());
   }
   //   print_xml_attrib(out,n_elements,n_nodes,attr_file.str());
   //   printining cell attributes
@@ -1268,7 +1267,7 @@ void MGEquationsSystem::movemesh() {
 #if DIMENSION == 3
   MGSolBase* mgsoldsz = get_eqs("SDSZ");
 #endif
-  //   (mgsolt->x_old[NoLevels-1])->localize(*mgsolt ->x_oold[NoLevels-1]);
+  //   (mgsolt->x_old[0][NoLevels-1])->localize(*mgsolt ->x_oold[NoLevels-1]);
 
   const int flag_moving_mesh = (int)(_mgutils._geometry["moving_mesh"]);
 
@@ -1280,39 +1279,39 @@ void MGEquationsSystem::movemesh() {
   if (flag_moving_mesh) {
     /// E) mesh update
 
-    //         mgsoldsx->x_old[NoLevels-1]->localize(*x_new);
+    //         mgsoldsx->x_old[0][NoLevels-1]->localize(*x_new);
     const int n_nodes = _mgmesh._NoNodes[NoLevels - 1];
     int offsetp = 0 * n_nodes;
 
     for (int inode = 0; inode < n_nodes; inode++) {
       offsetp = 0 * n_nodes;
-      double disp = (*mgsoldsx->x_old[NoLevels - 1])(inode) - (*mgsoldsx->x_oold[NoLevels - 1])(inode);
+      double disp = (*mgsoldsx->x_old[0][NoLevels - 1])(inode) - (*mgsoldsx->x_old[1][NoLevels - 1])(inode);
       //             _mgmesh._xyz[inode+offsetp] += disp; // cerroni
       _mgmesh._xyz[inode + offsetp] =
-          _mgmesh._xyzo[inode + offsetp] + (*mgsoldsx->x_old[NoLevels - 1])(inode);
+          _mgmesh._xyzo[inode + offsetp] + (*mgsoldsx->x_old[0][NoLevels - 1])(inode);
       _mgmesh._dxdydz[inode + offsetp] = disp;
       offsetp = 1 * n_nodes;
-      disp = (*mgsoldsy->x_old[NoLevels - 1])(inode) - (*mgsoldsy->x_oold[NoLevels - 1])(inode);
+      disp = (*mgsoldsy->x_old[0][NoLevels - 1])(inode) - (*mgsoldsy->x_old[1][NoLevels - 1])(inode);
       //             _mgmesh._xyz[inode+offsetp] += disp; cerroni
       _mgmesh._dxdydz[inode + offsetp] = disp;
       _mgmesh._xyz[inode + offsetp] =
-          _mgmesh._xyzo[inode + offsetp] + (*mgsoldsy->x_old[NoLevels - 1])(inode);
+          _mgmesh._xyzo[inode + offsetp] + (*mgsoldsy->x_old[0][NoLevels - 1])(inode);
 
 #if DIMENSION == 3
       offsetp = 2 * n_nodes;
-      disp = (*mgsoldsz->x_old[NoLevels - 1])(inode) - (*mgsoldsz->x_oold[NoLevels - 1])(inode);
+      disp = (*mgsoldsz->x_old[0][NoLevels - 1])(inode) - (*mgsoldsz->x_old[1][NoLevels - 1])(inode);
       //             _mgmesh._xyz[inode+offsetp] += disp; cerroni
       _mgmesh._dxdydz[inode + offsetp] = disp;
       _mgmesh._xyz[inode + offsetp] =
-          _mgmesh._xyzo[inode + offsetp] + (*mgsoldsz->x_old[NoLevels - 1])(inode);
+          _mgmesh._xyzo[inode + offsetp] + (*mgsoldsz->x_old[0][NoLevels - 1])(inode);
 #endif
     }
 
-    //         mgsoldsx->x_old[NoLevels-1]->localize(*mgsoldsx
+    //         mgsoldsx->x_old[0][NoLevels-1]->localize(*mgsoldsx
     //         ->x_oold[NoLevels-1]);
-    //         mgsoldsy->x_old[NoLevels-1]->localize(*mgsoldsy
+    //         mgsoldsy->x_old[0][NoLevels-1]->localize(*mgsoldsy
     //         ->x_oold[NoLevels-1]); #if DIMENSION==3
-    //         mgsoldsz->x_old[NoLevels-1]->localize(*mgsoldsz
+    //         mgsoldsz->x_old[0][NoLevels-1]->localize(*mgsoldsz
     //         ->x_oold[NoLevels-1]);
     // #endif
   }

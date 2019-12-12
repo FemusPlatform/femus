@@ -174,7 +174,7 @@ void MGSolRANS_thermal::GenMatRhs(
     for (int deg = 0; deg < 3; deg++) {  // OLD SOLUTION
       for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
         _data_eq[deg].mg_eqs[eq]->get_el_sol(
-            0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+            0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
             _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
       }
     }
@@ -255,8 +255,8 @@ void MGSolRANS_thermal::MGTimeStep_no_up(
 
     // SET UP XOOLD AND XNONL VECTORS AFTER RESTART
     if (_Restart == 0) {
-      x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-      x_old[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
     }
 
     _Restart = 1;
@@ -269,7 +269,7 @@ void MGSolRANS_thermal::MGTimeStep_no_up(
 }  // =======================================================================================
 
 void MGSolRANS_thermal::MGUpdateStep() {
-  x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
+  x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
 
   int size = x[_NoLevels - 1]->size();
 
@@ -281,7 +281,7 @@ void MGSolRANS_thermal::MGUpdateStep() {
     }
   }
 
-  x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+  x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
 
   return;
 }
@@ -304,8 +304,8 @@ void MGSolRANS_thermal::MGTimeStep(
 
     // SET UP XOOLD AND XNONL VECTORS AFTER RESTART
     if (_Restart == 0) {
-      x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-      x_old[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+      x_old[0][_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
     }
 
     _Restart = 1;

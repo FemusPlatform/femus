@@ -211,25 +211,25 @@ void MGSolTURB::GenMatRhs(
 
     if (_FF_idx[K_F] >= 0) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F]]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 0, _KW);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 0, _KW);  // pressure
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F] + 1]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 1, _KW);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 1, _KW);  // pressure
     }
 
     if (_FF_idx[KTT_F] >= 0) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[KTT_F]]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 0, _KHWH);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 0, _KHWH);  // pressure
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[KTT_F] + 1]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 1, _KHWH);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 1, _KHWH);  // pressure
     }
 
     _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[DIST]]->get_el_sol(
-        0, 1, el_ndof[2], el_conn, offset, 0, _DIST);  // pressure
+        0, 0, 1, el_ndof[2], el_conn, offset, 0, _DIST);  // pressure
 
     for (int deg = 0; deg < 3; deg++) {  // OLD SOLUTION
       for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
         _data_eq[deg].mg_eqs[eq]->get_el_sol(
-            0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+            0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
             _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
       }
     }
@@ -437,20 +437,20 @@ void MGSolTURB::GenRhs(
     // fill the node data vectors
     if (_FF_idx[K_F] >= 0) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F]]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 0, _KW);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 0, _KW);  // pressure
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F] + 1]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 1, _KW);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 1, _KW);  // pressure
     }
 
     if (_FF_idx[KTT_F] >= 0) {
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[KTT_F]]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 0, _KHWH);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 0, _KHWH);  // pressure
       _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[KTT_F] + 1]->get_el_sol(
-          0, 1, el_ndof[2], el_conn, offset, 1, _KHWH);  // pressure
+          0, 0, 1, el_ndof[2], el_conn, offset, 1, _KHWH);  // pressure
     }
 
     _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[DIST]]->get_el_sol(
-        0, 1, el_ndof[2], el_conn, offset, 0, _DIST);  // pressure
+        0, 0, 1, el_ndof[2], el_conn, offset, 0, _DIST);  // pressure
 
     // ----------------------------------------------------------------------------------
     /// 2. Boundary integration  (bc)
@@ -547,7 +547,7 @@ void MGSolTURB::MGTimeStep(
             << std::endl;
 #endif
   /// D) Update of the old solution at the top Level  (MGSolTURB::OldSol_update),
-  x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+  x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
 
   _FirstAssembly = 0;
 

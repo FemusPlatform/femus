@@ -1,12 +1,12 @@
 // lib include ------------------
-#include <limits>
-#include <sstream>
+// #include <limits>
+// #include <sstream>
 
 // configure file -------------
-#include "MGFE_conf.h"
+// #include "MGFE_conf.h"
 #include "Printinfo_conf.h"
 #include "Solverlib_conf.h"
-// class include
+// // class include
 #include "MGSolverBase.h"
 #ifdef TWO_PHASE
 #include "MGSolverCC.h"
@@ -15,9 +15,8 @@
 #include "MGMesh.h"
 #include "MGSystem.h"
 #include "MGUtils.h"
-
 #include "MGEquationsSystem.h"
-#include "MGFEMap.h"
+// #include "MGFEMap.h"
 
 // alg include-------------------
 #include "linear_solverM.h"
@@ -25,24 +24,23 @@
 #include "sparse_MmatrixM.h"
 #include "sparse_matrixM.h"
 
-#include <mpi.h>  //for MPI_COMM_WORLD
-#include "petsc_macroM.h"
+// #include <mpi.h>  //for MPI_COMM_WORLD
+// #include "petsc_macroM.h"
 
 //  #define VANKA (0)
 //
-// ========================================================
+// ============================================================================
 /// This function  is the MGSolBase constructor :
 MGSolBase::MGSolBase(
     MGEquationsSystem& e_map_in,  // equation map
     const int nvars_in[],         // # variables
     std::string eqname_in         // equation name
     )
-    : _mgutils(e_map_in._mgutils),
-      //     _mgphys(e_map_in._mgphys),
-      _mgfemap(e_map_in._mgfemap),
-      _mgmesh(e_map_in._mgmesh),
-      _mgeqnmap(e_map_in),
-      _NoLevels((int)(e_map_in._mgutils._geometry["nolevels"])),  // you can do that
+    : _mgutils(e_map_in._mgutils),  // mgutils pointer from equation map pointer
+      _mgfemap(e_map_in._mgfemap),  // mgfemap pointer from equation map pointer
+      _mgmesh(e_map_in._mgmesh),    // mgmesh pointer from equation map pointer
+      _mgeqnmap(e_map_in),          // equation map pointer
+      _NoLevels((int)(e_map_in._mgutils._geometry["nolevels"])),
       _eqname(eqname_in),
       _n_vars(nvars_in[0] + nvars_in[1] + nvars_in[2]),
       _var_names(NULL),
@@ -52,83 +50,61 @@ MGSolBase::MGSolBase(
       _msolcc(NULL)
 #endif
 {
-
+  // processor number ---------------------------------------------------------
+  _iproc = _mgmesh._iproc;  // > 1CPU
+  //  Lagrange piecewise  variables (const,linear,quad) -----------------------
   _nvars[0] = nvars_in[0];  // Lagrange piecewise constant variables
   _nvars[1] = nvars_in[1];  // Lagrange piecewise linear variables
   _nvars[2] = nvars_in[2];  // Lagrange piecewise linear variables
-  // processor number ---------------------------
-#ifndef HAVE_LASPACKM
-  _iproc = _mgmesh._iproc;  // > 1CPU
-#else
-  _iproc = 0;  // 1 CPU
-#endif
 
-  // allocation of dynamic system ---------------
-  _Dim = new int[_NoLevels];  // matrix and vect  dim
-  A.resize(_NoLevels);
-  x.resize(_NoLevels);  // matrix vect sol
-  x_old.resize(_NoLevels);
-  x_oold.resize(_NoLevels);     // old solution
-  x_nonl.resize(_NoLevels);     // non linear solution
-  disp.resize(_NoLevels);       // displacement for mesh
-  disp_old.resize(_NoLevels);   // displacement for mesh
-  disp_oold.resize(_NoLevels);  // displacement for mesh
-  x_ooold.resize(_NoLevels);    // vector for multiple uses
-  x_oooold.resize(_NoLevels);   // vector for multiple uses
-  b.resize(_NoLevels);
-  res.resize(_NoLevels);  // rhs
-  disp_ooold.resize(_NoLevels);
-  // restr and prol operators -----------------
+  // allocation of dynamic system ---------------------------------------------
+  _Dim = new int[_NoLevels];   // matrix and vect  dim
+  A.resize(_NoLevels);         // matrix
+  x.resize(_NoLevels);         // matrix vect sol
+  b.resize(_NoLevels);         // rhs
+  res.resize(_NoLevels);       // residual
+  x_old[0].resize(_NoLevels);  // old solution 1 step (old)
+  x_old[1].resize(_NoLevels);  // old solution 2 step (oold)
+  x_old[2].resize(_NoLevels);  // old solution 3 step (ooold)
+  x_nonl.resize(_NoLevels);    // non linear solution
+  x_aux.resize(0);
+  d_aux.resize(0);
+  // dof info -----------------------------------------------------------------
+  _node_dof = new int*[_NoLevels + 1];  // dof (+1)
+  // restr and prol operators -------------------------------------------------
   Rst.resize(_NoLevels);
   Prl.resize(_NoLevels);  // Projector and restrictor
-
-  // dof info ---------------
-  _node_dof = new int*[_NoLevels + 1];  // dof (+1)
-                                        //   bc= new int*[_NoLevels];           // bc
-                                        //   _attrib.resize(_NoLevels);         // Attribute vector (cell)
-
-  // solver ---------------------------------------
+  // solver -------------------------------------------------------------------
   _solver = new LinearSolverM*[_NoLevels];  // one solver for each level
-  // get the communicator from the PETSc object
-  //   ParallelM::communicator comm;
-  //   PetscObjectGetComm((PetscObject)pc, &comm);
-  //   const ParallelM::Communicator communicator(comm);
-
   for (int l = 0; l < _NoLevels; l++)
     _solver[l] = LinearSolverM::build(_mgmesh._comm.comm(), LSOLVER).release();
+  // class parameters ----------------------------------------------------------
   _control = 0.;
-#ifdef TWO_PHASE
-
-#endif
+  _dt = 0.1;  // time step
+  _dir = 0;   // number equation for segregated system
 
   return;
 }
 
 // ===================================================
 /// This function  is the MGSolBase destructor.
-MGSolBase::~MGSolBase() {
-// ===================================================
-// clear substructrures
-#if PRINT_INFO == 2
-  std::cout << "~MGSolBase() called for system " << _eqname << std::endl;
-#endif
+MGSolBase::~MGSolBase() {  // ===================================================
+  // clear substructrures
   clear();
   A.clear();
-  x.clear();  //  A and x
-  x_old.clear();
-  x_oold.clear();     //  old solutions
-  x_ooold.clear();    //  ooold solutions
-  x_ooold.clear();    //  oooold solutions
-  x_nonl.clear();     // nonlinear solution tmp
-  disp.clear();       // displacement for mesh
-  disp_old.clear();   // displacement for mesh
-  disp_oold.clear();  // displacement for mesh
-  disp_ooold.clear();
-  b.clear();
+  x.clear();
+  b.clear();    //  A and x and b
   res.clear();  //  rhs and residual vector
+
+  x_nonl.clear();  // nonlinear solution tmp
+  x_old[0].clear();
+  x_old[1].clear();
+  x_old[2].clear();  // old solutions
+  x_aux.clear();
+  d_aux.clear();
   Rst.clear();
-  Prl.clear();    // Restrictor and projector
-                  //   _attrib.clear();                // Cell properties
+  Prl.clear();  // Restrictor and projector
+  //   _attrib.clear();                // Cell properties
   delete[] _Dim;  // dimension system Ax=b
   delete[] _bc[0];
   delete[] _bc[1];      // boundary condition flag
@@ -148,16 +124,10 @@ void MGSolBase::clear() {
     delete x[Level];  //  A and x  at Level
     delete b[Level];
     delete res[Level];  //  old solutions  at Level
-    delete x_old[Level];
-    delete x_oold[Level];
-    delete x_ooold[Level];
-    delete x_oooold[Level];
-    delete x_nonl[Level];  //  rhs and residual vector
-    delete disp[Level];
-    delete disp_old[Level];
-    delete disp_oold[Level];
-    delete disp_ooold[Level];
-    //     delete _attrib[Level];                         // Cell properties  at Level
+    delete x_old[0][Level];
+    delete x_old[1][Level];
+    delete x_old[2][Level];
+    delete x_nonl[Level];                          //  rhs and residual vector
     delete[] _node_dof[Level];                     // dof distribution at Level
     delete _solver[Level];                         // delete solver  at Level
     if (Level < _NoLevels - 1) delete Rst[Level];  // Restrictor
@@ -165,9 +135,12 @@ void MGSolBase::clear() {
   }
 }
 
-#ifdef TWO_PHASE_LIB
-void MGSolBase::set_mgcc(MGSolCC& cc) { _msolcc = &cc; }
-#endif
+// ==================================================
+//               MULTILEVEL OPERATOR
+//======================================================
+//  MGDofBcOp() is defined also in  MGSolverBase
+//  all the other are defined in MGSolverDA
+
 // ===============================================================
 /// This  function reads all the Operators from files
 void MGSolBase::MGDofBcOp() {
@@ -177,15 +150,10 @@ void MGSolBase::MGDofBcOp() {
   std::cout << "\n Reading " << _eqname << " Dof, Bc, Op \n";
 #endif  // -------  end      info --------------------
   for (int Level = 0; Level < _NoLevels; Level++) init_dof(Level);  // init the dofmap
-
-  GenBc();  // init the bc-map
-
-  for (int Level = 0; Level < _NoLevels; Level++) {
-    init(Level);  // allocation struct
-  }
-
+  GenBc();                                                          // init the bc-map
+  for (int Level = 0; Level < _NoLevels; Level++) init(Level);      // allocation struct
 #ifdef PRINT_INFO
-  std::cout << " MGDofBcOp(B): Dof, Bc, Op settled \n";
+  std::cout << " MGDofBcOp(MGSolverBase): Dof, Bc, Op settled \n";
 #endif
   return;
 }
@@ -196,11 +164,11 @@ void MGSolBase::MGSolve(
     double Eps1,  // tolerance
     int MaxIter,  // n iterations
     // -----------------------------------------------------------
-    const int clearing,   // 1= clean the init matrix and precond
-    const int Gamma,      // Control V W cycle
-    const int Nc_pre,     // n pre-smoothing cycles
-    const int Nc_coarse,  // n coarse cycles
-    const int Nc_post     // n post-smoothing cycles
+    const int clearing,   ///< 1= clean the init matrix and precond
+    const int Gamma,      ///< Control V W cycle
+    const int Nc_pre,     ///< n pre-smoothing cycles
+    const int Nc_coarse,  ///< n coarse cycles
+    const int Nc_post     ///< n post-smoothing cycles
 ) {
   // ===================================================================
   double rest = 0.;
@@ -211,24 +179,31 @@ void MGSolBase::MGSolve(
 #ifdef PRINT_CONV
   std::cout << " bNorm " << bNorm << std::endl;
   if (bNorm != bNorm) {
-    std::cout << "\033[38;5;196m  ----------bNorm is Nan ABORT!!----------  \033[0m" << endl;
+    std::cout << "\033[38;5;196m  --- bNorm is Nan ABORT!! ---- \033[0m \n";
     return;
   }
   if (bNorm > 1.e15) {
-    std::cout << "\033[38;5;196m  ----------bNorm is too high!!----------  \033[0m" << endl;
+    std::cout << "\033[38;5;196m  --- bNorm is too high!!---  \033[0m \n";
+    return;
+  }
+  if (bNorm < 1.e-8) {
+    x[_NoLevels - 1]->close();
+    x[_NoLevels - 1]->zero();
+    std::cout << "\033[38;5;196m  ----------bNorm <1.e-8 !!----------  \033[0m \n";
     return;
   }
 #endif
-  // FAS Multigrid (Nested) ---------------------------
+  // FAS Multigrid (Nested) ------------------------------------------------------
   int NestedMG = 1;
   if (NestedMG == 0) {
+    x[0]->close();
     x[0]->zero();
-    MGStep(0, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post, clearing);
+    rest = MGStep(0, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post, clearing);
     for (int Level = 1; Level < _NoLevels; Level++) {
       x[Level]->matrix_mult(*x[Level - 1], *Prl[Level]);                                 // projection
       rest = MGStep(Level, Eps1, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post, clearing);  // MGStepsolution
     }
-  }  // ------------------------------------------------
+  }  // -------------------------------------------------------------------------
 
   // V or W cycle
   int cycle = 0;
@@ -243,16 +218,14 @@ void MGSolBase::MGSolve(
     rest = MGStep(_NoLevels - 1, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post, clearing);  // MGStep
 //       rest=0.; MGCheck(_NoLevels-1); // check projection-restriction
 #else
-    rest = MGStep_Vanka(
-        _NoLevels - 1, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse,
-        Nc_post);  // MGStep_Vanka
-                   // Vanka_test(0); // check projection-restriction
+    rest = MGStep_Vanka(_NoLevels - 1, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post);  // MGStep_Vanka
+                                                                                             // Vanka_test(0); // check projection-restriction
 #endif
     if (rest < Eps1 * (1. + bNorm)) exit_mg = 1;  // exit test
     cycle++;
-#ifdef PRINT_CONV
+    // #ifdef PRINT_CONV
     std::cout << " cycle= " << cycle << " residual= " << rest << " \n";
-#endif
+    // #endif
   }  // --------------------- end multigrid step  ------------------
   return;
 }
@@ -272,11 +245,8 @@ double MGSolBase::MGStep(
   // ====================================================================
   std::pair<int, double> rest(0, 0.);
   if (Level == 0) {  // coarse level ----------------------------------
-    x[Level]->close();
-    //     std::cout<< " coarse pre " <<b[Level]->l2_norm()<<std::endl;
     rest = _solver[Level]->solve(*A[Level], *x[Level], *b[Level], Eps1, 200, clearing);
-    x[Level]->close();
-//     std::cout<< " coarse post" <<b[Level]->l2_norm()<<std::endl;
+
 #ifdef PRINT_CONV
     std::cout << " Coarse res " << rest.second << " " << rest.first << std::endl;
 #endif
@@ -284,23 +254,21 @@ double MGSolBase::MGStep(
     res[Level]->resid(*b[Level], *x[Level], *A[Level]);
   }       // --------------------------------------------------------------
   else {  // fine levels
-//     std::cout<< " finer pre " <<x[Level]->l2_norm()<<std::endl;
-// presmoothing (Nu1) ---------------------------------
+
+  // presmoothing (Nu1) ---------------------------------
 #ifdef PRINT_TIME  //  TC +++++++++++++++
     std::clock_t start_time = std::clock();
 #endif  //  TC +++++++++++++++
     int Nc_pre1 = Nc_pre;
     if (Level < _NoLevels - 1) Nc_pre1 *= 2;
     rest = _solver[Level]->solve(*A[Level], *x[Level], *b[Level], Eps1, Nc_pre1, clearing);
-//     std::cout<< " finer pre " <<x[Level]->l2_norm()<<std::endl;
+
 #ifdef PRINT_CONV  //  CC +++++++++++++++
     std::cout << " Pre Lev " << Level << " res " << rest.second << " " << rest.first;
 #endif             //  CC +++++++++++++++
 #ifdef PRINT_TIME  //  TC +++++++++++++++
     std::clock_t end_time = std::clock();
     std::cout << " time =" << double(end_time - start_time) / CLOCKS_PER_SEC << std::endl;
-//         x[Level]->close();
-//     std::cout<< " finer " <<x[Level]->l2_norm()<<std::endl;
 #endif  //  TC +++++++++++++++
     // presmoothing residual
     res[Level]->resid(*b[Level], *x[Level], *A[Level]);
@@ -326,7 +294,7 @@ double MGSolBase::MGStep(
     int Nc_post1 = Nc_post;
     if (Level < _NoLevels - 1) Nc_post1 *= 2;
     rest = _solver[Level]->solve(*A[Level], *x[Level], *b[Level], Eps1, Nc_post1, clearing);
-//    std::cout<< " finer post " <<x[Level]->l2_norm()<<std::endl;
+
 #ifdef PRINT_CONV  //  CC +++++++++++++++
     std::cout << " Post Lev " << Level << " res " << rest.second << " " << rest.first;
 #endif             //  CC +++++++++++++++
@@ -343,7 +311,7 @@ double MGSolBase::MGStep(
   return rest.second;
 }
 
-// =============================================
+// ============================================================================================
 /// Check for Prolong and Restr Operators
 void MGSolBase::MGCheck(int Level) const {
   std::cout << "\nxlevel-1 before rest\n";
@@ -360,294 +328,42 @@ void MGSolBase::MGCheck(int Level) const {
   //   x[Level]  ->matrix_mult(*x[Level-1],*Prl[Level]);
   return;
 }
-// =============================================
-/// Print xml attrib
-void MGSolBase::print_xml_attrib(
-    std::ofstream& out,  //  file xdmf
-    int nodes, int /*nelems*/,
-    std::string file_name) const {  // ================================
 
-  for (int ivar = 0; ivar < _n_vars; ivar++) {
-    std::string var_name = _var_names[ivar];
-    out << "<Attribute Name=\"" << var_name << "\" AttributeType=\"Scalar\" Center=\"Node\">\n";
-    out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\"" << nodes << "  " << 1
-        << "\" Format=\"HDF\">  \n";
-    out << file_name
-        //       femus_dir << "/" << output_dir << basesol << "."
-        //       << setw(ndigits) << setfill('0') << t_step << ".h5"
-        << ":" << var_name << "\n";
-    out << "</DataItem>\n"
-        << "</Attribute>";
-  }
-  return;
-}
+  // *************************************************************************
+  //  SET FUNCTIONS
+  // ***********************************************************************=
 
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_sol(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivar is like idim
+#ifdef TWO_PHASE_LIB
+void MGSolBase::set_mgcc(MGSolCC& cc) { _msolcc = &cc; }
+#endif
 
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];         // dof from top level
-      uold[id + (ivar + kvar0) * NDOF_FEM] = ((*x_old[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
+// =========================================
+/// This function sets up data structures for each problem class
+// =========================================
+void MGSolBase::setUpExtFieldData() {
+  /// A) set up _mg_eqs
+  // external system and index vectors
+  for (int deg = 0; deg < 3; deg++) {
+    for (int kl = 0; kl < _data_eq[deg].max_neqs; kl++) {
+      _data_eq[deg].n_eqs = 0;
+      _data_eq[deg].mg_eqs[kl] = NULL;
+      _data_eq[deg].indx_ub[kl] = -1;
+      _data_eq[deg].tab_eqs[kl] = -1;
 
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_sol_piece(
-    const int ivar0,   // initial variable  <-
-    const int nvars,   // # of variables to get  <-
-    const int el_nds,  // # of element nodes for this variable  <-
-    const int iel,     // connectivity <-
-    const int offset,  // offset for connectivity <-
-    const int kvar0,   // offset  variable for  uold <-
-    double uold[]      // element node values ->
-    ) const {          // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivar is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][iel * el_nds + id + (ivar + ivar0) * offset];   // dof from top level
-      uold[id + (ivar + kvar0) * NDOF_FEM] = ((*x_old[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
+      for (int kk = 0; kk < NDOF_FEM; ++kk) {
+        _data_eq[deg].ub[kk + kl * NDOF_FEM] = 0.;  // data
+      }
+    }
   }
+  // start index K from 0, L from 0, Q from DIMENSION (coordinates+ q variable)
+  _data_eq[0].indx_ub[0] = 0;  //_data_eq[0].n_eqs=0; // piecewice constant  (0)
+  _data_eq[1].indx_ub[0] = 0;  //_data_eq[1].n_eqs=0; // piecewice linear    (1)
+  _data_eq[2].indx_ub[0] = 0;  //_data_eq[2].n_eqs=0; // piecewice quadratic (2)
   return;
 }
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_oldsol(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];          // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*x_oold[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-// ==========================================================================================
-/// This function gets  the solution  vector at the nodes of  an element.
-void MGSolBase::get_el_nonl_sol(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];  // dof from top level
-      double val = ((*x_nonl[_NoLevels - 1])(kdof_top));
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = val;  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_disp(
-    const int Level,      // Level  <-
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];    // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*disp_old[Level])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_disp(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];            // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*disp_old[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-       //     disp_old[_NoLevels-1]->print();
-  }
-  return;
-}
-
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_oooldsol(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];           // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*x_ooold[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-void MGSolBase::get_el_ooooldsol(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];            // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*x_oooold[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_new_disp(
-    const int Level,      // Level  <-
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];  // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*disp[Level])(kdof_top));    // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_new_disp(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];        // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*disp[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-
-// ==========================================================================================
-/// This function gets  the dof , the bc and the solution  vector at the nodes of  an element.
-/// Note that indx_loc = id +ivar*NDOF_FEM with NDOF_FEM max dof (quad)
-void MGSolBase::get_el_oold_disp(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];             // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*disp_oold[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
-void MGSolBase::get_el_ooold_disp(
-    const int ivar0,      // initial variable  <-
-    const int nvars,      // # of variables to get  <-
-    const int el_nds,     // # of element nodes for this variable  <-
-    const int el_conn[],  // connectivity <-
-    const int offset,     // offset for connectivity <-
-    const int kvar0,      // offset  variable for  uold <-
-    double uold[]         // element node values ->
-    ) const {             // ==============================================================
-  for (int id = 0; id < el_nds; id++) {
-    // quadratic -------------------------------------------------
-    for (int ivar = 0; ivar < nvars; ivar++) {  // ivarq is like idim
-      const int kdof_top =
-          _node_dof[_NoLevels - 1][el_conn[id] + (ivar + ivar0) * offset];              // dof from top level
-      uold[id + (kvar0 + ivar) * NDOF_FEM] = ((*disp_ooold[_NoLevels - 1])(kdof_top));  // element sol
-    }  // end quadratic ------------------------------------------------
-  }
-  return;
-}
+// *****************************************************************************
+//  SOLVER
+// *****************************************************************************
 
 /// ======================================================
 /// This function controls the time step operations:
@@ -676,10 +392,13 @@ void MGSolBase::MGTimeStep(const double time, const int) {
             << std::endl;
 #endif
   /// [d] Update of the old solution at the top Level
-  x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+  x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
   return;
 }
 
+/// ======================================================
+/// This function controls the time step operations with no update for old solution:
+/// ======================================================
 void MGSolBase::MGTimeStep_no_up(const double time, const int) {
   std::cout << std::endl << "  " << _eqname.c_str() << " solution " << std::endl;
 
@@ -706,10 +425,12 @@ void MGSolBase::MGTimeStep_no_up(const double time, const int) {
 
   return;
 }
-
+/// ======================================================
+/// This function  updates the solution x_old from x
+/// ======================================================
 void MGSolBase::MGUpdateStep() {
   std::cout << std::endl << "  " << _eqname.c_str() << " update solution " << std::endl;
-  x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+  x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
   return;
 }
 /// ======================================================
@@ -721,6 +442,13 @@ void MGSolBase::MGUndo_disp() {
   return;
 }
 
+// *****************************************************************************
+//  COMPUTE fUNCTIONS
+// *****************************************************************************
+
+/// ======================================================
+/// This function  computes the  functional
+/// ======================================================
 double MGSolBase::MGFunctional(
     double /*parameter*/,  /// Use of the function: (0) compute functional OR (1) set _eta
     double& /*control*/    /// \param[in] <>  eta multiplier for optimal method
@@ -759,7 +487,7 @@ void MGSolBase::set_ctrl_dom(
 #endif
     ) {
       _weight_ctrl[iel + nel_b] = 1;  // 1 inside control region
-      // 	std::printf("iel %4d wieght %4f xm0 %4.5f xm1 %4.5f xm2 %4.5f\n",iel+nel_b,
+      //  std::printf("iel %4d wieght %4f xm0 %4.5f xm1 %4.5f xm2 %4.5f\n",iel+nel_b,
       // _weight_ctrl[iel+nel_b],x_m[0],x_m[1],x_m[2]);
     }
   }  // end iel loop
@@ -770,303 +498,30 @@ void MGSolBase::set_ctrl_dom(
 /// This function change current dt
 /// ======================================================
 
-double MGSolBase::GetValue(int flag) {}
-
-void MGSolBase::SetValue(double value) {}
-
-void MGSolBase::SetValueVector(std::vector<double> value) {}
-
 void MGSolBase::set_dt(double /*dt*/) {}
 
-double MGSolBase::CalcFUpwind(
-    double VelOnGauss[], double PhiDer[], double Diffusivity, int Dim, int NbOfNodes) {
-  double vel_modulus = 1.e-10, h_eff = 1.e-20, f_upwind = 0.;
+// ===================================================================
+// ================== Print/Read function (All virtual)===============
+// ===================================================================
 
-  for (int i = 0; i < Dim; i++) vel_modulus += VelOnGauss[i] * VelOnGauss[i];
-  vel_modulus = sqrt(vel_modulus);
+// =============================================
+/// Print xml attrib
+void MGSolBase::print_u_xdmf(
+    std::ofstream& out,  //  file xdmf
+    int nodes, int /*nelems*/,
+    std::string file_name) const {  // ================================
 
-  for (int i = 0; i < NbOfNodes; i++) {
-    double hh = 1.e-20;
-    for (int idim = 0; idim < Dim; idim++)
-      hh += VelOnGauss[idim] * PhiDer[i + idim * NbOfNodes] / vel_modulus;
-    h_eff += fabs(hh);
-  }
-  h_eff = 2. / h_eff;
-  if (h_eff < 1.e-10) {
-    h_eff = 1.;
-    std::cout << h_eff << " <1.e-10 in SUPG !!!!!!!!!\n";
-  }
-  // STANDARD SUPG
-  const double Pe_h = 0.5 * vel_modulus * h_eff / (Diffusivity);
-  const double a_opt = (1. / tanh(Pe_h) - 1. / Pe_h);
-  if (a_opt > 1.) { std::cout << a_opt << " a_opt >1 in SUPG !!!!!!!!!\n"; }
-  //   f_upwind = 0.5*a_opt*h_eff/ (vel_modulus);
-  f_upwind = 0.5 * a_opt * h_eff / (vel_modulus);
-  return f_upwind;
-}
-
-// ====================================================================
-/// This function gets element dof indices using local-to-global map
-// ====================================================================
-void MGSolBase::get_el_dof_indices(
-    const int Level,                                 /// Level                                (in)
-    const int iel,                                   /// ELement number                       (in)
-    const int el_conn[],                             /// ELement connectivity                 (in)
-    const int el_dof[],                              /// Quadratic[2] Linear[1] Const[0] dofs (in)
-    const int offset,                                /// Offset                               (in)
-    std::map<int, std::vector<int>>& el_dof_indices  /// Global dof of iel (out)
-    ) const {
-  for (int id = 0; id < NDOF_FEM; id++) {
-    // quadratic -------------------------------------------------
-    if (id < el_dof[2])
-      for (int ivar = 0; ivar < _nvars[2]; ivar++) {  // ivarq is like idim
-        const int indx_loc_ql = id + ivar * el_dof[2];
-        const int indx_glob = el_conn[id] + ivar * offset;
-
-        el_dof_indices[iel][indx_loc_ql] = _node_dof[Level][indx_glob];  // from mesh to dof
-      }  // end quadratic ------------------------------------------------
-
-    //     // linear -----------------------------
-    if (id < el_dof[1])
-      for (int ivar = 0; ivar < _nvars[1]; ivar++) {  // ivarq is like idim
-        const int indx_loc_ql = id + ivar * el_dof[1] + _nvars[2] * el_dof[2];
-        const int indx_glob = el_conn[id] + (ivar + _nvars[2]) * offset;
-
-        el_dof_indices[iel][indx_loc_ql] = _node_dof[Level][indx_glob];  // from mesh to dof
-      }  // end quadratic ------------------------------------------------
-
-    //     // piecewise -----------------------------
-    if (id < el_dof[0])
-      for (int ivar = 0; ivar < _nvars[0]; ivar++) {  // ivarq is like idim
-        const int indx_loc_ql = id + ivar * el_dof[0] + _nvars[2] * el_dof[2] + _nvars[1] * el_dof[1];
-        const int indx_glob = id + iel * el_dof[0] + (ivar + _nvars[2] + _nvars[1]) * offset;
-
-        el_dof_indices[iel][indx_loc_ql] = _node_dof[Level][indx_glob];  // from mesh to dof
-      }  // end piecewise ------------------------------------------------
+  for (int ivar = 0; ivar < _n_vars; ivar++) {
+    std::string var_name = _var_names[ivar];
+    out << "<Attribute Name=\"" << var_name << "\" AttributeType=\"Scalar\" Center=\"Node\">\n";
+    out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\"" << nodes << "  " << 1
+        << "\" Format=\"HDF\">  \n";
+    out << file_name
+        //       femus_dir << "/" << output_dir << basesol << "."
+        //       << setw(ndigits) << setfill('0') << t_step << ".h5"
+        << ":" << var_name << "\n";
+    out << "</DataItem>\n"
+        << "</Attribute>";
   }
   return;
 }
-
-// ========================================================================
-#ifdef VANKA
-// ========================================================================
-// ****************** HERE STARTS VANKA SECTION ***************************
-// ========================================================================
-#include "dense_vectorM.h"
-#include "dense_matrixM.h"
-#include "petsc_vectorM.h"
-#include "petsc_matrixM.h"
-#include "MeshExtended.h"
-//
-// ====================================================================
-/// This function does one multigrid step
-double MGSolBase::Vanka_test(int Level) {
-  // ====================================================================
-  std::pair<int, double> rest(0, 0.);
-  if (Level == 0) {  // coarse level ----------------------------------
-                     //         std::vector<int> eldofs;
-    Vanka_solve(Level, *A[Level], *x[Level], *b[Level], 1.e-6, 40);
-#ifdef PRINT_CONV
-    std::cout << " Coarse res " << rest.second << " " << rest.first << std::endl;
-#endif
-  }  // --------------------------------------------------------------
-  ;
-  return 0;
-}
-
-// ====================================================================
-/// This function does one multigrid step with Vanka
-double MGSolBase::MGStep_Vanka(
-    int Level,            // Level
-    double Eps1,          // Tolerance
-    int MaxIter,          // n iterations
-    const int Gamma,      // Control V W cycle
-    const int Nc_pre,     // n pre-smoothing cycles
-    const int Nc_coarse,  // n coarse cycles
-    const int Nc_post     // n post-smoothing cycles
-) {
-  // ====================================================================
-  std::pair<int, double> rest(0, 0.);
-  if (Level == 0) {  // coarse level ----------------------------------
-    // coarse solution
-    Vanka_solve(Level, *A[Level], *x[Level], *b[Level], Eps1, MaxIter, true);
-    // coarse residual
-    res[Level]->resid(*b[Level], *x[Level], *A[Level]);
-#ifdef PRINT_CONV
-    std::cout << " Coarse res " << MaxIter << " " << res[Level]->l2_norm() << std::endl;
-#endif
-
-  }       // --------------------------------------------------------------
-  else {  // fine levels
-
-  // presmoothing (Nu1) ---------------------------------
-#ifdef PRINT_TIME  //  TC +++++++++++++++
-    std::clock_t start_time = std::clock();
-#endif  //  TC +++++++++++++++
-    int Nc_pre1 = Nc_pre;
-    if (Level < _NoLevels - 1) { Nc_pre1 *= 2; }
-    bool direct = /*(Level<5)?false:*/ true;
-    Vanka_solve(Level, *A[Level], *x[Level], *b[Level], Eps1, Nc_pre1, direct);
-    res[Level]->resid(*b[Level], *x[Level], *A[Level]);
-#ifdef PRINT_CONV  //  CC +++++++++++++++
-    std::cout << " Pre Lev " << Level << " res " << res[Level]->l2_norm();
-#endif             //  CC +++++++++++++++
-#ifdef PRINT_TIME  //  TC +++++++++++++++
-    std::clock_t end_time = std::clock();
-    std::cout << " time =" << double(end_time - start_time) / CLOCKS_PER_SEC << std::endl;
-#endif  //  TC +++++++++++++++
-    // --------- end presmoothing (Nc_pre) ------------------------
-
-    // restriction
-    b[Level - 1]->matrix_mult(*res[Level], *Rst[Level - 1]);
-
-    //  solving of system of equations for the residual on the coarser grid
-    x[Level - 1]->close();
-    x[Level - 1]->zero();
-    for (int g = 1; g <= Gamma; g++) {
-      MGStep_Vanka(Level - 1, Eps1, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post);
-    }
-
-    // interpolation of the solution from the coarser grid (projection)
-    res[Level]->matrix_mult(*x[Level - 1], *Prl[Level]);
-    // adding the coarse solution
-    x[Level]->add(*res[Level]);  //  *x[Level] +=*res[Level];
-
-    // postsmooting (Nc_post) --------------------------------------------
-#ifdef PRINT_TIME               //  TC +++++++++++++++
-    start_time = std::clock();  //   initial set
-#endif                          //  TC +++++++++++++++
-    //  postsmooting
-    int Nc_post1 = Nc_post;
-    if (Level < _NoLevels - 1) { Nc_post1 *= 2; }
-    Vanka_solve(Level, *A[Level], *x[Level], *b[Level], Eps1, Nc_post1, direct);
-    res[Level]->resid(*b[Level], *x[Level], *A[Level]);
-#ifdef PRINT_CONV  //  CC +++++++++++++++
-    std::cout << " Post Lev " << Level << " res " << res[Level]->l2_norm();
-#endif             //  CC +++++++++++++++
-#ifdef PRINT_TIME  //  TC +++++++++++++++
-    end_time = std::clock();
-    std::cout << " time =" << double(end_time - start_time) / CLOCKS_PER_SEC << std::endl;
-#endif  //  TC +++++++++++++++
-        // ----------------  end postsmoothing ---------------------------
-  }
-  // end cycle -------------------------------------
-  res[Level]->close();
-  double norm2 = res[Level]->l2_norm();
-  return norm2;
-}
-
-// ========================================================
-/// This function solves a Vanka step  Ax=b
-
-void MGSolBase::Vanka_solve(
-    int Level,                    /// Level
-    SparseMatrixM& matrix_in,     /// Matrix A
-    NumericVectorM& solution_in,  /// Previous solution x
-    NumericVectorM& rhs_in,       /// Rhs b
-    const double tol,             /// Tolerance
-    const int m_its,              /// n smoothing cycles
-    bool isdirect) {
-  const int nel_e = _mgmesh._off_el[0][Level + _NoLevels * _iproc + 1];
-  const int nel_b = _mgmesh._off_el[0][Level + _NoLevels * _iproc];
-
-  int size;  // linear system size
-  DenseMatrixM Mat;
-  DenseVectorM sol, loc_rhs;
-
-  // Petsc variables init
-  PetscErrorCode ierr;
-  PetscInt ncols;
-  const PetscInt* cols;
-  const PetscScalar* vals;
-
-  // Make sure the data passed in are really of Petsc types
-  PetscMatrixM* matrix = libmeshM_cast_ptr<PetscMatrixM*>(&matrix_in);
-  PetscVectorM* solution = libmeshM_cast_ptr<PetscVectorM*>(&solution_in);
-  PetscVectorM* rhs = libmeshM_cast_ptr<PetscVectorM*>(&rhs_in);
-
-  // Close the matrices and vectors in case this wasn't already done.
-  matrix->close();
-  solution->close();
-  rhs->close();
-
-  /// a) Set up
-  // geometry -----------------------------------------------------------------------------------
-  const int offset = _mgmesh._NoNodes[Level];  // mesh nodes
-  int el_conn[NDOF_FEM];                       // element connectivity
-  double xx_qnds[DIMENSION * NDOF_FEM];
-
-  vector<double> x_loc[offset];
-  solution->localize(*x_loc);
-  vector<double> b_loc[offset];
-  rhs->localize(*b_loc);
-
-  int nsm = m_its / 2;
-  for (int ismooth = 0; ismooth <= nsm; ismooth++) {             // smooth loop
-    for (int iel = 0; iel < (nel_e - nel_b); iel++) {            // loop over subdomains
-      _mgmesh.get_el_nod_conn(0, Level, iel, el_conn, xx_qnds);  // get connectivity and coord
-      std::vector<int> subdom_indx;  // subdom restricted indx with no repeated dof
-      for (int idof = 0; idof < NDOF_P; idof++) {
-        ierr = MatGetRow(matrix->mat(), el_conn[idof], &ncols, &cols, NULL);
-        for (int icol = 0; icol < ncols; icol++) subdom_indx.push_back(cols[icol]);
-        ierr = MatRestoreRow(matrix->mat(), el_conn[idof], &ncols, &cols, &vals);
-      }
-
-      std::sort(subdom_indx.begin(), subdom_indx.end());  // removing duplicates
-      auto last = std::unique(subdom_indx.begin(), subdom_indx.end());
-      subdom_indx.erase(last, subdom_indx.end());
-      size = subdom_indx.size();
-
-      PetscInt idx[size];
-      for (int i = 0; i < size; i++) { idx[i] = subdom_indx[i]; }
-      if (isdirect == true) {
-        //                 cout<<"diretto"<<Level<<endl;
-        PetscScalar matr[size * size];  // Resize with actual linear system size
-        Mat.resize(size, size);
-        sol.resize(size);
-        loc_rhs.resize(size);
-        ierr = MatGetValues(matrix->mat(), size, idx, size, idx, matr);  // extract values from global matrix
-
-        for (int inode = 0; inode < size; inode++) {  // loop over ndof
-          //               std::cout << el_conn[inode] << " " ;
-          ierr = MatGetRow(matrix->mat(), idx[inode], &ncols, &cols, &vals);
-
-          loc_rhs(inode) = (*b_loc)[idx[inode]];  // RHS from assembly
-          for (int i = 0; i < size; i++) {
-            loc_rhs(inode) += matr[i + size * inode] * (*x_loc)[idx[i]];  // sum diagonal values
-          }
-          for (int i = 0; i < ncols; i++) {
-            loc_rhs(inode) -= vals[i] * (*x_loc)[cols[i]];  // subtract all row values
-          }
-
-          ierr = MatRestoreRow(matrix->mat(), idx[inode], &ncols, &cols, &vals);
-
-        }  // end inode
-
-        Mat.zero();
-        for (int j = 0; j < size; j++)
-          for (int i = 0; i < size; i++) { Mat(j, i) = matr[i + j * size]; }
-        Mat.lu_solve(loc_rhs, sol);  // Solve Mat*sol=loc_rhs with libmesh lu decomposition
-        for (int i = 0; i < size; i++) { (*x_loc)[idx[i]] = sol(i); }
-        if (ismooth == nsm) {  // We save the solution only after the nsm-th smoothing cycle
-          for (int i = 0; i < size; i++) { (*x[Level]).set(idx[i], sol(i)); }
-        }
-      }
-      if (isdirect == false) {
-        _solver[Level]->restrict_solve_to(nullptr, SUBSET_DONT_TOUCH);
-        _solver[Level]->restrict_solve_to(&subdom_indx, SUBSET_DONT_TOUCH);
-        const int clearing = 0;
-        std::pair<int, double> rest(0, 0.);
-        rest = _solver[Level]->solve(matrix_in, solution_in, rhs_in, tol, m_its, clearing);
-        //                 cout<<size<<endl;
-        for (int i = 0; i < size; i++) { (*x_loc)[idx[i]] = solution_in(idx[i]); }
-
-        if (ismooth == nsm) {  // We save the solution only after the nsm-th smoothing cycle
-          for (int i = 0; i < size; i++) { (*x[Level]).set(idx[i], (*x_loc)[idx[i]]); }
-        }
-      }
-    }  // end subdom loop
-  }    // end ismooth loop
-  return;
-}
-#endif

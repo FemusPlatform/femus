@@ -171,6 +171,8 @@ FEMUS::~FEMUS()  // ============================================================
   delete _mg_time_loop;
   delete _start;
   //==============================
+
+  //   delete _mg_equations_map;
   //   delete _mg_utils;
   delete _mg_mesh;
   delete _mg_geomel;
@@ -232,6 +234,7 @@ void FEMUS::SetValueVector(const int& ff, std::vector<double> value) {
 void FEMUS::init_systems() {
   _mg_equations_map->init_data(0);
   _mg_equations_map->setDofBcOpIc();  // set operators
+
   _mg_equations_map->set_mesh_mg(*_mg_mesh);
 #ifdef HAVE_MED
   _mg_equations_map->set_mesh_med(*_med_mesh);
