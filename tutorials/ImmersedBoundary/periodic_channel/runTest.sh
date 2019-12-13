@@ -10,6 +10,9 @@ fi
 # copy standard Makefile for applications
 cp $FEMUS_DIR/solvers/Makefile .
 
+cp $FEMUS_DIR/solvers/MGSolverIB/*.h SRC/
+cp $FEMUS_DIR/solvers/MGSolverIB/*.C SRC/
+
 # create directories for results
 mkdir RESU
 mkdir RESU_MED
