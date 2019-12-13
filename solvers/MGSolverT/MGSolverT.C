@@ -167,15 +167,15 @@ void MGSolT::GenMatRhs(
     for (int deg = 0; deg < 3; deg++) {
       for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
         _data_eq[deg].mg_eqs[eq]->get_el_sol(
-            0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+            0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
             _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
       }
     }
 
     _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[T_F]]->get_el_sol(
-        0, 1, el_ndof[2], el_conn, offset, 0, _T_1ts);  // time step -1
-    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[T_F]]->get_el_oldsol(
-        0, 1, el_ndof[2], el_conn, offset, 0, _T_2ts);  // time step -2
+        0, 0, 1, el_ndof[2], el_conn, offset, 0, _T_1ts);  // time step -1
+    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[T_F]]->get_el_sol(
+        1, 0, 1, el_ndof[2], el_conn, offset, 0, _T_2ts);  // time step -2
 
     // ----------------------------------------------------------------------------------
     /// 2. Boundary integration  (bc)
@@ -228,7 +228,7 @@ void MGSolT::GenMatRhs(
   el_dof_indices.clear();
   A[Level]->close();
   if (mode == 1) { b[Level]->close(); }
-    //   A[Level]->print(); b[Level]->print();
+  //   A[Level]->print(); b[Level]->print();
 #ifdef PRINT_INFO
   std::cout << " Matrix Assembled(T)  for  Level " << Level << " dofs " << A[Level]->n() << "\n";
 #endif
@@ -265,8 +265,8 @@ void MGSolT::MGTimeStep(
               << std::endl;
 #endif
 
-    x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-    x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+    x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+    x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
   }
   return;
 }  // =======================================================================================
