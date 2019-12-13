@@ -252,6 +252,11 @@ class FEMUS {
   void setCtrlDomain(
       const double xMin, const double xMax, const double yMin, const double yMax, const double zMin,
       const double zMax);
+  // ================================================================================================
+  double GetValue(const int& ff, int flag);
+  void SetValue(const int& ff, double value);
+  void SetValueVector(const int& ff, std::vector<double> value);
+  // ================================================================================================
 
 //=============================================================================
 //                              FUNCTIONS USING
@@ -429,11 +434,6 @@ class FEMUS {
   void InitTurbulence(int MeshID);
   void CalcTurbulence();
 
-  // ================================================================================================
-  double GetValue(const int& ff, int flag);
-  void SetValue(const int& ff, double value);
-  void SetValueVector(const int& ff, std::vector<double> value);
-  // ================================================================================================
   void SetPieceFieldOnYdist(MEDCoupling::MEDCouplingFieldDouble* Field);
 
   //     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> ReadField(
