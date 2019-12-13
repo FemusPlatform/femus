@@ -87,6 +87,14 @@ MGSolDS::MGSolDS(
   /// D) Setting nondimensional parameters _alpha _IPrdl _IRe .....
 
   _SolveDS = (_mgutils._sim_config["SolveFluidStructure"].compare("yes") == 0) ? true : false;
+
+  // extra vector d_aux for mesh movement in MoveMesh
+  int n_glob = _mgmesh._NoNodes[_NoLevels - 1] * (_nDSdim + 1);
+  const ParallelM::Communicator& comm1 = _mgmesh._comm.comm();
+  d_aux.resize(1);
+  // displacement
+  d_aux[0] = NumericVectorM::build(comm1).release();
+  d_aux[0]->init(n_glob, false, SERIALM);
   return;
 }
 
@@ -183,7 +191,7 @@ void MGSolDS::GenMatRhs(
     for (int deg = 0; deg < 3; deg++) {
       for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
         _data_eq[deg].mg_eqs[eq]->get_el_sol(
-            0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+            0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
             _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
       }
     }
@@ -309,9 +317,9 @@ void MGSolDS::MGTimeStep(
 #endif
 
     /// D) Update of the old solution at the top Level  (MGSolDS::OldSol_update),
-    x_oold[_NoLevels - 1]->zero();
-    x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-    x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+    x_old[1][_NoLevels - 1]->zero();
+    x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+    x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
     const int flag_moving_mesh = _mgutils._geometry["moving_mesh"];
     if (flag_moving_mesh == 1) MoveMesh(_NoLevels - 1);
   }
@@ -329,8 +337,8 @@ void MGSolDS::MoveMesh(const int Level                 // Level <-
   // print linear -----------------------------------
   double* sol_c = new double[_mgmesh._GeomEl.n_l[0]];
   int ndof_lev = 0;
-  disp[Level]->close();
-  disp[Level]->zero();
+  d_aux[0]->close();
+  d_aux[0]->zero();
   for (int iproc = 0; iproc < _mgmesh._n_subdom; iproc++) {
     int n_iel0 = _mgmesh._off_el[0][_NoLevels * iproc + 0];
     int n_ielf = _mgmesh._off_el[0][0 + _NoLevels * iproc + 1];
@@ -340,21 +348,21 @@ void MGSolDS::MoveMesh(const int Level                 // Level <-
         const int ivar = 0;
         for (int in = 0; in < NDOF_FEM; in++) {
           int gl_i = _mgmesh._el_map[0][e_indx + in];
-          double val = (*x_old[Level])(_node_dof[Level][gl_i + ivar * offset]);
-          disp[Level]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], val);
+          double val = (*x_old[0][Level])(_node_dof[Level][gl_i + ivar * offset]);
+          d_aux[0]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], val);
         }
       }       // end solid if
       else {  // liquid at coarse level
         const int ivar = 0;
         for (int in = 0; in < NDOF_P; in++) {
           int gl_i = _mgmesh._el_map[0][e_indx + in];
-          double val = (*x_old[Level])(_node_dof[Level][gl_i + ivar * offset]);
+          double val = (*x_old[0][Level])(_node_dof[Level][gl_i + ivar * offset]);
           sol_c[in] = val;
         }
         for (int in = 0; in < NDOF_FEM; in++) {  // mid-points
           double sum = 0.;
           for (int jn = 0; jn < NDOF_P; jn++) { sum += _mgmesh._GeomEl.Prol[in * NDOF_P + jn] * sol_c[jn]; }
-          disp[Level]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], sum);
+          d_aux[0]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], sum);
         }
       }
     }
@@ -367,27 +375,27 @@ void MGSolDS::MoveMesh(const int Level                 // Level <-
           const int ivar = 0;
           for (int in = 0; in < NDOF_FEM; in++) {
             int gl_i = _mgmesh._el_map[0][e_indx + in];
-            double val = (*x_old[Level])(_node_dof[Level][gl_i + ivar * offset]);
-            disp[Level]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], val);
+            double val = (*x_old[0][Level])(_node_dof[Level][gl_i + ivar * offset]);
+            d_aux[0]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], val);
           }
         }       // end solid if
         else {  // liquid
           const int ivar = 0;
           for (int in = 0; in < NDOF_P; in++) {
             int gl_i = _mgmesh._el_map[0][e_indx + in];
-            double val = (*disp[Level])(_node_dof[Level][gl_i + ivar * offset]);
+            double val = (*d_aux[0])(_node_dof[Level][gl_i + ivar * offset]);
             sol_c[in] = val;
           }
           for (int in = 0; in < NDOF_FEM; in++) {  // mid-points
             double sum = 0.;
             for (int jn = 0; jn < NDOF_P; jn++) { sum += _mgmesh._GeomEl.Prol[in * NDOF_P + jn] * sol_c[jn]; }
-            disp[Level]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], sum);
+            d_aux[0]->set(_node_dof[Level][_mgmesh._el_map[0][e_indx + in]], sum);
           }
         }  // end liquid
       }    // ---- end iel -------------------------
     }      // 2bB end interpolation over the fine mesh ------------------------
   }
-  disp[Level]->close();
+  d_aux[0]->close();
   delete[] sol_c;
   return;
 }
