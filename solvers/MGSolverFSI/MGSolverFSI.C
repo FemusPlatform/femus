@@ -225,7 +225,6 @@ void MGSolFSI::GenMatRhs(const double /* time*/, const int Level, const int mode
     get_el_dof_bc(Level, iel + ndof_lev, _el_dof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd);
     // field data  ------------------------------------------------------
     get_el_field_data(iel, Level, el_conn, offset, el_ndof, ndof_lev, u_old, u_oold, u_nl, p_proj, dp_proj);
-    for (int i = 0; i < NDOF_FEM; i++) _dx_old[i] = dp_proj[i];
     // initializing  volume quantities
     for (int idim = 0; idim < _nNSdim; idim++) {  // quad loop entities (vector)
       x_m[idim] = 0.;
@@ -346,8 +345,8 @@ void MGSolFSI::MGTimeStep(
     if (_Restart == 0) {  // sdsx last solution is stored into sdsx disp vector
       for (int kdim = 0; kdim < _nNSdim; kdim++) {
         const int num = _data_eq[2].tab_eqs[SDSX_F + kdim];
-        _data_eq[2].mg_eqs[num]->x_old[_NoLevels - 1]->localize(
-            *_data_eq[2].mg_eqs[num]->disp[_NoLevels - 1]);  // Moves the mesh (interpolation of mid-points)
+        _data_eq[2].mg_eqs[num]->x_old[0][_NoLevels - 1]->localize(
+            *_data_eq[2].mg_eqs[num]->d_aux[0]);  // Moves the mesh (interpolation of mid-points)
       }
     }
     _Restart = 1;
@@ -356,7 +355,7 @@ void MGSolFSI::MGTimeStep(
       const int num = _data_eq[2].tab_eqs[SDSX_F + kdim];
       _mgmesh.Translate(
           kdim,
-          (*_data_eq[2].mg_eqs[num]->disp[_NoLevels - 1]));  // Moves the mesh (interpolation of mid-points)
+          (*_data_eq[2].mg_eqs[num]->d_aux[0]));  // Moves the mesh (interpolation of mid-points)
     }
     x[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
     // ========================================================================================= //
@@ -399,8 +398,8 @@ void MGSolFSI::MGTimeStep(
       MGSolve(1.e-6, 15);                                                             // solve
                                                                                       //
     }
-    x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);
-    x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+    x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);
+    x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
 #if (FSI_EQUATIONS % 2 == 0)
     x[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
 #endif

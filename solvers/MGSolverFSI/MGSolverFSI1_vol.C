@@ -44,13 +44,13 @@ void MGSolFSI::get_el_field_data(
   for (int deg = 0; deg < 3; deg++)
     for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
       _data_eq[deg].mg_eqs[eq]->get_el_sol(
-          0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+          0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
           _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
     }
   _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[FS_F]]->get_el_sol(
-      _nNSdim, 1, el_ndof[1], el_conn, offset, 0, _data_eq[1].ub);  // pressure
+      0, _nNSdim, 1, el_ndof[1], el_conn, offset, 0, _data_eq[1].ub);  // pressure
   _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[FS_F]]->get_el_sol(
-      0, _nNSdim, el_ndof[2], el_conn, offset, 0, u_old);  // old vel
+      0, 0, _nNSdim, el_ndof[2], el_conn, offset, 0, u_old);  // old vel
   _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[FS_F]]->get_el_nonl_sol(
       0, _nNSdim, el_ndof[2], el_conn, offset, 0, u_nl);  //  non linear vel
   return;

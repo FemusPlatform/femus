@@ -81,9 +81,9 @@ void MGSolFSI::set_bc_matrix(
               KeM(indx_row, indx_row) = 1.;
               FeM(indx_row) = 0.;
               //                             if (xyz_g[0]>0.199&&xyz_g[0]<0.301 && xyz_g[1]>0.4)
-              //                                     FeM(indx_row) += -20*_dx_old[0]*row_shift;
+              //                                     FeM(indx_row) += -20*_dx_old [0][0]*row_shift;
               //                             if (xyz_g[0]>0.199&&xyz_g[0]<0.301 && xyz_g[1]<0.01)
-              //                                     FeM(indx_row) +=  20*_dx_old[0]*row_shift;
+              //                                     FeM(indx_row) +=  20*_dx_old [0][0]*row_shift;
             } else {
               for (int jvar = 0; jvar < _nNSdim; jvar++) {  //  -beta_n*n*( u.n)
                 const int indj = sur_toply[lbnode] + jvar * el_ndof[2];
