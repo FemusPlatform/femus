@@ -189,13 +189,13 @@ void MGSolIB::GenMatRhs(
     for (int deg = 0; deg < 3; deg++) {
       for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
         _data_eq[deg].mg_eqs[eq]->get_el_sol(
-            0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+            0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
             _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
       }
     }
     double u_old[NDOF_FEM];
     _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[IB_F + _dir]]->get_el_sol(
-        0, 1, el_ndof[2], el_conn, offset, 0, u_old);  // old vel
+        0, 0, 1, el_ndof[2], el_conn, offset, 0, u_old);  // old vel
 
     // ----------------------------------------------------------------------------------
     /// 2. Boundary integration  (bc)
@@ -265,7 +265,7 @@ void MGSolIB::MGTimeStep(
     const int num = _data_eq[2].tab_eqs[SDSX_F + kdim];
     _mgmesh.Translate(
         kdim,
-        (*_data_eq[2].mg_eqs[num]->disp[_NoLevels - 1]));  // Moves the mesh (interpolation of mid-points)
+        (*_data_eq[2].mg_eqs[num]->d_aux[0]));  // Moves the mesh (interpolation of mid-points)
   }
 #endif
 
@@ -290,7 +290,7 @@ void MGSolIB::MGTimeStep(
             << std::endl;
 #endif
   /// D) Update of the old solution at the top Level  (MGSolIB::OldSol_update),
-  x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);
+  x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);
 
   return;
 }  // =======================================================================================
