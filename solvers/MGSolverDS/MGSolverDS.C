@@ -89,7 +89,7 @@ MGSolDS::MGSolDS(
   _SolveDS = (_mgutils._sim_config["SolveFluidStructure"].compare("yes") == 0) ? true : false;
 
   // extra vector d_aux for mesh movement in MoveMesh
-  int n_glob = _mgmesh._NoNodes[_NoLevels - 1] * (_nDSdim + 1);
+  int n_glob = _mgmesh._NoNodes[_NoLevels - 1];
   const ParallelM::Communicator& comm1 = _mgmesh._comm.comm();
   d_aux.resize(1);
   // displacement
@@ -519,7 +519,8 @@ void DS_param::read_file() {  //  ==============================================
     std::cout << it->first << " " << it->second << "\n";
   }
   std::cout << "\033[038;5;" << SDS_F + 50 << ";1m \
-                \n----------------------------------------------\n\033[0m" << std::endl;
+                \n----------------------------------------------\n\033[0m"
+            << std::endl;
 #endif
 
   fin.close();
