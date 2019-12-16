@@ -600,7 +600,7 @@ class MGSolBase
   // Functions ===================================================================================
   void Vanka_solve(
       int Level, SparseMatrixM& matrix_in, NumericVectorM& solution_in, NumericVectorM& rhs_in,
-      const double tol, const int m_its);
+      const double tol, const int m_its, bool isdirect = false);
   // --------------------------------------------------------------------
   double Vanka_test(int Level  // Level
   );
