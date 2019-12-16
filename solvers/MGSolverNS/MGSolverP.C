@@ -446,9 +446,9 @@ void MGSolP::MGTimeStep_no_up(
 /// This function controls the assembly and the solution of the P_equation system:
 void MGSolP::MGUpdateStep() {
   if (_SolveP == 1) {
-    x_oold[_NoLevels - 1]->localize(*x_ooold[_NoLevels - 1]);  // p(n-2)
-    x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);    // p(n-1)
-    x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);         // p(n)
+    x_old[1][_NoLevels - 1]->localize(*x_old[2][_NoLevels - 1]);  // p(n-2)
+    x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);  // p(n-1)
+    x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);         // p(n)
   }
 
   return;
@@ -484,17 +484,17 @@ void MGSolP::get_el_data(int el_ndof[], int el_conn[], int offset) {
 
   for (int idim = 0; idim < _nPdim; idim++) {
     _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol(
-        0, 1, el_ndof[2], el_conn, offset, idim, u_1ts);
-    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oldsol(
-        0, 1, el_ndof[2], el_conn, offset, idim, u_2ts);
-    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_oooldsol(
-        0, 1, el_ndof[2], el_conn, offset, idim, u_3ts);
+        0, 0, 1, el_ndof[2], el_conn, offset, idim, u_1ts);
+    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol(
+        1, 0, 1, el_ndof[2], el_conn, offset, idim, u_2ts);
+    _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F + idim]]->get_el_sol(
+        2, 0, 1, el_ndof[2], el_conn, offset, idim, u_3ts);
   }
 
   _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_sol(
-      0, 1, el_ndof[1], el_conn, offset, 0, _p_1ts);  // dp pressure
-  _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_oldsol(
-      0, 1, el_ndof[1], el_conn, offset, 0, p_2ts);  // dp pressure
+      0, 0, 1, el_ndof[1], el_conn, offset, 0, _p_1ts);  // dp pressure
+  _data_eq[1].mg_eqs[_data_eq[1].tab_eqs[P_F]]->get_el_sol(
+      1, 0, 1, el_ndof[1], el_conn, offset, 0, p_2ts);  // dp pressure
 
   for (int dim = 0; dim < _nPdim; dim++)
     for (int node = 0; node < el_ndof[2]; node++)

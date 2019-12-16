@@ -38,21 +38,21 @@ void MGSolNS_coup::get_el_field_data(
   for (int deg = 0; deg < 3; deg++)
     for (int eq = 0; eq < _data_eq[deg].n_eqs; eq++) {
       _data_eq[deg].mg_eqs[eq]->get_el_sol(
-          0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
+          0, 0, _data_eq[deg].indx_ub[eq + 1] - _data_eq[deg].indx_ub[eq], el_ndof[deg], el_conn, offset,
           _data_eq[deg].indx_ub[eq], _data_eq[deg].ub);
     }
 
   _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_nonl_sol(
       0, _nNSdim, el_ndof[2], el_conn, offset, 0, _u_nl);
   _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_sol(
-      0, _nNSdim, el_ndof[2], el_conn, offset, 0, _u_1ts);
-  _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_oldsol(
-      0, _nNSdim, el_ndof[2], el_conn, offset, 0, _u_2ts);
+      0, 0, _nNSdim, el_ndof[2], el_conn, offset, 0, _u_1ts);
+  _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_sol(
+      1, 0, _nNSdim, el_ndof[2], el_conn, offset, 0, _u_2ts);
 
   _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_sol(
-      _nNSdim, 1, el_ndof[1], el_conn, offset, 0, _p_1ts);  // pressure
-  _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_oldsol(
-      _nNSdim, 1, el_ndof[1], el_conn, offset, 0, _p_2ts);  // pressure
+      0, _nNSdim, 1, el_ndof[1], el_conn, offset, 0, _p_1ts);  // pressure
+  _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[NS_F]]->get_el_sol(
+      1, _nNSdim, 1, el_ndof[1], el_conn, offset, 0, _p_2ts);  // pressure
 
   for (int i = 0; i < NDOF_P; i++) {
     if (_NS_parameter._TimeDisc == 2) _Pressure[i] = (2. * _p_1ts[i] - _p_2ts[i]);

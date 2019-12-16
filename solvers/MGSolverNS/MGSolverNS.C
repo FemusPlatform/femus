@@ -341,9 +341,9 @@ void MGSolNS::MGTimeStep_no_up(
 
 void MGSolNS::MGUpdateStep() {
   if (_SolveNS) {
-    x_oold[_NoLevels - 1]->localize(*x_ooold[_NoLevels - 1]);  // time step -2
-    x_old[_NoLevels - 1]->localize(*x_oold[_NoLevels - 1]);    // time step -1
-    x[_NoLevels - 1]->localize(*x_old[_NoLevels - 1]);         // time step
+    x_old[1][_NoLevels - 1]->localize(*x_old[2][_NoLevels - 1]);  // time step -2
+    x_old[0][_NoLevels - 1]->localize(*x_old[1][_NoLevels - 1]);  // time step -1
+    x[_NoLevels - 1]->localize(*x_old[0][_NoLevels - 1]);         // time step
     x[_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
   }
 

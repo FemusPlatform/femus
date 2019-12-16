@@ -10,7 +10,7 @@
 /// \ingroup NS_Boundary_conditions
 // ========================================================================
 /// Navier-Stokes boundary conditions
-enum bound_cond {
+enum bound_cond_NS {
   interior = 11,  ///< 1 (n) \f$ {\sigma}_{nn}=0  \f$  + 1(t)   \f$   {\sigma}_{nt}=0   \f$
   nostress = 11,  ///< 1 (n) \f$ {\sigma}_{nn}=0  \f$  + 1(t)   \f$   {\sigma}_{nt}=0   \f$
   outflow = 11,  ///<  \f$  p=0  \wedge  ( {\boldsymbol \tau} \cdot {\bf n} ) \cdot {\boldsymbol \varphi_t } =
