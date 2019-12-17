@@ -186,7 +186,7 @@ void MGSolBase::MGSolve(
     std::cout << "\033[38;5;196m  --- bNorm is too high!!---  \033[0m \n";
     return;
   }
-  if (bNorm < 1.e-8) {
+  if (bNorm < 1.e-12) {
     x[_NoLevels - 1]->close();
     x[_NoLevels - 1]->zero();
     std::cout << "\033[38;5;196m  ----------bNorm <1.e-8 !!----------  \033[0m \n";
@@ -218,8 +218,10 @@ void MGSolBase::MGSolve(
     rest = MGStep(_NoLevels - 1, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post, clearing);  // MGStep
 //       rest=0.; MGCheck(_NoLevels-1); // check projection-restriction
 #else
-    rest = MGStep_Vanka(_NoLevels - 1, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse, Nc_post);  // MGStep_Vanka
-                                                                                             // Vanka_test(0); // check projection-restriction
+    rest = MGStep_Vanka(
+        _NoLevels - 1, 1.e-20, MaxIter, Gamma, Nc_pre, Nc_coarse,
+        Nc_post);  // MGStep_Vanka
+                   // Vanka_test(0); // check projection-restriction
 #endif
     if (rest < Eps1 * (1. + bNorm)) exit_mg = 1;  // exit test
     cycle++;
@@ -255,7 +257,7 @@ double MGSolBase::MGStep(
   }       // --------------------------------------------------------------
   else {  // fine levels
 
-  // presmoothing (Nu1) ---------------------------------
+    // presmoothing (Nu1) ---------------------------------
 #ifdef PRINT_TIME  //  TC +++++++++++++++
     std::clock_t start_time = std::clock();
 #endif  //  TC +++++++++++++++
@@ -329,9 +331,9 @@ void MGSolBase::MGCheck(int Level) const {
   return;
 }
 
-  // *************************************************************************
-  //  SET FUNCTIONS
-  // ***********************************************************************=
+// *************************************************************************
+//  SET FUNCTIONS
+// ***********************************************************************=
 
 #ifdef TWO_PHASE_LIB
 void MGSolBase::set_mgcc(MGSolCC& cc) { _msolcc = &cc; }

@@ -257,16 +257,16 @@ void MGTimeLoop::transient_control_onestep(
 }
 /// This function controls the transient loop
 void MGTimeLoop::transient_control_onestep(
-    const int& nmax_step,               ///< number max of steps         (in)
-    const int& it,                      ///< initial time iteration      (in)
-    const int& t_step,                  ///< running time iteration      (in)
-    const int& print_step,              ///< print every                 (in)
-    double& time,                       ///< running time                (in)
-    double& dt,                         ///< step time                   (in)
-    const int& eq_min,                  ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-    const int& eq_max,                  ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-    std::vector<double> controlled_eq,  /// vector with the number of convergence-controlled equation
-    bool& converged,                    ///< check if the solution converged (1->converged) (out)
+    const int& nmax_step,            ///< number max of steps         (in)
+    const int& it,                   ///< initial time iteration      (in)
+    const int& t_step,               ///< running time iteration      (in)
+    const int& print_step,           ///< print every                 (in)
+    double& time,                    ///< running time                (in)
+    double& dt,                      ///< step time                   (in)
+    const int& eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+    const int& eq_max,               ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+    std::vector<int> controlled_eq,  ///< equations to solve and to control convergence   (in)
+    bool& converged,                 ///< check if the solution converged (1->converged) (out)
     const double& toll)  // =================================================================================
 {
 // A Soving the system ****************************************************************

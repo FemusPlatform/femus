@@ -119,16 +119,16 @@ class MGTimeLoop {
   // ========================================================================================
   /// This function does one step of control solution
   void transient_control_onestep(
-      const int& nmax_step,               ///< number max of steps         (in)
-      const int& it,                      ///< iteration                   (in)
-      const int& t_step,                  ///< running time iteration      (in)
-      const int& print_step,              ///< print every                 (in)
-      double& time,                       ///< running time                (in)
-      double& dt,                         ///< step time                   (in)
-      const int& eq_min,                  ///< eq min to solve -> enum  FIELDS (equations_conf.h)
-      const int& eq_max,                  ///< eq max to solve -> enum  FIELDS (equations_conf.h)
-      std::vector<double> controlled_eq,  /// vector with the number of convergence-controlled equation
-      bool& converged,                    ///< check if the solution converged (1->converged)     (out)
+      const int& nmax_step,            ///< number max of steps         (in)
+      const int& it,                   ///< iteration                   (in)
+      const int& t_step,               ///< running time iteration      (in)
+      const int& print_step,           ///< print every                 (in)
+      double& time,                    ///< running time                (in)
+      double& dt,                      ///< step time                   (in)
+      const int& eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)
+      const int& eq_max,               ///< eq max to solve -> enum  FIELDS (equations_conf.h)
+      std::vector<int> controlled_eq,  ///< equations to solve and to control convergence      (in)
+      bool& converged,                 ///< check if the solution converged (1->converged)     (out)
       const double& toll);
   // ========================================================================================
   /// This function runs a time step with a feedback on the norm convergence

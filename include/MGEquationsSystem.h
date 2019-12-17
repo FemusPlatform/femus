@@ -70,7 +70,7 @@ class MGEquationsSystem : public MGSystem {
   inline iterator end() { return _equations.end(); }
   inline const_iterator begin() const { return _equations.begin(); }
   inline const_iterator end() const { return _equations.end(); }
-    ///@}
+  ///@}
 #ifdef TWO_PHASE
   void set_mgcc(MGSolCC& cc);
 #endif
@@ -114,14 +114,14 @@ class MGEquationsSystem : public MGSystem {
   );
 
   void eqnmap_timestep_loop_control(
-      const int& nmax_step,               ///< number max of steps                                        (in)
-      const int& it,                      ///< iteration number                                           (in)
-      const double& delta_t_step_in,      ///< delta t timestep                                           (in)
-      const int& eq_min,                  ///< eq min to solve -> enum  FIELDS (equations_conf.h)         (in)
-      const int& eq_max,                  ///< eq max to solve -> enum  FIELDS (equations_conf.h)         (in)
-      std::vector<double> controlled_eq,  ///< vector with the number of convergence-controlled equation  (in)
-      bool& converged,    ///< check if the solution converged (1->converged)             (out)
-      const double& toll  ///< tolerance                                                  (in)
+      const int& nmax_step,            ///< number max of steps                                        (in)
+      const int& it,                   ///< iteration number                                           (in)
+      const double& delta_t_step_in,   ///< delta t timestep                                           (in)
+      const int& eq_min,               ///< eq min to solve -> enum  FIELDS (equations_conf.h)         (in)
+      const int& eq_max,               ///< eq max to solve -> enum  FIELDS (equations_conf.h)         (in)
+      std::vector<int> controlled_eq,  ///< equations to solve and to control convergence              (in)
+      bool& converged,                 ///< check if the solution converged (1->converged)             (out)
+      const double& toll               ///< tolerance                                                  (in)
   );
 
   void eqnmap_timestep_loop_and_update(
