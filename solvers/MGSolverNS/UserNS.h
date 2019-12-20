@@ -18,7 +18,8 @@ enum bound_cond {
     pressure_outlet        =       28,     ///<  \f$  p=0  \wedge  u_{t1} = 0 \wedge u_{t2} = 0  \f$: Zero pressure and velocity field along tangential direction
     outflow_p              =       31,     ///<  \f$  p=p_0  \wedge  ( {\boldsymbol \tau} \cdot {\bf n} ) \cdot {\boldsymbol \varphi_t } = 0  \f$: Fixed pressure and null stress along tangential direction
     pressure_inlet         =       38,     ///<  \f$  p=p_0  \wedge  u_{t1} = 0 \wedge u_{t2} = 0  \f$: Fixed pressure and zero velocity field along tangential direction
-    penalty_turb           =       44,
+    penalty_turb           =       0,
+    periodic_stress        =       44,
     accelerating_swirl     =       85,     ///<  \f$ ( {\boldsymbol \tau} \cdot {\bf n} ) \cdot {\boldsymbol \varphi_{t2} } \propto {\bf u_{t1}} \f$: Accelerating stress for velocity component \f$ \bf{u_{t2}} \f$ velocity along \f$ \bf{t_1} \f$ (see #MGSolNS::TangType())
     decelerating_swirl     =      -85,     ///<  \f$ ( {\boldsymbol \tau} \cdot {\bf n} ) \cdot {\boldsymbol \varphi_{t2} } \propto {\bf u_{t1}} \f$: Decelerating stress for velocity component \f$ \bf{u_{t2}} \f$ velocity along \f$ \bf{t_1} \f$ (see #MGSolNS::TangType())
     swirl                  =       85,

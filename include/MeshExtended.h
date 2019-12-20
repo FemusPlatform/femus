@@ -15,8 +15,8 @@ class DataArrayDouble;
 // #endif
 class MeshExtended : public MGMesh {
 public:
-   std::vector<int>                      _bc_id;
-   std::vector<int>                     _mat_id;
+   std::vector<int>  _bc_id;
+   std::vector<int> _mat_id;
   // Constructor-Destructor
   MeshExtended(        const ParallelObjectM &comm,
                        MGUtils& mgutils,
@@ -34,7 +34,7 @@ public:
 #ifdef HAVE_MED
   void print_med(int Level,std::string filename);
 #endif
-  
+  void restart_cell_array(double array[], std::string FieldName);
 };
 
 #endif

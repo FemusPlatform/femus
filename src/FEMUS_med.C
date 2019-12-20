@@ -748,6 +748,70 @@ void FEMUS::SetPieceFieldOnYdist (
   return;
   }
 
+void FEMUS::SetPieceFieldOnVolFrac_parallel (
+  MEDCoupling::MEDCouplingFieldDouble * Field
+) {
+
+  double * FieldVal = const_cast<double *> ( Field->getArray()->getPointer() );
+  int  Cells = Field->getMesh()->getNumberOfCells();
+
+  const int nel_ef = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * _mg_mesh->_iproc + 1]; // start element
+  const int nel_bf = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * _mg_mesh->_iproc]; // stop element
+
+  // check number of cells
+  int err = ((nel_ef - nel_bf)==Cells)? 0:1;
+  if(err)
+    std::cerr<<"Wrong number of cells "<<nel_ef - nel_bf<<" "<<Cells<<std::endl;
+  
+  for ( int i = 0; i < Cells; i++ ) {
+      _mg_mesh->_VolFrac[nel_bf+i] = FieldVal[i];
+      }
+
+  if ( _mg_mesh->_NoLevels > 1 ) {
+
+      int ChildCells = pow ( 2, DIMENSION );
+
+      for ( int Lev = _mg_mesh->_NoLevels - 2; Lev >= 0; Lev-- ) {
+
+          const int nel_e = _mg_mesh->_off_el[0][Lev + _mg_mesh->_NoLevels * _mg_mesh->_iproc + 1]; // start element
+          const int nel_b = _mg_mesh->_off_el[0][Lev + _mg_mesh->_NoLevels * _mg_mesh->_iproc]; // stop element
+
+          int ActCells = nel_e - nel_b;
+
+          for ( int cell = 0; cell < ActCells; cell++ ) {
+              double val = 0;
+
+              for ( int child = 0; child < ChildCells; child++ )
+                val +=  _mg_mesh->_VolFrac[nel_bf + cell * ChildCells + child];
+
+              _mg_mesh->_VolFrac[nel_b + cell] = val / ChildCells;
+
+              }
+          }
+      }
+
+  int nProcs;
+  MPI_Comm_size ( MPI_COMM_WORLD, &nProcs );
+  int * shifts = new int[nProcs];
+  int * counts = new int[nProcs];
+
+  for ( int np = 0; np < nProcs; np++ ) {
+      const int nel_e = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * np + 1]; // start element
+      const int nel_b = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * np]; // stop element
+    
+      shifts[np] = nel_b;
+      counts[np] = nel_e - nel_b;
+      }
+  // Gathering yplus values on proc 0 for printing
+  MPI_Gatherv ( _mg_mesh->_VolFrac + nel_bf, nel_ef - nel_bf, MPI_DOUBLE, _mg_mesh->_VolFrac, counts, shifts, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+  delete [] shifts;
+  delete [] counts;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  return;
+  
+}  
 
 
 #endif

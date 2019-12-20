@@ -1388,7 +1388,6 @@ void MGSolDA::print_u (
   SolSuffix[0] = "";
   SolSuffix[1] = "_old";
   SolSuffix[2] = "_oold";
-  std::cout<<"=========================== MGSolDA::print_u ==============================\n";
   // print quad -------------------------------------
   for ( int ivar = 0; ivar < _nvars[2]; ivar++ )        {
       for( int timeStep = 0; timeStep < SolToPrint; timeStep ++ ){
@@ -2186,19 +2185,27 @@ void MGSolDA::read_u (
                   }
 
               // reading ivar param
-              _mgutils.read_Dhdf5 ( file_sol, "/" + _var_names[ivar] + SolSuffix[oldTstep], sol );
+              hid_t file = _mgutils.read_Dhdf5 ( file_sol, "/" + _var_names[ivar] + SolSuffix[oldTstep], sol );
+              
+              if(file == 0)
+                 std::cout<<"Read solution for system "<<_var_names[ivar]<<" found on file "<<namefile<<"\n";
+              else
+                 std::cout<<"Solution not found for system "<<_var_names[ivar]<<" on file "<<namefile<<" using default initial condition \n"; 
+              
               double Irefval = 1. / _refvalue[ivar]; // units
 
               // storing  ivar variables (in parallell)
-              for ( int iel = 0; iel < _mgmesh._off_el[0][_iproc * _NoLevels + _NoLevels] -
-                    _mgmesh._off_el[0][_iproc * _NoLevels + _NoLevels - 1]; iel++ ) {
-                  int  elem_gidx = ( iel + _mgmesh._off_el[0][_iproc * _NoLevels + _NoLevels - 1] ) * NDOF_FEM;
-
-                  for ( int  i = 0; i < el_nds; i++ ) { // linear and quad
-                      int k = _mgmesh._el_map[0][elem_gidx + i]; // the global node
-                      x[_NoLevels - 1]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], sol[k]*Irefval ); // set the field
-                      }
-                  }
+              if(file == 0){
+                   for ( int iel = 0; iel < _mgmesh._off_el[0][_iproc * _NoLevels + _NoLevels] -
+                         _mgmesh._off_el[0][_iproc * _NoLevels + _NoLevels - 1]; iel++ ) {
+                       int  elem_gidx = ( iel + _mgmesh._off_el[0][_iproc * _NoLevels + _NoLevels - 1] ) * NDOF_FEM;
+                   
+                       for ( int  i = 0; i < el_nds; i++ ) { // linear and quad
+                           int k = _mgmesh._el_map[0][elem_gidx + i]; // the global node
+                           x[_NoLevels - 1]->set ( _node_dof[_NoLevels - 1][k + ivar * offset], sol[k]*Irefval ); // set the field
+                           }
+                       }
+                   }
               }
 
           int ndof_lev = 0;

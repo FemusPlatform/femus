@@ -101,7 +101,7 @@
 /// EquationsMap standard constructor
 EquationsMap::EquationsMap() {
     Fill_FIELD_map();
-    ReadEquationsToAdd();
+    ReadFile_FillMap<int>("/DATA/Equations.in",_EquationsToAdd);
     Fill_pbName();
     }
 
@@ -111,7 +111,8 @@ void EquationsMap:: Fill_pbName ( ) {
     _myproblemP.clear();
 
 #ifdef _TURBULENCE_
-    ReadTurbulenceInfo();
+//     ReadTurbulenceInfo();
+    ReadFile_FillMap<std::string>("/DATA/Turbulence.in",_TurbulenceModel);
 #endif
 
 
@@ -274,7 +275,7 @@ void EquationsMap::initNavierStokes ( EquationSystemsExtendedM & EqMap ) {
         _nvars[0] = 0;
         _nvars[1] = 1;
         _nvars[2] = 0; // only  Linear(1) approx
-        EqMap.AddSolver<MGSolP> ( "NS2P", NS_F, _nvars[0], _nvars[1], _nvars[2], "p" );
+        EqMap.AddSolver<MGSolP> ( "NS2P", NS_F+3, _nvars[0], _nvars[1], _nvars[2], "p" );
         }
 
 // #if NS_EQUATIONS==3
@@ -936,72 +937,4 @@ void EquationsMap::setProblems ( MGSolBase *& ProbObj ) {
 
     return;
     }
-
-void EquationsMap::ReadEquationsToAdd() {
-    std::ostringstream filename;
-    filename << getenv ( "APP_PATH" ) << "/DATA/Equations.in";
-    std::ifstream fin;
-
-    fin.open ( filename.str().c_str() ) ; // stream file
-    std::string buf = "";
-
-    int value;
-
-    if ( fin.is_open() ) { // -------------------------------------------------------------
-        while ( buf != "/" ) {
-            fin >> buf;    // find "/" file start
-            }
-
-        fin >> buf;
-
-        while ( buf != "/" ) {
-            if ( buf == "#" ) {
-                getline ( fin, buf );    // comment line
-                }
-            else {
-                fin >> value;
-                _EquationsToAdd.insert ( std::pair<std::string, int> ( buf, value ) );
-                }
-
-            fin >> buf;
-            }
-        } // --------------------------------------------------------------------------------------
-
-    return;
-    }
-
-void  EquationsMap::ReadTurbulenceInfo() {
-    std::ostringstream filename;
-    filename << getenv ( "APP_PATH" ) << "/DATA/Turbulence.in";
-    std::ifstream fin;
-
-    fin.open ( filename.str().c_str() ) ; // stream file
-    std::string buf = "";
-
-    std::string value;
-
-    if ( fin.is_open() ) { // -------------------------------------------------------------
-        while ( buf != "/" ) {
-            fin >> buf;    // find "/" file start
-            }
-
-        fin >> buf;
-
-        while ( buf != "/" ) {
-            if ( buf == "#" ) {
-                getline ( fin, buf );    // comment line
-                }
-            else {
-                fin >> value;
-                _TurbulenceModel.insert ( std::pair<std::string, std::string> ( buf, value ) );
-                }
-
-            fin >> buf;
-            }
-        } // --------------------------------------------------------------------------------------
-
-    return;
-
-    }
-
 

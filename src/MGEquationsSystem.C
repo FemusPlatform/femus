@@ -522,27 +522,29 @@ void MGEquationsSystem::print_soln_h5(const int t_flag // time flag
   // print all systems ---------------------------
   MGEquationsSystem::const_iterator pos = _equations.begin();
   MGEquationsSystem::const_iterator pos_e = _equations.end();
-  for (; pos != pos_e; pos++) {
-    MGSolBase *mgsol = pos->second;
-    mgsol->print_u(filename.str(), NoLevels - 1);
-    if (_mgutils._sim_config["MG_ControlTemperature"] != "")
-      if (stoi(_mgutils._sim_config["MG_ControlTemperature"]) != 0)
-        mgsol->print_weight_med("mesh_sol.med", NoLevels - 1);
+  for(; pos!=pos_e; pos++)    {
+    MGSolBase *mgsol=pos->second;
+    mgsol->print_u(filename.str(),NoLevels-1);
+    if (_mgutils._sim_config["MG_ControlTemperature"]!="")
+      if(stoi(_mgutils._sim_config["MG_ControlTemperature"])!=0)
+        mgsol->print_weight_med("mesh_sol.med",NoLevels-1);
   }
-  // printing cell system data (MGSystem-> printdata)
-  for (int idata = 0; idata < _n_data[0] + _n_data[1]; idata++) {
+// printing cell system data (MGSystem-> printdata)
+  for(int idata=0; idata<_n_data[0]+_n_data[1]; idata++) {
     std::ostringstream dir_name;
     dir_name << "DATA" << idata;
-    print_data_view(filename.str(), idata, dir_name.str());
+    print_data_view(filename.str(),idata,dir_name.str());
   }
-  if (_mgutils._sim_config["MG_ImmersedBoundary"] != "")
-    if (stoi(_mgutils._sim_config["MG_ImmersedBoundary"]) != 0)
-      _mgmesh.print_VolFrac_hf5(filename.str(), "Piece_VolFrac");
-
-  if (_mgutils._sim_config["MG_DynamicalTurbulence"] != "")
-    if (stoi(_mgutils._sim_config["MG_DynamicalTurbulence"]) != 0)
-      _mgmesh.print_dist_hf5(filename.str(), _mgmesh._yplus, "YPLUS");
-
+  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
+   if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0) 
+     _mgmesh.print_VolFrac_hf5(filename.str(),"Piece_VolFrac");
+   
+  if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
+   if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){    
+     _mgmesh.print_dist_hf5(filename.str(),_mgmesh._dist,"CellDist")  ;
+     _mgmesh.print_dist_hf5(filename.str(),_mgmesh._yplus,"YPLUS")  ;
+   }
+   
   return;
 }
 
@@ -640,34 +642,33 @@ void MGEquationsSystem::print_soln_xmf(const int t_step, int /*n_lines*/,
   //   // print of CC
   //   print_xmfCC(out,t_step,n_lines,n_cells);
   // #endif
-  if (_mgutils._sim_config["MG_ImmersedBoundary"] != "")
-    if (stoi(_mgutils._sim_config["MG_ImmersedBoundary"]) != 0) {
-      // ----------------------------------------------------------
-      out << "<Attribute Name=\"Piece_VolFrac\" AttributeType=\"Scalar\" "
-             "Center=\"Cell\">\n";
+  if (_mgutils._sim_config["MG_ImmersedBoundary"]!="")
+    if(stoi(_mgutils._sim_config["MG_ImmersedBoundary"])!=0){
+  // ----------------------------------------------------------
+  out << "<Attribute Name=\"Piece_VolFrac\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
+  out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
+      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+  out << attr_file.str()
+//       femus_dir << "/" << output_dir << basesol << "."
+//       << setw(ndigits) << setfill('0') << t_step << ".h5"
+      << ":Piece_VolFrac\n";
+  out << "</DataItem>\n" << "</Attribute>";
+ }
+ 
+   if (_mgutils._sim_config["MG_DynamicalTurbulence"]!="")
+   if(stoi(_mgutils._sim_config["MG_DynamicalTurbulence"])!=0){
+      out << "<Attribute Name=\"CellDist\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
       out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-          << n_elements * NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
-      out << attr_file.str()
-          //       femus_dir << "/" << output_dir << basesol << "."
-          //       << setw(ndigits) << setfill('0') << t_step << ".h5"
-          << ":Piece_VolFrac\n";
-      out << "</DataItem>\n"
-          << "</Attribute>";
-    }
-
-  if (_mgutils._sim_config["MG_DynamicalTurbulence"] != "")
-    if (stoi(_mgutils._sim_config["MG_DynamicalTurbulence"]) != 0) {
-      out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" "
-             "Center=\"Cell\">\n";
+      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+      out << attr_file.str()  << ":CellDist\n";
+      out << "</DataItem>\n" << "</Attribute>";     
+     
+      out << "<Attribute Name=\"YPLUS\" AttributeType=\"Scalar\" Center=\"Cell\">\n";
       out << "<DataItem  DataType=\"Float\" Precision=\"8\" Dimensions=\""
-          << n_elements * NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
-      out << attr_file.str()
-          //       femus_dir << "/" << output_dir << basesol << "."
-          //       << setw(ndigits) << setfill('0') << t_step << ".h5"
-          << ":YPLUS\n";
-      out << "</DataItem>\n"
-          << "</Attribute>";
-    }
+      << n_elements*NSUBDOM << "  " << 1 << "\" Format=\"HDF\">  \n";
+      out << attr_file.str()  << ":YPLUS\n";
+      out << "</DataItem>\n" << "</Attribute>";
+  } 
 
   out << "</Grid>\n"
       << "</Domain> \n"
@@ -714,8 +715,7 @@ void MGEquationsSystem::read_soln(const int t_step) {
   buffer >> restart_time;
 
   // add parameter to system
-  //   _mgutils.set_par("restartime",restart_time);
-  _mgutils.set_sim_par("restartime", std::to_string(restart_time));
+  _mgutils._sim_config.insert(std::make_pair<std::string, std::string>("restartime", std::to_string(restart_time)));
   // ---------------------------------------------------
   // reading data from  sol.N.h5
   // ---------------------------------------------------

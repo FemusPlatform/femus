@@ -91,11 +91,6 @@ IbUtils::SetMeshes (MEDCoupling::MEDCouplingUMesh * SolidBodyMesh,
   _LinearFluidMesh->zipCoords();
   _LinearSolidBodyMesh->zipCoords();
   
-//   if(_Proc==0){
-//   MEDCoupling::WriteUMesh("linear_solid.med",_LinearSolidBodyMesh,true);
-//   MEDCoupling::WriteUMesh("linear_fluid.med",_LinearFluidMesh,true);
-//   }
-//   PrintMed(_LinearFluidMesh    ,"linear_fluid.med");
 
   FemusMesh2->decrRef ();
   PalaMesh->decrRef ();

@@ -270,9 +270,8 @@ void FEMUS::init_systems()
         abort();
     }
     _MgEquationMapInitialized = true;
-    //     std::cout<<"Creating interface for mesh "<<_mg_utils->_interface_mesh.c_str()<<std::endl;
-//     init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
-//     init_par_interface ( 2,true );
+    init_interface ( _GlobInterfaceId, 2, _mg_utils->_interface_mesh.c_str() );
+    init_par_interface ( 2,true );
 }
 
 
@@ -459,6 +458,31 @@ void FEMUS::dummy_step (
 )   // ========================================================================
 {
     _mg_time_loop->dummy_step ( t_in,t_step,print_step,time,dt ); ///< step time
+    return;
+}
+
+void FEMUS::UpdateDist(){
+  std::cout<<"Sharing cell wise wall dist field values \n";  
+  const int nel_ef = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * _mg_mesh->_iproc + 1]; // start element
+  const int nel_bf = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * _mg_mesh->_iproc]; // stop element 
+  
+  int nProcs;
+  MPI_Comm_size ( MPI_COMM_WORLD, &nProcs );
+  int * shifts = new int[nProcs];
+  int * counts = new int[nProcs];
+
+  for ( int np = 0; np < nProcs; np++ ) {
+      const int nel_e = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * np + 1]; // start element
+      const int nel_b = _mg_mesh->_off_el[0][ ( _mg_mesh->_NoLevels - 1 ) + _mg_mesh->_NoLevels * np]; // stop element
+    
+      shifts[np] = nel_b;
+      counts[np] = nel_e - nel_b;
+      }
+  // Gathering yplus values on proc 0 for printing
+  MPI_Gatherv ( _mg_mesh->_dist + nel_bf, nel_ef - nel_bf, MPI_DOUBLE, _mg_mesh->_dist, counts, shifts, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+  delete [] shifts;
+  delete [] counts;
+    
     return;
 }
 

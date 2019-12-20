@@ -128,6 +128,13 @@ public:
   int GetFamilyType(int elem_dof, int dim); // the function returns 0 or 1
   
   void init_pie();    ///< Generates the Lagrangian piecewise shape functions
+  
+  const int _MedToLib_27[27]= {
+        //0  1   2   3   4   5   6   7   8    9    10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26 
+          0, 3,  2,  1,  4,  7,  6,  5,  11,  10,  9,  8,  19, 18, 17, 16, 12, 15, 14, 13, 20, 24, 23, 22, 21, 25, 26
+    };
+    
+  
     /// \f$ \xi,\eta,\chi \f$ coordinates of the HEX27 nodes
     const int _CooH27[27*3]= {
         //0  1   2    3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26 

@@ -265,8 +265,7 @@ public:
         const double zMax
     );
 
-
-
+    void UpdateDist();
 
 
 
@@ -477,6 +476,8 @@ MEDCoupling::MEDCouplingFieldDouble *getValuesOnInterface_from_cell(   // field 
     void SetPieceFieldOnYdist(
       MEDCoupling::MEDCouplingFieldDouble * Field
     );
+    
+    void SetPieceFieldOnVolFrac_parallel (MEDCoupling::MEDCouplingFieldDouble * Field);
     
 //     MEDCoupling::MCAuto<MEDCoupling::MEDCouplingFieldDouble> ReadField(
 //        MEDCoupling::TypeOfField type, const std::string& fileName, const std::string& meshName, int meshDimRelToMax, const std::string& fieldName, int iteration, int order

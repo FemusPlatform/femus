@@ -20,7 +20,8 @@ void MGSolRANS::vol_integral (
   {
 
   double xyz_g[DIMENSION], vel_dxg[DIMENSION * DIMENSION], x_2ts_g[1];
-
+  x_2ts_g[0]=0.;
+  
   const double T_0ts = ( _TimeDer == 2 ) ? 1.5 : 1.;
   const double T_1ts = ( _TimeDer == 2 ) ? 2.  : 1.;
   const double T_2ts = ( _TimeDer == 2 ) ? 0.5 : 0.;
@@ -41,8 +42,8 @@ void MGSolRANS::vol_integral (
       _fe[2]->get_ddphi_gl_g ( _nTdim, qp, _InvJac2, _ddphi_g[2] );   // local second deriv
 
       interp_el_sol ( _data_eq[2].ub, 0, _data_eq[2].indx_ub[_data_eq[2].n_eqs], _phi_g[2], el_ndof2, _ub_g[2] ); // quadratic
-
-      interp_el_sol ( _x_2ts, 0, 1, _phi_g[2], el_ndof2, x_2ts_g );
+      if(!(_TimeDer-2))
+        interp_el_sol ( _x_2ts, 0, 1, _phi_g[2], el_ndof2, x_2ts_g );
 
       // DERIVATIVES OF OLD SOLUTION
       interp_el_gdx ( _data_eq[2].ub, _FF_idx[K_F],      1, _dphi_g[2], el_ndof2, _T_dxg[0] );

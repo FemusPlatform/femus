@@ -10,14 +10,11 @@
 #include <map>
 #include <string>
 #include "hdf5.h"
-// #ifdef TBK_EQUATIONS
 #include "TurbUtils.h"
 #include "Solvertype_enum.h"
 #include "EquationsMap.h"
-// #include "IbUtils.h"
-// #endif
-// Forwarding class -------------------
-// class MGFiles;
+#include <sstream>      // std::ostringstream
+#include <fstream>
 
 class IbUtils;
 // class TurbUtils;
@@ -111,23 +108,6 @@ class MGUtils  {
       return _name;
       }
 
-    /// Set a parameter in the corresponding map
-    inline void   set_par ( const std::string & name, double value )  {
-      _param_utils[name] = value;
-      }
-    inline void   set_geom_par ( const std::string & name, double value )  {
-      _geometry[name] = value;
-      }
-    inline void   set_mat_par ( const std::string & name, double value )  {
-      _mat_prop[name] = value;
-      }
-    inline void   set_sim_par ( const std::string & name, std::string value )  {
-      _sim_config[name] = value;
-      }
-    inline void   set_temp ( const std::string & name, std::string value )  {
-      _temp_info[name] = value;
-      }
-// #ifdef TBK_EQUATIONS
     inline void set_turbulence_info ( TurbUtils * Parameters ) {
       _TurbParameters =  Parameters;
       }
@@ -152,7 +132,12 @@ class MGUtils  {
     void read ( const std::string & name = "/DATA/param_files.in" ); ///< Read file names from file
     void read_temp ( const std::string & name ); ///< Read file names from file
     void print();                                               ///< Print in console the file names
-
+    
+    template<class VarType> void ReadFile_FillMap(
+      std::string FileName, 
+      std::map<std::string, VarType> &MapToFill  
+    );
+    
     /// Print in console the parameters read
     void print_par() const;
     ///@}
@@ -187,4 +172,45 @@ inline void MGUtils::cross ( const double * a, const double * b, double * res ) 
 
   return;
   }
+  
+  
+  
+template<class VarType> void MGUtils::ReadFile_FillMap(
+    std::string FileName, 
+    std::map<std::string, VarType> &MapToFill  
+) {
+    std::ostringstream filename;
+    filename << FileName;
+    std::ifstream fin( filename.str().c_str() ) ; // stream file
+    std::string buf = "";
+    VarType value;
+    if ( fin.is_open() ) { // -------------------------------------------------------------
+        std::cout << "Init Reading = " << filename.str() <<  std::endl;
+        while ( buf != "/" ) {
+            fin >> buf;    // find "/" file start
+            }
+        fin >> buf;
+
+        while ( buf != "/" ) {
+            if ( buf == "#" ) {
+                getline ( fin, buf );    // comment line
+                }
+            else {
+                fin >> value;
+                MapToFill.insert ( std::pair<std::string, VarType> ( buf, value ) );
+                }
+            fin >> buf;
+            }
+            std::cout << "End Reading file " <<  filename.str() << std::endl;
+            fin.close();
+        } // --------------------------------------------------------------------------------------
+    else{
+            std::cerr << "MGUtils::read_par: no parameter file found" << std::endl;
+            abort();
+        }
+        
+    return;
+    }  
+  
+  
 #endif

@@ -90,97 +90,11 @@ void MGUtils::StandardBuild()
 void MGUtils::read_par()   // READ PARAMETER FILES AND FILL RELATIVE MAPS ===========================
 {
 
-// file names ------------------
-    std::vector<std::string> maps;
-    maps.resize ( 5 ); // PARAMETER files
-    maps[0] = get_file ( "BASEPARUTILS" );
-    maps[1] = get_file ( "GEOM_PAR" );
-    maps[2] = get_file ( "SIM_CONFIG" );
-    maps[3] = get_file ( "MAT_PROP" );
-    maps[4] = "Equations.in";
-    
-
-    double double_value;
-    std::string string_value;
-    std::string buf=""; // read double, string, dummay
-
-    for ( int i=1; i<4; i++ ) { // CYCLE ON FILES TO READ -------------------------------------------
-        std::ostringstream filename;
-        filename << _data_dir << maps[i]; // file name
-        std::ifstream fin;
-        fin.open ( filename.str().c_str() ); // stream file
-        buf="";
-#ifdef PRINT_INFO
-        if ( fin.is_open() ) {
-            std::cout << "Init Reading = " << filename.str() <<  std::endl;
-        }
-#endif
-        if ( fin.is_open() ) { // -------------------------------------------------------------
-            while ( buf != "/" ) {
-                fin >> buf;    // find "/" file start
-            }
-            fin >> buf;
-            while ( buf != "/" ) {
-                if ( buf == "#" ) {
-                    getline ( fin, buf );    // comment line
-                } else {
-                    if ( i==0 ) {
-                        fin >> double_value;
-                        set_par ( buf,double_value );
-                    } else if ( i==1 ) {
-                        fin >> double_value;
-                        set_geom_par ( buf,double_value );
-                    } else if ( i==2 || i==4 ) {
-                        fin >> string_value;
-                        set_sim_par ( buf,string_value );
-                    } else {
-                        fin >> double_value;
-                        set_mat_par ( buf,double_value );
-                    }
-                }
-                fin >> buf;// std::cerr <<buf.c_str() << "\n ";
-            }
-        } // --------------------------------------------------------------------------------------
-        else {
-            std::cerr << "MGUtils::read_par: no parameter file found" << std::endl;
-            abort();
-        }
-#ifdef PRINT_INFO
-        std::cout << "End Reading file " <<  filename.str() << std::endl;
-#endif
-        fin.close();
-    }// END CYCLE ON FILES TO READ ----------------------------------------------------------
-    
-    
-    // READING EQUATIONS.in FILE
-        std::ostringstream filename;
-        filename << _data_dir << "Equations.in"; // file name
-        std::ifstream fin;
-        fin.open ( filename.str().c_str() ); // stream file
-        buf="";
-#ifdef PRINT_INFO
-        if ( fin.is_open() ) {
-            std::cout << "Init Reading = " << filename.str() <<  std::endl;
-        }
-#endif
-        if ( fin.is_open() ) { // -------------------------------------------------------------
-            while ( buf != "/" ) {
-                fin >> buf;    // find "/" file start
-            }
-            fin >> buf;
-            while ( buf != "/" ) {
-                if ( buf == "#" ) {
-                    getline ( fin, buf );    // comment line
-                } else {
-                        fin >> string_value;
-                        set_sim_par ( buf,string_value );
-                }
-                fin >> buf;// std::cerr <<buf.c_str() << "\n ";
-            }
-        } // --------------------------------------------------------------------------------------
-    
-    
-    maps.clear();
+//     ReadFile_FillMap<double>( getenv ( "APP_PATH" ) + _data_dir + get_file ( "BASEPARUTILS" ),_param_utils);
+    ReadFile_FillMap<double>( _data_dir + get_file ( "GEOM_PAR" ),_geometry);
+    ReadFile_FillMap<std::string>( _data_dir + get_file ( "SIM_CONFIG" ),_sim_config);
+    ReadFile_FillMap<double>( _data_dir + get_file ( "MAT_PROP" ),_mat_prop);
+    ReadFile_FillMap<std::string>( _data_dir + "/Equations.in",_sim_config);
 
     return;
 }// END READ_PAR FUNCTION ================================================================
@@ -199,47 +113,7 @@ void MGUtils::read_temp (
     const std::string &name_file_in    ///< (input) file to read
 )   // ============================================================================================
 {
-
-    // function setup ***************************************************************************** A
-    std::ostringstream filename;
-    filename << _app_dir  <<"/" << name_file_in;
-    std::ifstream           fin;
-    fin.open ( filename.str().c_str() ); // stream file
-    std::string          buf="";
-#ifdef PRINT_INFO
-    if ( fin.is_open() ) {
-        std::cout << "Init Reading = " << filename.str() <<  std::endl;
-    }
-#endif
-
-    // function body ****************************************************************************** B
-    if ( fin.is_open() ) { // -------------------------------------------------------------
-        while ( buf != "/" ) {
-            fin >> buf;    // find "/" file start
-        }
-        fin >> buf;  // fill buf
-        while ( buf != "/" ) { //  while till to "/ " file end
-            if ( buf == "#" ) {
-                getline ( fin, buf );    // # comment line (skip)
-            } else {
-                std::string string_value;
-                fin >> string_value; // reading parameter
-                set_temp ( buf,string_value );
-            }
-            fin >> buf;   // fill buf
-        }
-    } // --------------------------------------------------------------------------------------
-    else {//  no file found
-        std::cerr << "MGUtils::read_par: no "<< name_file_in <<" file found" << std::endl;
-        abort();
-    }
-
-    // function closure *************************************************************************** C
-#ifdef PRINT_INFO
-    std::cout << "End Reading file " <<  filename.str() << std::endl;
-#endif
-    fin.close();
-
+    ReadFile_FillMap<std::string>( _app_dir + "/" + name_file_in,_temp_info);
     return;
 }// ===============================================================================================
 

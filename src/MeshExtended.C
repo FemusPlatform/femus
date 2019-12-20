@@ -33,20 +33,32 @@ MeshExtended::MeshExtended(
   read_bc_id(_NoLevels-1);
   read_mat_id(_NoLevels-1);
 
+  const int restart = stoi(_mgutils._sim_config["restart"]);
 
-  if(_mgutils._FieldClass->_EquationsToAdd["MG_DynamicalTurbulence"]!=0) {
+  if(_mgutils._FieldClass->_EquationsToAdd["MG_DynamicalTurbulence"]!=0) {    
     _dist=new double [_off_el[0][_NoLevels*_n_subdom]];// distance
     _yplus=new double [_off_el[0][_NoLevels*_n_subdom]];
-    if(_mgutils._FieldClass->_EquationsToAdd["MG_DynamicalTurbulence"]!=0) {
+
+      if( !restart )
        for(int  ilev=0; ilev<_NoLevels; ilev++)  B_dist(ilev);   // distance computing
-    }
+      else{
+        restart_cell_array(_dist, "CellDist");
+        restart_cell_array(_yplus, "YPLUS");
+      }
   
   }else {
     _dist=new double [1];_dist[0]=0.;
   }  
 
-    if(_mgutils._FieldClass->_EquationsToAdd["MG_ImmersedBoundary"]!=0) 
-      _VolFrac=new double [_off_el[0][_NoLevels*_n_subdom]];
+  if(_mgutils._FieldClass->_EquationsToAdd["MG_ImmersedBoundary"]!=0) {
+    _VolFrac=new double [_off_el[0][_NoLevels*_n_subdom]];
+    
+    if( !restart )
+      for(int i=0; i<_off_el[0][_NoLevels*_n_subdom]; i++)
+         _VolFrac[i]=0.;
+    else
+      restart_cell_array(_VolFrac, "Piece_VolFrac");
+  }
 
     return;
 }
@@ -579,5 +591,93 @@ void  MeshExtended::print_bc_hf5(
   return;
 }
 
+void MeshExtended::restart_cell_array(double array[], std::string FieldName){
+
+    int restart = stoi(_mgutils._sim_config["restart"]);
+    const int ndigits = stoi ( _mgutils._sim_config["ndigits"] );  
+    std::string rest_id = std::to_string(restart);
+    std::ostringstream str_standard_id;
+    str_standard_id << std::setw ( ndigits ) << std::setfill ( '0' ) << 0 ;
+    
+    std::string standard_id = str_standard_id.str();
+    int rest_size = rest_id.length();
+    
+    std::string restart_num;
+    if(rest_size>ndigits-1)
+        restart_num = rest_id;
+    else
+        restart_num = standard_id.substr(0, (ndigits - rest_size)) + rest_id;
+    
+    std::ostringstream restart_sol;
+    restart_sol  << getenv("APP_PATH") 
+                 <<"/RESU/" 
+                 << _mgutils.get_file ( "BASESOL" ) 
+                 << "."+restart_num+".h5"   ;
+        
+#ifdef PRINT_INFO
+  std::cout << "\033[1;31m MGMesh: Reading restart values from " <<  restart_sol.str() << "\033[0m"<< std::endl;
+#endif  
+  
+    hid_t  file_id = H5Fopen ( restart_sol.str().c_str(), H5F_ACC_RDWR, H5P_DEFAULT );  
+    hsize_t dims[2];
+    int n_subdivision = ( DIMENSION > 1 ) ? 4 * ( DIMENSION - 1 ) : 2;
+    
+    hid_t dtset = H5Dopen ( file_id, FieldName.c_str()
+#if HDF5_VERSIONM != 1808
+                          , H5P_DEFAULT
+#endif
+                        );
+    hid_t filespace = H5Dget_space ( dtset ); /* Get filespace handle first. */
+    hid_t status  = H5Sget_simple_extent_dims ( filespace, dims, NULL );
+    
+    double *cdist_array = new double[dims[0]];
+    
+    if ( status < 0 ) {
+    }
+    else {   // reading
+       status = H5Dread ( dtset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, cdist_array );
+    }
+    
+    int cel = 0;
+    for ( int  iproc = 0; iproc < _n_subdom; iproc++ ) {
+        const int  nel_b = _off_el[0][_NoLevels - 1 + iproc * _NoLevels];
+        for ( int iel = 0; iel < _off_el[0][_NoLevels - 1 + iproc * _NoLevels + 1] - nel_b; iel++ ) {
+           array[iel + nel_b] = cdist_array[cel * n_subdivision];
+           cel++;
+        }
+    }
+    
+    
+    // WRITING VALUES ON COARSER MESH CELLS
+    if ( _NoLevels > 1 ) {
+
+      int ChildCells = pow ( 2, DIMENSION );
+
+      for ( int Lev = _NoLevels - 2; Lev >= 0; Lev-- ) {
+
+          int ActualLevelOffset = _off_el[0][Lev];
+          int FinerLevelOffset  = _off_el[0][Lev + 1];
+
+          int ActCells = FinerLevelOffset - ActualLevelOffset;
+
+          for ( int cell = 0; cell < ActCells; cell++ ) {
+              double val = 0;
+
+              for ( int child = 0; child < ChildCells; child++ )
+                val +=  array[FinerLevelOffset + cell * ChildCells + child];
+
+              array[ActualLevelOffset + cell] = val / ChildCells;
+
+          }
+       }
+    }
+    
+    
+    delete [] cdist_array;           
+    H5Dclose ( dtset );
+    H5Sclose ( filespace ); 
+       
+  return;
+}
 
 // kate: indent-mode cstyle; indent-width 2; replace-tabs on; 

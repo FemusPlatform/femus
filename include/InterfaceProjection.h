@@ -34,18 +34,21 @@ public:
    InterfaceProjection  (
            const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
-	       DomainType bdd= Boundary /**< Domain type of the mesh group (Boundary of Volume) */
+	       DomainType bdd= Boundary, /**< Domain type of the mesh group (Boundary of Volume) */
+           int DiscOrder=2                   
 	      );
    InterfaceProjection  (
            const MEDCoupling::MEDCouplingUMesh * SourceMesh, /**< Mesh support of the source geometry */
 	       const MEDCoupling::MEDCouplingUMesh * TargetMesh, /**< Mesh support of the target geometry */
            int procId,
-            DomainType bdd = Boundary /**< Domain type of the mesh group (Boundary of Volume) */
+           DomainType bdd = Boundary, /**< Domain type of the mesh group (Boundary of Volume) */
+           int DiscOrder = 2
 	      );
    InterfaceProjection (
        const MEDCoupling::MEDCouplingUMesh * SourceMesh,    /**< Mesh support of the source geometry */
        std::vector<double> coord,                           /**< Point of the desired field measurement */
-       int procId 
+       int procId,
+       int DiscOrder=2
 );
 
    //! Destructor of the InterfaceProjection Class
@@ -70,7 +73,8 @@ public:
    int _SpaceDim;
    //! triangular(0) quadrangular(1)
    int _FamilyType;
-   
+   int _DiscOrder;
+//    int _InterpOrder;
    //! Mesh Dimension
    /*!
     * Dimension of the mesh group: if the group is a volume-one then _MeshDim = _SpaceDim,
@@ -101,6 +105,7 @@ public:
    int _AlreadyInitialized;
    
    int _OutOfDomain = 0;
+   int _Contained;
    
    //! Vector where the gradient components of function F are stored
    std::vector<double> _dF;
@@ -116,8 +121,9 @@ public:
    //! Check
    int IsNodeContained ();
    
-   
-   
+   using  Couple = std::array<int, 2>; 
+   std::map<INTERP_KERNEL::NormalizedCellType, const Couple> _InterpCoordsMap;
+   void BuildInterpCoordMap();
    // ====================================================================================================================
    //! Nodes of source mesh
    /*!
@@ -223,6 +229,9 @@ int  npt_el=2
    double CalcF(double NodePos[],  /**< Coordinates of the target mesh node */
 		double XiEtaChi[]  /**< Array containing the \f$ (\xi,\eta,\chi) \f$ coordinates */
                );
+   double CalcF_bound(double NodePos[],  /**< Coordinates of the target mesh node */
+		double XiEtaChi[]  /**< Array containing the \f$ (\xi,\eta,\chi) \f$ coordinates */
+		);            
    
    //! Gradient of F 
    /*!
@@ -251,6 +260,22 @@ int  npt_el=2
    double LinPhi(int node,      /**< Id of target mesh node */
                double XiEtaChi[] /**< Array containing the \f$ (\xi,\eta,\chi) \f$ coordinates */ 
               );
+   double LinPhi_bound(int node,      /**< Id of target mesh node */
+               double XiEtaChi[] /**< Array containing the \f$ (\xi,\eta,\chi) \f$ coordinates */ 
+              );          
+ 
+   //! Linear test function
+   /*!
+    * This function return the value of the 'node' linear test function on the point with coordinats 'XiEtaChi[]'
+    */
+//    double GenN(double XiEtaChi[], /**< Array containing the \f$ (\xi,\eta,\chi) \f$ coordinates */
+// 	       int node      /**< Id of target mesh node */
+// 	      );
+   double InterpPhi(int node,      /**< Id of target mesh node */
+               double XiEtaChi[], /**< Array containing the \f$ (\xi,\eta,\chi) \f$ coordinates */ 
+               int DiscOrder=2     
+              );
+              
    //! First derivative of linear test function
    /*!
     * This function return the derivative value of the 'node' linear test function, on the point with coordinats 'XiEtaChi[]', in the direction 'direction'
@@ -364,8 +389,13 @@ int  npt_el=2
  void CheckBelonging(bool &found);
  double _pos[3];
 //   MEDCoupling::DataArrayDouble* _secArray;
- 
   int IsFilled(){return __Filled;}
+  
+  double DistanceFromPlane (double NodePos[], int node1, int node2, int node3 );
+  double DistanceFromEdge (double NodePos[], int node1, int node2);
+  void IsNodeInsideCell(double NodePos[]);
+  
+  void TestInterpolation(int InterpOrder);
  
 private:
   // Private parameters are characterised by double underscore

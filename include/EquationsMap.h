@@ -3,7 +3,8 @@
 
 #include <map>
 #include <vector>
-
+#include <sstream>      // std::ostringstream
+#include <fstream>
 class EquationSystemsExtendedM;
 class MGSolBase;
 
@@ -124,15 +125,6 @@ class EquationsMap {
     EquationsMap();
     ~EquationsMap() {};
     
-    /*! This function fills #EquationsMap::_EquationsToAdd map with the names of 
-     * equations that will be activated. Equations are read from Equations.in 
-     * input file */
-    void ReadEquationsToAdd();
-    
-    /*! This function fills #EquationsMap::_TurbulenceModel map with info read from
-     Turbulence.in input file*/
-    void ReadTurbulenceInfo();
-
     /*! This function fills #EquationsMap::_map_str2field map: equation names are 
      * associated to corresponding number of #FIELDS enumeration */
     void Fill_FIELD_map ( ) ;
@@ -199,9 +191,47 @@ class EquationsMap {
     /// Initializaiton of one-dimensional Flowrate system
     void initFlowrateMono ( EquationSystemsExtendedM & EqMap );
     
+    /*! Generic function for reading an input file and filling a map of <std::string, VarType>
+     * values. Used to fill #EquationsMap::_TurbulenceModel and #EquationsMap::_EquationsToAdd
+     * maps */
+    template<class VarType> void ReadFile_FillMap(
+      std::string FileName, 
+      std::map<std::string, VarType> &MapToFill  
+    ); 
 
   };
 
 
+template<class VarType> void EquationsMap::ReadFile_FillMap(
+    std::string FileName, 
+    std::map<std::string, VarType> &MapToFill  
+) {
+    std::ostringstream filename;
+    filename << getenv ( "APP_PATH" ) << FileName;
+    std::ifstream fin( filename.str().c_str() ) ; // stream file
+    std::string buf = "";
+
+    VarType value;
+
+    if ( fin.is_open() ) { // -------------------------------------------------------------
+        while ( buf != "/" ) {
+            fin >> buf;    // find "/" file start
+            }
+        fin >> buf;
+
+        while ( buf != "/" ) {
+            if ( buf == "#" ) {
+                getline ( fin, buf );    // comment line
+                }
+            else {
+                fin >> value;
+                MapToFill.insert ( std::pair<std::string, VarType> ( buf, value ) );
+                }
+            fin >> buf;
+            }
+            fin.close();
+        } // --------------------------------------------------------------------------------------
+    return;
+    }
 
 #endif

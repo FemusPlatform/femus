@@ -68,11 +68,6 @@ MGSolRANS::MGSolRANS (
     for ( int l = 0; l < _NoLevels; l++ ) {
         _solver[l]->set_solver_type ( _RANS_parameter._SolverType );
     }
-//   for ( int  l = 0; l < _NoLevels; l++ ) {// BICGSTABM  BICGM GMRESM LSQRM
-// //       _solver[l]->set_solver_type ( BICGSTABM );
-//       _solver[l]->set_preconditioner_type ( AMG_PRECONDM );
-//       }
-
       
     // SETTING TURBULENCE MODEL PARAMETERS -> READING FROM TurbUtils CLASS
     _WallDist = _mgutils._geometry["Wall_dist"];
@@ -83,7 +78,6 @@ MGSolRANS::MGSolRANS (
     std::map<std::string, bool> YesNo;
     YesNo["yes"] = true;
     YesNo["no"]  = false;
-
 
     _SolveRANS = YesNo[_mgutils._sim_config["SolveDynamicalTurbulence"]];
 
@@ -156,7 +150,6 @@ void  MGSolRANS::GenMatRhs (
     };
 
     const int el_ndof2 = _fe[2]->_NoShape[_nTdim - 1];
-
     int el_mat_ncols = el_mat_nrows;   // square matrix
 
     std::vector<int> el_dof_indices ( el_mat_ncols );   // element dof vector
@@ -214,7 +207,8 @@ void  MGSolRANS::GenMatRhs (
         get_el_dof_bc ( Level, iel + ndof_lev, el_ndof, el_conn, offset, el_dof_indices, _bc_vol, _bc_bd );
         
         _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_sol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_1ts );
-        _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_2ts );
+        if(!(_TimeDer-2))
+           _data_eq[2].mg_eqs[_data_eq[2].tab_eqs[K_F + _dir]]->get_el_oldsol ( 0, 1, el_ndof[2], el_conn, offset, 0, _x_2ts );
 
         // ----------------------------------------------------------------------------------
         /// 2. Boundary integration  (bc)
