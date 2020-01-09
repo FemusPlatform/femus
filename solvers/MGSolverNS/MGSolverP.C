@@ -14,6 +14,8 @@
 #include "MeshExtended.h"
 #include "Pparameters.h"
 #include "Solvertype_enum.h"
+#include "Precondtype_enum.h"
+
 
 // local alg lib -----------------------------------------------
 #include "dense_matrixM.h"    // algebra dense matrices
@@ -51,9 +53,14 @@ MGSolP::MGSolP(
   _refvalue[0] = _rhof * _uref * _uref;  // class variable names
   _IRe = _muf / _rhof;
 
-  for (int l = 0; l < _NoLevels; l++) {  // BICGSTABM  BICGM
-    _solver[l]->set_solver_type(GMRESM);
-  }
+  //for (int l = 0; l < _NoLevels; l++) {  // BICGSTABM  BICGM
+  //  _solver[l]->set_solver_type(GMRESM);
+  //}
+
+  for ( int  l = 0; l < _NoLevels; l++ ) {
+      _solver[l]->set_solver_type ( BICGSTABM );  // BICGSTABM  BICGM GMRESM LSQRM    
+      _solver[l]->set_preconditioner_type ( AMG_PRECONDM );  // BLOCK_JACOBI_PRECONDM ILU_PRECONDM
+      }
 
   _P_parameter.read_param(_mgutils, _mgmesh._iproc);
   _AssembleOnce = _P_parameter._AssembleOnce;
