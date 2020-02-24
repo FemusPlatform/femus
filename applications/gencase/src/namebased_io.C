@@ -117,17 +117,17 @@ void NameBasedIO::read(const std::string& name) {
         MeshCommunication().broadcast(mymesh);
       }
 
-        // libHilbert-enabled libMesh builds should construct files
-        // with a canonical node ordering, which libHilbert-enabled
-        // builds will be able to read in again regardless of any
-        // renumbering.  So in that case we're free to renumber.
-        // However, if either the writer or the reader of this file
-        // don't have libHilbert, then we'll have to skip
-        // renumbering because we need the numbering to remain
-        // consistent with any solution file we read in next.
+      // libHilbert-enabled libMesh builds should construct files
+      // with a canonical node ordering, which libHilbert-enabled
+      // builds will be able to read in again regardless of any
+      // renumbering.  So in that case we're free to renumber.
+      // However, if either the writer or the reader of this file
+      // don't have libHilbert, then we'll have to skip
+      // renumbering because we need the numbering to remain
+      // consistent with any solution file we read in next.
 #ifdef LIBMESH_HAVE_LIBHILBERT
-        // if (!xdr_io.libhilbert_ordering())
-        //   skip_renumber_nodes_and_elements = true;
+      // if (!xdr_io.libhilbert_ordering())
+      //   skip_renumber_nodes_and_elements = true;
 #else
       mymesh.allow_renumbering(false);
 #endif
@@ -271,120 +271,120 @@ void NameBasedIO::write(const std::string& name) {
       Nemesis_IO(mymesh).write(name);
   }
 
-  // serial file formats
-  else {
-    // Nasty hack for reading/writing zipped files
-    std::string new_name = name;
-    pid_t pid_0 = 0;
-    if (mymesh.processor_id() == 0) pid_0 = getpid();
-    mymesh.comm().broadcast(pid_0);
-    std::ostringstream pid_suffix;
-    pid_suffix << '_' << pid_0;
-
-    if (name.size() - name.rfind(".bz2") == 4) {
-      new_name.erase(new_name.end() - 4, new_name.end());
-      new_name += pid_suffix.str();
-    } else if (name.size() - name.rfind(".xz") == 3) {
-      new_name.erase(new_name.end() - 3, new_name.end());
-      new_name += pid_suffix.str();
-    }
-
-    // New scope so that io will close before we try to zip the file
-    {
-      // Write the file based on extension
-      if (new_name.rfind(".dat") < new_name.size())
-        TecplotIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".plt") < new_name.size())
-        TecplotIO(mymesh, true).write(new_name);
-
-      else if (new_name.rfind(".ucd") < new_name.size())
-        UCDIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".gmv") < new_name.size())
-        if (mymesh.n_partitions() > 1)
-          GMVIO(mymesh).write(new_name);
-        else {
-          GMVIO io(mymesh);
-          io.partitioning() = false;
-          io.write(new_name);
-        }
-
-      //         else if (new_name.rfind(".ugrid") < new_name.size())
-      //           DivaIO(mymesh).write(new_name);
-      else if (new_name.rfind(".e") < new_name.size())
-        ExodusII_IO(mymesh).write(new_name);
-      //         else if (new_name.rfind(".mgf")  < new_name.size())
-      //           LegacyXdrIO(mymesh,true).write_mgf(new_name);
-
-      else if (new_name.rfind(".unv") < new_name.size())
-        UNVIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".mesh") < new_name.size())
-        MEDITIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".poly") < new_name.size())
-        TetGenIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".msh") < new_name.size())
-        GmshIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".fro") < new_name.size())
-        FroIO(mymesh).write(new_name);
-
-      else if (new_name.rfind(".vtu") < new_name.size())
-        VTKIO(mymesh).write(new_name);
-
-      else {
-        libMesh::err << " ERROR: Unrecognized file extension: " << name
-                     << "\n   I understand the following:\n\n"
-                     << "     *.dat   -- Tecplot ASCII file\n"
-                     << "     *.e     -- Sandia's ExodusII format\n"
-                     << "     *.exd   -- Sandia's ExodusII format\n"
-                     << "     *.fro   -- ACDL's surface triangulation file\n"
-                     << "     *.gmv   -- LANL's GMV (General Mesh Viewer) format\n"
-                     << "     *.mesh  -- MEdit mesh format\n"
-                     << "     *.mgf   -- MGF binary mesh format\n"
-                     << "     *.msh   -- GMSH ASCII file\n"
-                     << "     *.n     -- Sandia's Nemesis format\n"
-                     << "     *.nem   -- Sandia's Nemesis format\n"
-                     << "     *.plt   -- Tecplot binary file\n"
-                     << "     *.poly  -- TetGen ASCII file\n"
-                     << "     *.ucd   -- AVS's ASCII UCD format\n"
-                     << "     *.ugrid -- Kelly's DIVA ASCII format\n"
-                     << "     *.unv   -- I-deas Universal format\n"
-                     << "     *.vtu   -- VTK (paraview-readable) format\n"
-                     << "     *.xda   -- libMesh ASCII format\n"
-                     << "     *.xdr   -- libMesh binary format,\n"
-                     << std::endl
-                     << "\n Exiting without writing output\n";
-      }
-    }
-
-    // Nasty hack for reading/writing zipped files
-    if (name.size() - name.rfind(".bz2") == 4) {
-      START_LOG("system(bzip2)", "NameBasedIO");
-      if (mymesh.processor_id() == 0) {
-        std::string system_string = "bzip2 -f -c ";
-        system_string += new_name + " > " + name;
-        if (std::system(system_string.c_str())) libmesh_file_error(system_string);
-        std::remove(new_name.c_str());
-      }
-      mymesh.comm().barrier();
-      STOP_LOG("system(bzip2)", "NameBasedIO");
-    }
-    if (name.size() - name.rfind(".xz") == 3) {
-      START_LOG("system(xz)", "NameBasedIO");
-      if (mymesh.processor_id() == 0) {
-        std::string system_string = "xz -f -c ";
-        system_string += new_name + " > " + name;
-        if (std::system(system_string.c_str())) libmesh_file_error(system_string);
-        std::remove(new_name.c_str());
-      }
-      mymesh.comm().barrier();
-      STOP_LOG("system(xz)", "NameBasedIO");
-    }
-  }
+  //   // serial file formats
+  //   else {
+  //     // Nasty hack for reading/writing zipped files
+  //     std::string new_name = name;
+  //     pid_t pid_0 = 0;
+  //     if (mymesh.processor_id() == 0) pid_0 = getpid();
+  //     mymesh.comm().broadcast(pid_0);
+  //     std::ostringstream pid_suffix;
+  //     pid_suffix << '_' << pid_0;
+  //
+  //     if (name.size() - name.rfind(".bz2") == 4) {
+  //       new_name.erase(new_name.end() - 4, new_name.end());
+  //       new_name += pid_suffix.str();
+  //     } else if (name.size() - name.rfind(".xz") == 3) {
+  //       new_name.erase(new_name.end() - 3, new_name.end());
+  //       new_name += pid_suffix.str();
+  //     }
+  //
+  //     // New scope so that io will close before we try to zip the file
+  //     {
+  //       // Write the file based on extension
+  //       if (new_name.rfind(".dat") < new_name.size())
+  //         TecplotIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".plt") < new_name.size())
+  //         TecplotIO(mymesh, true).write(new_name);
+  //
+  //       else if (new_name.rfind(".ucd") < new_name.size())
+  //         UCDIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".gmv") < new_name.size())
+  //         if (mymesh.n_partitions() > 1)
+  //           GMVIO(mymesh).write(new_name);
+  //         else {
+  //           GMVIO io(mymesh);
+  //           io.partitioning() = false;
+  //           io.write(new_name);
+  //         }
+  //
+  //       //         else if (new_name.rfind(".ugrid") < new_name.size())
+  //       //           DivaIO(mymesh).write(new_name);
+  //       else if (new_name.rfind(".e") < new_name.size())
+  //         ExodusII_IO(mymesh).write(new_name);
+  //       //         else if (new_name.rfind(".mgf")  < new_name.size())
+  //       //           LegacyXdrIO(mymesh,true).write_mgf(new_name);
+  //
+  //       else if (new_name.rfind(".unv") < new_name.size())
+  //         UNVIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".mesh") < new_name.size())
+  //         MEDITIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".poly") < new_name.size())
+  //         TetGenIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".msh") < new_name.size())
+  //         GmshIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".fro") < new_name.size())
+  //         FroIO(mymesh).write(new_name);
+  //
+  //       else if (new_name.rfind(".vtu") < new_name.size())
+  //         VTKIO(mymesh).write(new_name);
+  //
+  //       else {
+  //         libMesh::err << " ERROR: Unrecognized file extension: " << name
+  //                      << "\n   I understand the following:\n\n"
+  //                      << "     *.dat   -- Tecplot ASCII file\n"
+  //                      << "     *.e     -- Sandia's ExodusII format\n"
+  //                      << "     *.exd   -- Sandia's ExodusII format\n"
+  //                      << "     *.fro   -- ACDL's surface triangulation file\n"
+  //                      << "     *.gmv   -- LANL's GMV (General Mesh Viewer) format\n"
+  //                      << "     *.mesh  -- MEdit mesh format\n"
+  //                      << "     *.mgf   -- MGF binary mesh format\n"
+  //                      << "     *.msh   -- GMSH ASCII file\n"
+  //                      << "     *.n     -- Sandia's Nemesis format\n"
+  //                      << "     *.nem   -- Sandia's Nemesis format\n"
+  //                      << "     *.plt   -- Tecplot binary file\n"
+  //                      << "     *.poly  -- TetGen ASCII file\n"
+  //                      << "     *.ucd   -- AVS's ASCII UCD format\n"
+  //                      << "     *.ugrid -- Kelly's DIVA ASCII format\n"
+  //                      << "     *.unv   -- I-deas Universal format\n"
+  //                      << "     *.vtu   -- VTK (paraview-readable) format\n"
+  //                      << "     *.xda   -- libMesh ASCII format\n"
+  //                      << "     *.xdr   -- libMesh binary format,\n"
+  //                      << std::endl
+  //                      << "\n Exiting without writing output\n";
+  //       }
+  //     }
+  //
+  //     // Nasty hack for reading/writing zipped files
+  //     if (name.size() - name.rfind(".bz2") == 4) {
+  //       START_LOG("system(bzip2)", "NameBasedIO");
+  //       if (mymesh.processor_id() == 0) {
+  //         std::string system_string = "bzip2 -f -c ";
+  //         system_string += new_name + " > " + name;
+  //         if (std::system(system_string.c_str())) libmesh_file_error(system_string);
+  //         std::remove(new_name.c_str());
+  //       }
+  //       mymesh.comm().barrier();
+  //       STOP_LOG("system(bzip2)", "NameBasedIO");
+  //     }
+  //     if (name.size() - name.rfind(".xz") == 3) {
+  //       START_LOG("system(xz)", "NameBasedIO");
+  //       if (mymesh.processor_id() == 0) {
+  //         std::string system_string = "xz -f -c ";
+  //         system_string += new_name + " > " + name;
+  //         if (std::system(system_string.c_str())) libmesh_file_error(system_string);
+  //         std::remove(new_name.c_str());
+  //       }
+  //       mymesh.comm().barrier();
+  //       STOP_LOG("system(xz)", "NameBasedIO");
+  //     }
+  //   }
 }
 
 void NameBasedIO::write_nodal_data(
