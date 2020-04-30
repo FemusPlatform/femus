@@ -1,0 +1,19 @@
+Tutorial structure
+-|Common: Directory with files that do not depend on the test.
+ |
+ |- DATA
+ |- MESH
+ |- SRC
+-|Turek_fsi1/2/3: Directories containing files that are test-specific 
+ |                (Boundary conditions/ Physical properties)
+ |
+ |- DATA : Physical properties
+ |- SRC  : Boundary conditions
+ |- runTest.sh : script that copies files from common to the test directory,
+                 then executes the test
+ 
+The FSI tests are performed for two different inflow speeds.
+FSI1 is resulting in a steady state solution,
+while the other two tests (FSI2, FSI3) result in periodic solutions
+and correspond to the final benchmark settings. 
+

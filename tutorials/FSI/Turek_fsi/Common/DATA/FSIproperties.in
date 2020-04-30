@@ -1,0 +1,54 @@
+# ===============================================================
+/ #      NS SOLVER SETTINGS 
+# ===============================================================
+# Note: comment #_  init-end file /
+# ===============================================================
+# STEADY STATE AND NON LINEARITY
+# ---------------------------------------------------------------
+# SolveSteady=1 then only steady eqs (dflt:0; option:0(no),1) 
+  SolveSteady  0
+  Compressible 1
+# MaxNonLinearIterations >0: non linear problem   (default 1) 
+  MaxNonLinearIterations   0 
+# DynamicUnderRelaxation=0.: no urelaxation (dflt:0.; option:0<u<1)   
+  DynamicUnderRelaxation      0. 
+# _SolverType=GMRESM: solver GMRES  
+# ---------------------------------------------------------------
+# NUMERICAL STABILIZATION:
+# ---------------------------------------------------------------
+# Supg=1 : standard supg formulation (dflt:1; option:0,1(no))
+  Supg         0
+# Upwind=0: no standard upwind (dflt:0; option:0<Up<1000)  
+  Upwind       0
+# ReactionNumberBased0 : (dflt:0; option:0,1(yes))  
+# Les=0: no les stabilization (dflt:0; option:0<l<1)   
+# ---------------------------------------------------------------
+# INITIAL CONDITION
+# ---------------------------------------------------------------
+# FlatProfile=1: flat inlet profile (dflt:1; option:0(no),1):
+#  ---------------------------------------------------------------  
+# BOUNDARY CONDITIONS
+#  ---------------------------------------------------------------
+#   For penalty bc (penalty_turb bc) we set normal and tg penalty
+#   Default values Penalty_n=1.e+8 Penalty_tg 1.e+5 
+   Penalty_n    1.e+8 
+   Penalty_tg   1.e+5 
+#  The available boundary conditions are: ---------------------
+# interior        (11), nostress      (11), outflow        (11),    
+# pressure_outlet (28), outflow_p     (31), pressure_inlet (38),      
+# slip            (81), wall          (88), penalty_turb   (44)
+# velocity        (99), velocity_norm (98), velocity_tang  (89)  
+# accelerating_swirl  (85), decelerating_swirl  (-85),    
+# accelerating_stress (84), decelerating_stress (-84), --------
+#  In order to set the boundary condition follow the example below
+#  NSgroup<Group Number>(ex. NSgroup10) <Boundary Condition>(ex. wall)
+#  ! A condition for each group defined in SimulationConfiguration.in file must be specified !
+#
+   FSIgroup11    velocity    
+   FSIgroup12    outflow   
+   FSIgroup14    wall    
+   FSIgroup20    wall 
+   FSIgroup1000  wall   
+#
+/ # ==============================================================
+  
