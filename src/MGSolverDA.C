@@ -132,8 +132,12 @@ void MGSolDA::init(const int Level) {
   std::ostringstream filename("");
   filename << _mgutils._inout_dir << f_matrix << Level << ".h5";
   A[Level] = SparseMatrixM::build(_mgmesh._comm.comm()).release();
-  A[Level]->init(n_glob, n_glob, n_local, n_local);
-  ReadMatrix(Level, filename.str(), *A[Level], _nvars);
+  if (_mgutils._densematrix) {
+    A[Level]->init(n_glob, n_glob, n_local, n_local, n_glob, n_glob);
+  } else {
+    A[Level]->init(n_glob, n_glob, n_local, n_local);
+    ReadMatrix(Level, filename.str(), *A[Level], _nvars);
+  }
 
   // vectors ------------------------------------------------------------------------------
   b[Level] = NumericVectorM::build(comm1).release();
@@ -311,7 +315,7 @@ void MGSolDA::compute_jac(
     double u_back[],      // interpolated function ->
     double u_forw_dx[],   // interpolated derivatives ->
     double u_back_dx[]    // interpolated derivatives ->
-    ) const {             // =================================================================
+) const {                 // =================================================================
   // All data vectors are NDOF_FEM long
   const double alfa = 1.e-08;
   // variable loop

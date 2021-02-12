@@ -62,7 +62,8 @@ class PetscMatrixM : public SparseMatrixM {
   }
 
   /// Initialize a Petsc matrix
-  void init(const int m, const int n, const int m_l, const int n_l, const int nnz = 0, const int noz = 0);
+  void init(const int m, const int n, const int m_l, const int n_l);
+  void init(const int m, const int n, const int m_l, const int n_l, const int nnz, const int noz);
   void init(const int m, const int n) {
     _m = m;
     _n = n;
@@ -282,7 +283,7 @@ inline void PetscMatrixM::add(
 inline double PetscMatrixM::operator()(
     const int i,  // index i
     const int j   // index j
-    ) const {
+) const {
   // do no use this function !!!!!!!!
   assert(this->initialized());
 #if PETSC_VERSION_LESS_THAN(2, 2, 1)  // PETSc 2.2.0 & older

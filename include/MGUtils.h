@@ -45,6 +45,7 @@ class MGUtils {
   std::map<std::string, SolverTypeM> _SolverTypeMap;
   double _factor = 1.;
   double _press = 0.;
+  bool _densematrix = 0;
   ///@{ \name USEFUL DIRECTORY NAMES
   std::string _data_dir;     ///< Data directory
   std::string _app_dir;      ///< Application directory
@@ -156,6 +157,8 @@ class MGUtils {
   ///@}
   void cross(const double* a, const double* b, double* res) const;
 
+  void solve_dense_matrix();
+
   void FillFieldsVector(EquationsMap& map_str2fieldclass, std::vector<FIELDS>& myproblemP);
 };
 
@@ -169,4 +172,7 @@ inline void MGUtils::cross(const double* a, const double* b, double* res) const 
 
   return;
 }
+
+inline void MGUtils::solve_dense_matrix() { _densematrix = 1; }
+
 #endif

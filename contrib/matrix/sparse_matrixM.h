@@ -101,6 +101,12 @@ class SparseMatrixM :
     _m = m_l;
     _n = n_l;
   }
+  virtual void init(const int m, const int n, const int m_l, const int n_l, const int nnz, const int noz) {
+    _m = m;
+    _n = n;
+    _m = m_l;
+    _n = n_l;
+  }
   //   virtual void init(      ///< Initialize  matrix 3
   //      const int  m,  const int  n,         ///< global indices
   //      const int  m_l,const int  n_l,       ///< local indices

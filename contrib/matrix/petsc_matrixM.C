@@ -15,7 +15,9 @@
 //-----------------------------------------------------------------------
 // PetscMatrix members
 void PetscMatrixM::init(
-    const int m, const int n, const int m_l, const int n_l, const int /*nnz*/, const int /*noz*/) {
+    const int m, const int n, const int m_l, const int n_l
+    //     , const int /*nnz*/, const int /*noz*/
+) {
   // Set matrix dimension
   _m = m;
   _n = n;
@@ -62,7 +64,67 @@ void PetscMatrixM::init(
   //     }
   //     this->zero ();
 }
+// PetscMatrixM members
+void PetscMatrixM::init(
+    const int m, const int n, const int m_l, const int n_l, const int nnz, const int noz) {
+  // Set matrix dimension
+  _m = m;
+  _n = n;
+  _m_l = m_l;
+  _n_l = n_l;
 
+  // _len_row.resize(_m_l);
+  // _len_diag_row.resize(_m_l);
+  // We allow 0x0 matrices now
+  // if ((m==0) || (n==0))
+  //  return;
+
+  // Clear initialized matrices
+  if (this->initialized()) this->clear();
+  this->_is_initialized = true;
+
+  // processor info
+  int proc_id;
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
+  int numprocs;
+  MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+  int ierr = 0;
+  int m_global = static_cast<int>(m);
+  int n_global = static_cast<int>(n);
+  int m_local = static_cast<int>(m_l);
+  int n_local = static_cast<int>(n_l);
+  int n_nz = static_cast<int>(nnz);
+  int n_oz = static_cast<int>(noz);
+
+  // create a sequential matrix on one processor
+  if (numprocs == 1) {
+    assert((m_l == m) && (n_l == n));
+
+    // Create matrix.  Revisit later to do preallocation and make more efficient
+    ierr = MatCreateSeqAIJ(MPI_COMM_WORLD, m_global, n_global, n_nz, PETSC_NULL, &_mat);
+    CHKERRABORT(MPI_COMM_WORLD, ierr);
+    ierr = MatSetFromOptions(_mat);
+    CHKERRABORT(MPI_COMM_WORLD, ierr);
+  }
+
+  else {
+    //       parallel_only();
+
+    ierr = MatCreate(MPI_COMM_WORLD, &_mat);
+    CHKERRABORT(MPI_COMM_WORLD, ierr);
+
+    ierr = MatSetSizes(_mat, m_l, n_l, m, n);
+    CHKERRABORT(MPI_COMM_WORLD, ierr);
+
+    ierr = MatSetType(_mat, MATMPIAIJ);  // Automatically chooses seqaij or mpiaij
+    CHKERRABORT(MPI_COMM_WORLD, ierr);
+
+    ierr = MatMPIAIJSetPreallocation(_mat, nnz, PETSC_NULL, noz, PETSC_NULL);
+    CHKERRABORT(MPI_COMM_WORLD, ierr);
+  }
+
+  this->zero();
+}
 // =====================================0
 void PetscMatrixM::update_sparsity_pattern(
     int m_global,                 // # global rows
@@ -260,15 +322,15 @@ double PetscMatrixM::linfty_norm() const {
 
 // ===================================================
 void PetscMatrixM::print_personal(std::ostream& os  // pointer stream
-                                  ) const {         // =========================================
+) const {                                           // =========================================
   assert(this->initialized());
   std::cout << "\n PetscMatrixM::print_personal \n";
   // #ifndef NDEBUG
   //   if (os != std::cout)
   //     std::cerr << "Warning! PETSc can only print to std::cout!" << std::endl;
   // #endif
-  PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
-  //   PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_DEFAULT);
+  //   PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+  PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_DEFAULT);
   int ierr = 0;
   ierr = MatView(_mat, PETSC_VIEWER_STDOUT_WORLD);
   CHKERRABORT(MPI_COMM_WORLD, ierr);
@@ -452,7 +514,7 @@ void PetscMatrixM::get_diagonal(NumericVectorM& dest) const {
 /// This function copies the transpose of the matrix
 // ===========================================================
 void PetscMatrixM::get_transpose(SparseMatrixM& dest  // output transpose matrix
-                                 ) const {
+) const {
   // Make sure the SparseMatrix passed in is really a PetscMatrix
   PetscMatrixM& petsc_dest = libmeshM_cast_ref<PetscMatrixM&>(dest);
 
