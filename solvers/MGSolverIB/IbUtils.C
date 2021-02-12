@@ -1929,8 +1929,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::InterpolateFluidOnSolid(
 
 MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
     MEDCoupling::MEDCouplingFieldDouble* ReducedVelocityField,
-    MEDCoupling::MEDCouplingFieldDouble* BoundaryField, const MEDCoupling::MEDCouplingUMesh* BoundaryMesh,
-    const int axisym) {
+    const MEDCoupling::MEDCouplingUMesh* ImmersedMesh, const int axisym) {
   if (_ExtractedVelocity != NULL) _ExtractedVelocity->decrRef();
   _ExtractedVelocity = ReducedVelocityField->buildSubPart(_CellToExtract, _CellToExtract + _NumCellToExtract);
 
@@ -2119,8 +2118,9 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
       NewStress[1] += JxW_g * (Vel_tg_grad_norm_g * Normal[0] * _muf + _rhof * p_on_g * Normal[1]);
 
       for (int i = 0; i < DIMENSION; i++) {
-        Stress[i] += ViscStress[i] - PressContrib[i];
+        Stress[i] = ViscStress[i] - PressContrib[i];
         StressOnCell[i] += Stress[i];
+        Stress[i] = 0;
       }
 
       GlobViscContrib += ViscStress[0];
@@ -2129,7 +2129,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
     }  // END LOOP OVER GAUSS NODES
 
     for (int i = 0; i < DIMENSION; i++) {
-      array->setIJ(cell, i, Stress[i] /*StressOnCell[i]*/);
+      array->setIJ(cell, i, StressOnCell[i]);
       StressOnCell[i] = 0;
     }
 
@@ -2138,7 +2138,7 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
   //     double cd =     NewStress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
   //     double cl = -1.*NewStress[1] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
   // //     std::cout<<" ==================================== \n";
-  std::cout << "Stress[0]:  " << Stress[0] << "  Stress[1]: " << Stress[1] << std::endl;
+  //   std::cout << "Stress[0]:  " << Stress[0] << "  Stress[1]: " << Stress[1] << std::endl;
   // //
   //
   //       double cd2 =     Stress[0] * 2 /(_rhof * 0.1 * 0.2 * 0.2);
@@ -2170,14 +2170,23 @@ MEDCoupling::MEDCouplingFieldDouble* IbUtils::ComputeStressField(
   StressFieldBDNodes = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
   StressFieldBDNodes = Remap.transferField(StressFieldBD, 0.);
 
-  std::cout << "\033[1;21m IBMOVER: FILL PARAMETERS\033[0m\n";
-  FillParameters(ExtractedUMesh, BoundaryMesh, Volume, 1.e-5);
-  f = InterpolatedField(StressFieldBDNodes, BoundaryField);
+  MEDCoupling::DataArrayDouble* ZeroArray = MEDCoupling::DataArrayDouble::New();
+  ZeroArray->alloc(ImmersedMesh->getNumberOfNodes(), 1);
+  ZeroArray->fillWithValue(0.);
+  MEDCoupling::MEDCouplingFieldDouble* Support;
+  Support = MEDCoupling::MEDCouplingFieldDouble::New(MEDCoupling::ON_NODES);
+  Support->setMesh(ImmersedMesh);
+  Support->setArray(ZeroArray);
+  Support->setName("Stress");
+  Support->setNature(MEDCoupling::IntensiveMaximum);
 
-  //     StressFieldBD->decrRef();
-  //     StressFieldBDNodes->decrRef();
-  //     ExtractedMesh->decrRef();
-  //     ExtractedUMesh->decrRef();
+  std::cout << "\033[1;21m IBMOVER: FILL PARAMETERS\033[0m\n";
+  FillParameters(ExtractedUMesh, ImmersedMesh, Volume, 1.e-5);
+  f = InterpolatedField(StressFieldBDNodes, Support);
+
+  StressFieldBD->decrRef();
+  ZeroArray->decrRef();
+  Support->decrRef();
 
   return f;
 }

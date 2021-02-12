@@ -85,8 +85,7 @@ class IbUtils : public InterfaceProjection {
 
   MEDCoupling::MEDCouplingFieldDouble* ComputeStressField(
       MEDCoupling::MEDCouplingFieldDouble* ReducedVelocityField,
-      MEDCoupling::MEDCouplingFieldDouble* BoundaryField, const MEDCoupling::MEDCouplingUMesh* BoundaryMesh,
-      const int axisym = 0);
+      const MEDCoupling::MEDCouplingUMesh* ImmersedMesh, const int axisym = 0);
 
   void InitColor();
   void CalcInterface(MEDCoupling::MEDCouplingFieldDouble* ProjectedColor);

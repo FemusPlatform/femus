@@ -108,7 +108,7 @@ void MGMesh::get_el_ctr(
     const int bdry,        // zone vol/bd    (<- input)=(1)/(0) flag
     const double* xx_nds,  // element coords (-> output)
     double* el_xm          // element center (-> output)
-    ) const {              // =======================================
+) const {                  // =======================================
 
   for (int idim = 0; idim < _dim; idim++) {
     el_xm[idim] = 0.;  // zero
@@ -130,7 +130,7 @@ void MGMesh::get_el_nodes(
     const int Level,      // level         (<- input)
     const int iel,        // element       (<- input)
     double xx[]           // element coords(-> output)
-    ) const {             // =======================================
+) const {                 // =======================================
 
   // element  definition
   for (int n = 0; n < el_nnodes; n++) {
@@ -155,7 +155,7 @@ void MGMesh::get_el_nod_disp(
     const int iel,    // element              (<- input)
                       //   int  el_conn[],   // element connectivity (<- intput)
     double xx[]       // element coordinates  (-> output)
-    ) const {         // =================================
+) const {             // =================================
 
   const int el_nnodes = _GeomEl.n_q[bdry];  // element nodes
                                             //   const int  offset   =_NoNodes[_NoLevels-1];
@@ -223,7 +223,7 @@ void MGMesh::get_el_nod_conn(
     const int iel,    // element              (<- input)
     int el_conn[],    // element connectivity (-> output)
     double xx[]       // element coordinates  (-> output)
-    ) const {         // =================================
+) const {             // =================================
 
   const int el_nnodes = _GeomEl.n_q[bdry];  // element nodes
   const int offset = _NoNodes[_NoLevels - 1];
@@ -271,7 +271,7 @@ void MGMesh::get_el_neighbor(
     const int Level,     // level                (<- input)
     const int iel,       // element              (<- input)
     int el_neigh[]       // element connectivity (-> output)
-    ) const {            // =================================
+) const {                // =================================
 
   //   const int  el_sides= _GeomEl._n_sides[bdry]; // element nodes
   for (int iside = 0; iside < el_sides; iside++) {
@@ -291,7 +291,7 @@ void MGMesh::get_el_conn(
     const int Level,      // Level            (<- input)
     const int iel,        // element          (<- input)
     int el_conn[]         // connectivity map (-> output)
-    ) const {             // ==========
+) const {                 // ==========
 
   // get the global node number
   for (int n = 0; n < el_nnodes; n++) {
@@ -320,7 +320,7 @@ void MGMesh::xcoord(
 void MGMesh::nodesxyz(
     double xyzvect[],  // coord vector ->
     const int n_nodes  // node number  <-
-    ) const {          // ====================================
+) const {              // ====================================
   // computation xyz vector in node order
   for (int i = 0; i < n_nodes; i++) {
     xyzvect[i * 3] = _xyz[i];
@@ -343,7 +343,7 @@ int MGMesh::sub_conn(
     const int ifem,        // fem type
     const int ilev,        // Level
     const int n_points_el  // point number
-    ) const {              // =============================================
+) const {                  // =============================================
 
   int n_elements = _NoElements[ifem][ilev];
   int type_family_in = _type_FEM[ilev + ifem * _NoLevels];
@@ -369,7 +369,7 @@ void MGMesh::conn(
     int gl_conn[],       // global sub-connectivity map
     const int ifem,      // fem type
     const int indx_mesh  // mesh
-    ) const {            // =============================================
+) const {                // =============================================
   for (int ik = 0; ik < _NoElements[ifem][indx_mesh] * _type_FEM[indx_mesh]; ik++) {
     gl_conn[ik] = _el_map[ifem][ik];
   }
@@ -1443,7 +1443,7 @@ void MGMesh::print_conn_lin_hf5(const int Level  // Level <-
 // ====================================================
 /// This function prints the subdomain subdivision (proc)
 void MGMesh::print_subdom_hf5(std::string filename  // filename
-                              ) const {             // ==========================================
+) const {                                           // ==========================================
 
   // setup ucoord
   int n_elements = _NoElements[0][_NoLevels - 1];
@@ -1685,7 +1685,10 @@ void MGMesh::set_node_normal() {
               xxb_qnds[idim * NDOF_FEMB + lbnode] = xx_qnds[idim * NDOF_FEM + lnode];
             }
           }
-          get_normal_b(xxb_qnds, x_m, normal);  // normal,tg1,tg2
+          if (_dim > 1)
+            get_normal_b(xxb_qnds, x_m, normal);  // normal,tg1,tg2
+          else
+            normal[0] = 0;
           //         int dir_maxnormal = (fabs(normal[0]) > fabs(normal[1])) ? 0 : 1 ;
           //         dir_maxnormal = (fabs(normal[dir_maxnormal]) > fabs(normal[DIMENSION - 1])) ?
           //         dir_maxnormal : DIMENSION - 1; std::cout<<"
@@ -1699,9 +1702,12 @@ void MGMesh::set_node_normal() {
             int in_mid = elb_conn[NDOF_FEMB - 1];
             int ibc_mid = _NodeBDgroup[in_mid];
             // Note; ibc == ibc_mid geometric -> normals based on the Group regions
-            for (int ivar = 0; ivar < _dim; ivar++)
+            printf(" Mesh normal : %d %d ", _iproc, in);
+            for (int ivar = 0; ivar < _dim; ivar++) {
+              printf(" %f ", normal[ivar]);
               if (ibc == ibc_mid) _normalb[in * DIMENSION + ivar] = normal[ivar];
-            printf(" Mesh normal : %d %d  %f %f %d %d \n", _iproc, in, normal[0], normal[1], ibc, ibc_mid);
+            }
+            printf(" %d %d \n", ibc, ibc_mid);
 
           }  // int  lbnode
         }    // el_neigh[iside] == -1
@@ -1719,7 +1725,7 @@ void MGMesh::get_normal_b(
     const double* xx,    // all surface coordinates <-
     const double x_c[],  // point inside the element <-
     double normal_tg[]   //  normal [0;_dim-1]+tg1[_dim;...] ->
-    ) const {            // ======================================
+) const {                // ======================================
 
 #if DIMENSION == 2  //  2D -----------------------------------------------
                     //  The surface elements are such that when you go from the 1st to

@@ -416,7 +416,7 @@ MEDCouplingFieldDouble* EquationSystemsExtendedM::getDisplacement(
       int node_mg = map_mg[i_mg];    // mg  node
       int node_med = map_med[i_mg];  // med node
       const int kdof_top = mgsyst->_node_dof[Level][node_mg + (ji + first_cmp) * offset];
-      double v = 0;  // (*(mgsyst->disp[Level]))(kdof_top);
+      double v = (*(mgsyst->d_aux[0]))(kdof_top);
       array->setIJ(node_med, ji, v);
     }
   }
