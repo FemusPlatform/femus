@@ -63,6 +63,7 @@ enum FIELDS : int {
   MG_AdjointTurbulence = 18,
   KA_F = 18,  // [18] + 19 Adjoint turbulence
   EWA_F = 19,
+  MUA_F = 20,
   // control
   MG_ColorFunction = 20,
   MG_Laplacian = 20,

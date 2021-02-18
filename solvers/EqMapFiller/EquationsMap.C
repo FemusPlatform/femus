@@ -9,6 +9,7 @@
 #include "MGSolverNS_coup.h"  // NS ================
 #include "MGSolverNS_proj.h"  // NS ================
 #include "MGSolverP.h"
+#include "MGSolverNS_1comp.h"
 // #if NS_EQUATIONS ==3
 // #include "MGSolverNSunique.h"
 // #endif
@@ -21,8 +22,8 @@
 #endif                 // -----------------------------------------
 #ifdef RANS_EQUATIONS  // Turbulence -------------
 #include "Nagano_Log.h"
-#include "Nagano_KE.h"
 #include "Nagano_KW.h"
+#include "Nagano_KE.h"
 #include "Wilcox.h"
 #include "WilcoxLog.h"
 #endif  // -----------------------------------------
@@ -31,6 +32,9 @@
 #endif
 #ifdef TBKA_EQUATIONS  // Turbulence -------------
 #include "MGSolverTBKA.h"
+#endif
+#ifdef MUA_EQUATIONS  // Turbulence -------------
+#include "MGSolverMUA.h"
 #endif              // -----------------------------------------
 #ifdef T_EQUATIONS  // Temperature ================
 #include "MGSolverT.h"
@@ -105,7 +109,7 @@
 #ifdef THF_EQUATIONS
 #include "MGSolverTHF.h"
 #endif
-
+ 
 /// EquationsMap standard constructor
 EquationsMap::EquationsMap() {
   Fill_FIELD_map();
@@ -146,6 +150,13 @@ void EquationsMap::Fill_pbName() {
         if (it->first == "MG_ThermalTurbulence") {
           _myproblemP.push_back(ALPHA_T);
           std::cout << " Adding thermal turbulence with Equation tab number " << _myproblemP[i] << "\n";
+          i++;
+        }
+#endif
+#ifdef MUA_EQUATIONS
+         if (it->first == "MG_AdjointTurbulence") {
+          _myproblemP.push_back(MUA_F);
+          std::cout << " Adding adjoint turbulent viscosity with Equation tab number " << _myproblemP[i] << "\n";
           i++;
         }
 #endif
@@ -267,7 +278,13 @@ void EquationsMap::initNavierStokes(EquationSystemsExtendedM& EqMap) {
     _nvars[2] = 0;  // only  Linear(1) approx
     EqMap.AddSolver<MGSolP>("NS2P", NS_F, _nvars[0], _nvars[1], _nvars[2], "p");
   }
-
+//   
+  if (NS_sol_type == 3) {  // 1 dir solver for fully developed flow
+    _nvars[0] = 0;
+    _nvars[1] = 0;
+    _nvars[2] = 1;  // only  Quadratic (2) approx
+    EqMap.AddSolver<MGSolNS_1comp>("NS0", NS_F, _nvars[0], _nvars[1], _nvars[2], "u");
+  }
     // #if NS_EQUATIONS==3
     //   _nvars[0] = _nvars[1] = 0;
     //   _nvars[2] = 1;
@@ -541,6 +558,8 @@ void EquationsMap::initColor(EquationSystemsExtendedM& EqMap) {
   _nvars[2] = 1;  // only Quadratic[2] approx
   EqMap.AddSolver<MGSolCOL>("C", CO_F, _nvars[0], _nvars[1], _nvars[2], "c");
   EqMap.AddSolver<MGSolCOL>("CK", CO_F + 1, _nvars[0], _nvars[1], _nvars[2], "k");
+//   EqMap.AddSolver<MGSolCOL>("CKK", CO_F + 2, _nvars[0], _nvars[1], _nvars[2], "kk");
+
 #endif
   return;
 }
@@ -645,6 +664,12 @@ void EquationsMap::initAdjointDynamicTurbulence(EquationSystemsExtendedM& EqMap)
   EqMap.AddSolver<MGSolTBKA>("K1WA", KA_F + 1, _nvars[0], _nvars[1], _nvars[2], "wta");
 #endif
 #endif
+
+#ifdef MUA_EQUATIONS
+  _nvars[2] = 1;
+  EqMap.AddSolver<MGSolMUA>("MUA", MUA_F, _nvars[0], _nvars[1], _nvars[2], "mua");
+#endif
+  
   return;
 }
 // ================================== CTRL_EQUATIONS ================================
@@ -793,6 +818,7 @@ void EquationsMap::Fill_FIELD_map() {  // map equation   map_str2field
   _map_str2field["MG_AdjointTurbulence"] = KA_F;
   _map_str2field["KA_F"] = KA_F;    // [18] + 19 Adjoint turbulence
   _map_str2field["EWA_F"] = EWA_F;  // [18] + 19 Adjoint turbulence
+  _map_str2field["MUA_F"] = MUA_F;  // [18] + 19 Adjoint turbulence
   // control
   _map_str2field["MG_ColorFunction"] = CO_F;
   _map_str2field["MG_Laplacian"] = CO_F;
@@ -952,7 +978,12 @@ void EquationsMap::setProblems(MGSolBase*& ProbObj) {
       if (EqnName == "MG_ImmersedBoundary") { ProbObj->ActivateCoupled(2, IB_F, "IB1", _QuadEq, "IB2"); }
 
       // ADJOINT TURBULENCE
-      if (EqnName == "MG_AdjointTurbulence") { ProbObj->ActivateCoupled(2, KA_F, "K2KA", _QuadEq, "K1WA"); }
+      if (EqnName == "MG_AdjointTurbulence") { 
+        ProbObj->ActivateCoupled(2, KA_F, "K2KA", _QuadEq, "K1WA"); 
+#ifdef MUA_EQUATIONS
+        ProbObj->ActivateScalar(2, MUA_F, "MUA", _QuadEq);
+#endif 
+    }
 
       // DA
       if (EqnName == "MG_DA") { ProbObj->ActivateScalar(2, DA_F, "DA", _QuadEq); }

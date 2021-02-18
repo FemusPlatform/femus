@@ -186,10 +186,10 @@ void MGSolBase::MGSolve(
     std::cout << "\033[38;5;196m  --- bNorm is too high!!---  \033[0m \n";
     return;
   }
-  if (bNorm < 1.e-12) {
+  if (bNorm < 1.e-15) {
     x[_NoLevels - 1]->close();
     x[_NoLevels - 1]->zero();
-    std::cout << "\033[38;5;196m  ----------bNorm <1.e-8 !!----------  \033[0m \n";
+    std::cout << "\033[38;5;196m  ----------bNorm <1.e-15 !!----------  \033[0m \n";
     return;
   }
 #endif

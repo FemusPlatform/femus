@@ -283,11 +283,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
   int conv_dim = controlled_eq.size();
   // Loop for time steps
   int NoLevels = 0;
-  double norm_new[conv_dim];
-  double norm_old[conv_dim];
-  double diff_norm[conv_dim];
-  double diff_norm_old[conv_dim];
-  double err_rel[conv_dim];
+  double norm_new[conv_dim], norm_old[conv_dim], diff_norm[conv_dim], diff_norm_old[conv_dim],err_rel[conv_dim];
   for (int i = 0; i < conv_dim; i++) {
     norm_new[i] = norm_old[i] = diff_norm[i] = err_rel[i] = 1.e-20;
     diff_norm_old[i] = 10000;
@@ -341,6 +337,7 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
     }
     // ---------------------------------------------------------------------------------------
     bool flag = true;
+    bool flag2 =true;
     for (int i = 0; i < conv_dim; i++) {
       if (err_rel[i] > toll) {
         flag = false;
@@ -349,10 +346,11 @@ void MGEquationsSystem::eqnmap_timestep_loop_control(
         time += time_step;
       }
       if (norm_new[i] > 1.e+8) {
-        std::cout << "\n  *** Steady state NOT found ABORTING and reducing control " << endl;
-        break;
+       std::cout << "\n  *** Steady state NOT found ABORTING and reducing control " << endl;
+        flag2=false;
       }
     }
+    if (flag2==false) break;
     if (flag == true) {
       std::cout << "*** Steady state found on  n =" << istep << " ** Time step= " << time << " ***"
                 << std::endl;
