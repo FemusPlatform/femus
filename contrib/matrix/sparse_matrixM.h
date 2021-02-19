@@ -163,6 +163,9 @@ class SparseMatrixM :
       const DenseMatrixM& dm, const std::vector<int>& rows, const std::vector<int>& cols) = 0;
   /// Same, but assumes the row and column maps are the same.
   virtual void add_matrix(const DenseMatrixM& dm, const std::vector<int>& dof_indices) = 0;
+  /// Adds a dense matrix to a sparse matrix
+  virtual void add_matrix_blocked(
+      const std::vector<double>& mat_values, const std::vector<int>& rows, const std::vector<int>& cols) = 0;
   /// Add a Sparse matrix \p _X, scaled with \p _a, to \p  A += cB
   virtual void add(const double /*c*/, SparseMatrixM& /*B*/) = 0;
 

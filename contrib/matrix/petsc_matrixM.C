@@ -108,7 +108,7 @@ void PetscMatrixM::init(
   }
 
   else {
-    //       parallel_only();
+    parallel_onlyM();
 
     ierr = MatCreate(MPI_COMM_WORLD, &_mat);
     CHKERRABORT(MPI_COMM_WORLD, ierr);
@@ -329,8 +329,8 @@ void PetscMatrixM::print_personal(std::ostream& os  // pointer stream
   //   if (os != std::cout)
   //     std::cerr << "Warning! PETSc can only print to std::cout!" << std::endl;
   // #endif
-  //   PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
-  PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_DEFAULT);
+  PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_ASCII_MATLAB);
+  //   PetscViewerPushFormat(PETSC_VIEWER_STDOUT_WORLD, PETSC_VIEWER_DRAW_LG);
   int ierr = 0;
   ierr = MatView(_mat, PETSC_VIEWER_STDOUT_WORLD);
   CHKERRABORT(MPI_COMM_WORLD, ierr);
@@ -445,6 +445,24 @@ void PetscMatrixM::add_matrix(
   ierr =
       MatSetValues(_mat, m, (int*)&rows[0], n, (int*)&cols[0], (PetscScalar*)&dm.get_values()[0], ADD_VALUES);
   CHKERRABORT(MPI_COMM_WORLD, ierr);
+}
+
+// ============================================================
+
+void PetscMatrixM::add_matrix_blocked(
+    const std::vector<double>& mat_values,  // blocked matrix stored as an m*n array
+    const std::vector<int>& rows,           // row vector indexes
+    const std::vector<int>& cols) {         // column vector indices
+  // ==================================================
+  assert(this->initialized());
+
+  const int m = rows.size();
+  const int n = cols.size();
+  assert(m * n == mat_values.size());
+
+  MatSetValuesBlocked(_mat, m, &rows[0], n, &cols[0], &mat_values[0], ADD_VALUES);
+
+  return;
 }
 
 // ===========================================================

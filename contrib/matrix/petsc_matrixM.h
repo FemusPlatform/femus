@@ -113,6 +113,9 @@ class PetscMatrixM : public SparseMatrixM {
   void add_matrix(const DenseMatrixM& dm, const std::vector<int>& rows, const std::vector<int>& cols);
   /// Add the full matrix to the Petsc matrix.
   void add_matrix(const DenseMatrixM& dm, const std::vector<int>& dof_indices);
+  /// Adds a dense matrix to a sparse matrix
+  void add_matrix_blocked(
+      const std::vector<double>& mat_values, const std::vector<int>& rows, const std::vector<int>& cols);
 
   /// Add a Sparse matrix
   void add(const double a, SparseMatrixM& X);
