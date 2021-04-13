@@ -76,6 +76,7 @@ class MGSolT : public MGSolDA {
   bool _SolveT = true;
   double _wall_frac;
   int _Axisym;
+  bool _Restart=0;
 
  public:
   // ==========================================================================

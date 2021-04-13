@@ -250,6 +250,11 @@ void MGSolT::MGTimeStep(
               << " solution of problem " << _mgutils.get_name()
               << "\n ---------------------------------------------------\n  \033[0m";
 
+    if (_Restart == 0) {
+        x_old [0][_NoLevels - 1]->localize(*x_old [1][_NoLevels - 1]);
+        x_old [0][_NoLevels - 1]->localize(*x_nonl[_NoLevels - 1]);
+    }
+    _Restart = 1;          
     std::clock_t start_time = std::clock();
     GenMatRhs(time, _NoLevels - 1, 1);  // matrix and rhs
     for (int Level = 0; Level < _NoLevels - 1; Level++) {
