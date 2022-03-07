@@ -2110,7 +2110,9 @@ double MGFE::JacSur2D(  // 2D surface jacobean ->
   }
   // surface weighted jacobean
   double det = sqrt(dxdxi * dxdxi + dydxi * dydxi);
-  InvJac[0] = 1. / det;
+//   InvJac[0] = 1. / det;
+  InvJac[0] = dxdxi/(det*det);
+  InvJac[2] = dydxi/(det*det);
   return (det);
 }
 
